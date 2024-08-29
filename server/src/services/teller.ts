@@ -1,6 +1,7 @@
 import axios from 'axios';
 import fs from 'fs';
 import https from 'https';
+import { Account, AccountBalance, Transaction } from '../models/teller';
 
 const baseUrl = "https://api.teller.io";
 
@@ -37,15 +38,15 @@ async function teller(endpoint: string, token: string) {
     }
 }
 
-export function listAccounts(token: string) {
-    return teller("/accounts", token);
+export async function listAccounts(token: string): Promise<Account[]> {
+    return await teller("/accounts", token) as Account[];
 }
 
-export function getAccountBalance(accountId: string, token: string) {
-    return teller(`/accounts/${accountId}/balances`, token);
+export async function getAccountBalance(accountId: string, token: string) {
+    return await teller(`/accounts/${accountId}/balances`, token) as AccountBalance;
 }
 
-export function listAccountTransactions(accountId: string, token: string, limit?: number, fromPage?: string) {
+export async function listAccountTransactions(accountId: string, token: string, limit?: number, fromPage?: string) {
     let endpoint = `/accounts/${accountId}/transactions?`;
     if (limit != null) {
         endpoint += `limit=${limit}`;
@@ -53,5 +54,5 @@ export function listAccountTransactions(accountId: string, token: string, limit?
     if (fromPage != null) {
         endpoint += `from_id=${fromPage}`
     }
-    return teller(endpoint, token);
+    return await teller(endpoint, token) as Transaction[];
 }

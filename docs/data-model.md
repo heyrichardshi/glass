@@ -9,6 +9,7 @@ Properties:
 - `accountId` – the identifier for this account; same as the account ID in Teller for more efficient lookups
 - `tellerAccessToken` - used to authorize requests to the account in Teller
 - `name` – the display name of the account, can be edited by the user
+- `institution` - the name of the issuing party of the account
 - `balance` – the current balance on the account
 - `mask` – the last four digits of the account number
 - `officialName` – what the financial institution calls the account
