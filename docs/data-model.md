@@ -13,6 +13,8 @@ Properties:
 - `mask` – the last four digits of the account number
 - `officialName` – what the financial institution calls the account
 - `transactionsLastRefreshedAt` – a date/time value for when the transactions for this account was last retrieved (Unix time)
+- `type` - `'credit'` or `'depository'`
+- `status` - indicates whether the account is open, closed, or there is a connection issue with the account
 
 ### Transaction
 A *Transaction* represents a transaction on an account at a financial institution. A transaction must have a counterparty, which is usually a Merchant, but may also be another Account in the case of transfers.
