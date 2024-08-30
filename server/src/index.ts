@@ -8,6 +8,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { errorHandler } from "./middleware/error.middleware";
 import { notFoundHandler } from "./middleware/not-found.middleware";
+import router from "./routes/accounts";
 
 dotenv.config();
 
@@ -36,8 +37,11 @@ app.use(function (req, res, next) {
     next();
 });
 
+app.use('/accounts', router);
+
 app.use(errorHandler);
 app.use(notFoundHandler);
+
 
 /**
  * Server Activation
