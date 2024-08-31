@@ -33,7 +33,7 @@ async function teller(endpoint: string, token: string) {
             });
         console.log("Response data:", response.data);
         return response.data;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error:", error.response ? error.response.data : error.message);
     }
 }

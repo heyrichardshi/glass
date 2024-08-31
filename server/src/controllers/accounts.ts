@@ -5,7 +5,7 @@ export async function registerAccounts(req: Request, res: Response) {
     try {
         await accounts.registerAccountsFromToken(req.params.token);
         res.status(200).send();
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({ message: error.message });
       }
 }
@@ -14,7 +14,7 @@ export async function refreshAccount(req: Request, res: Response) {
     try {
         await accounts.refresh(req.params.accountId);
         res.status(200).send();
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({ message: error.message });
       }
 }
