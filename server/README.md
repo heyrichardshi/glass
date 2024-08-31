@@ -7,3 +7,9 @@ It is recommended to install [`httpie`](https://github.com/httpie/cli) for simpl
 ```
 brew install httpie
 ```
+
+Start the server locally:
+```
+pnpm docker:build
+pnpm docker:run
+```

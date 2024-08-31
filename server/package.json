@@ -6,7 +6,9 @@
   "scripts": {
       "dev": "ts-node-dev --respawn --pretty --transpile-only src/index.ts",
       "start": "dist/index.js",
-      "build": "tsc"
+      "build": "tsc",
+      "docker:build": "docker build -t saffron-server .",
+      "docker:run": "docker run -p 7000:7000 saffron-server"
   },
   "keywords": [],
   "author": "Richard Shi",
