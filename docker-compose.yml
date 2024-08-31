@@ -1,5 +1,19 @@
 services:
-  saffron-server:
+  dynamodb-local:
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data -disableTelemetry -port 7070"
+    image: "amazon/dynamodb-local:latest"
+    ports:
+      - "7070:7070"
+    volumes:
+      - "./.dev/dynamodb:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
+  server:
+    depends_on:
+      - dynamodb-local
     build: ./server
     ports:
       - "7000:7000"
+    environment:
+      AWS_ACCESS_KEY_ID: 'dummy_id'
+      AWS_SECRET_ACCESS_KEY: 'dummy_key'
+      REGION: 'us-east-1'
