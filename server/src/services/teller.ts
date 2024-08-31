@@ -42,6 +42,10 @@ export async function listAccounts(token: string): Promise<Account[]> {
     return await teller("/accounts", token) as Account[];
 }
 
+export async function getAccount(accountId: string, token: string) {
+    return await teller(`/accounts/${accountId}`, token) as Account;
+}
+
 export async function getAccountBalance(accountId: string, token: string) {
     return await teller(`/accounts/${accountId}/balances`, token) as AccountBalance;
 }
