@@ -1,10 +1,18 @@
 import { Request, Response } from 'express';
-import * as teller from '../services/teller';
-import { registerAccountsFromToken } from '../services/accounts';
+import * as accounts from '../services/accounts';
 
 export async function registerAccounts(req: Request, res: Response) {
     try {
-        await registerAccountsFromToken(req.params.token);
+        await accounts.registerAccountsFromToken(req.params.token);
+        res.status(200).send();
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+}
+
+export async function refreshAccount(req: Request, res: Response) {
+    try {
+        await accounts.refresh(req.params.accountId);
         res.status(200).send();
       } catch (error) {
         res.status(500).json({ message: error.message });

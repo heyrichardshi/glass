@@ -5,7 +5,7 @@ export interface Transaction {
     date: Date,
     rawDescription: string,
     status: 'posted' | 'pending',
-    tellerType?: string,
+    tellerType: string,
     tellerCategory?: string,
     tellerCounterparty?: string,
     categoryId: string,

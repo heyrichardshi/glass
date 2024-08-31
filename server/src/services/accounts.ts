@@ -1,4 +1,5 @@
 import { Account } from "../models/account";
+import { Transaction } from "../models/transaction";
 import * as teller from "./teller";
 
 export async function registerAccountsFromToken(token: string) {
@@ -33,4 +34,45 @@ export async function registerAccountsFromToken(token: string) {
     accounts.forEach(account => {
         console.log(account);
     });
+}
+
+/**
+ * Retrieves latest balance and transaction data for the given account from Teller, and updates the database.
+ */
+export async function refresh(accountId: string) {
+    // TODO: Get registered account, if it exists.
+    const token = ""
+
+    const account = teller.getAccount(accountId, token);
+    const balance = teller.getAccountBalance(accountId, token);
+
+    console.log("Fetching transactions...");
+    const tellerTransactions = await teller.listAccountTransactions(accountId, token);
+    console.log(`Fetched ${tellerTransactions.length} transaction(s)`);
+
+    // Convert to own structure
+    const transactions: Transaction[] = await Promise.all(
+        tellerTransactions.map(async (transaction) => {
+            const status = transaction.status == 'posted' ? 'posted' : 'pending'
+            // TODO get category + counterparty dynamically
+            const categoryId = "0"
+            const counterpartyId = "0"
+            return {
+                transactionId: transaction.id,
+                accountId: accountId,
+                amount: transaction.amount,
+                date: new Date(transaction.date),
+                rawDescription: transaction.description,
+                status: status,
+                tellerType: transaction.type,
+                tellerCategory: transaction.details.category,
+                tellerCounterparty: transaction.details.counterparty?.name,
+                categoryId: categoryId,
+                counterpartyId: counterpartyId,
+                tagIds: [],
+            }
+        })
+    );
+
+    // TODO: Write transactions to database
 }
