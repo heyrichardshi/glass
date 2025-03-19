@@ -9,3 +9,9 @@ Powerful cash flow analysis and budgeting.
 pnpm install
 pnpm dev
 ```
+
+### Running
+
+```
+docker compose up
+```
