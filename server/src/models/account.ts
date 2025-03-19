@@ -1,12 +1,15 @@
 export interface Account {
-    accountId: string,
-    tellerAccessToken: string,
+    id: string,
     name: string,
     institution: string,
     balance: string,
+    /** The last four of the account number. */
     mask: string,
+    /** What the financial institution refers to the account as. */
     officialName: string,
     transactionsLastRefreshedAt: Date,
+    /** The type of the account, e.g. checking, savings, credit card. */
     type: string,
-    status: string,
+    status: 'open' | 'closed',
+    tellerAccessToken: string,
 }

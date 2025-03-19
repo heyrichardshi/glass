@@ -1,4 +1,5 @@
 export interface Tag {
-    tagId: string,
+    id: string,
     name: string,
+    usageCount: number,
 }

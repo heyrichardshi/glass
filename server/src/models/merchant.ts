@@ -1,4 +1,9 @@
+/**
+ * Represents a merchant that a user has made a transaction with.
+ */
 export interface Merchant {
-    merchantId: string,
+    id: string,
     name: string,
+    normalizedNames: string[],
+    defaultCategoryId: string,
 }
