@@ -1,5 +1,6 @@
 export interface Account {
     id: string,
+    userId: string,
     name: string,
     institution: string,
     balance: string,

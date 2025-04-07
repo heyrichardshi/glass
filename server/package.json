@@ -9,7 +9,7 @@
         "build": "tsc",
         "lint": "eslint .",
         "docker:build": "docker build -t saffron-server .",
-        "docker:run": "docker run -p 7000:7000 saffron-server"
+        "docker:run": "docker run -p 7070:7070 saffron-server"
     },
     "keywords": [],
     "author": "Richard Shi",
@@ -17,6 +17,7 @@
     "private": "true",
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.767.0",
+        "@azure/cosmos": "^4.3.0",
         "axios": "^1.8.3",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",

@@ -9,5 +9,5 @@ RUN npm run build
 # Copy Teller secrets
 COPY .dev/teller/ .dev/.teller/
 
-EXPOSE 7000
+EXPOSE 7070
 CMD ["npm", "run", "dev"]

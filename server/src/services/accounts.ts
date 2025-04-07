@@ -1,5 +1,5 @@
-import { Account } from "../models/account";
-import { Transaction } from "../models/transaction";
+import { Account, Transaction } from "../models";
+import { AccountRepository } from "../repositories/account";
 import * as teller from "./teller";
 
 export async function registerAccountsFromToken(token: string) {
@@ -15,8 +15,8 @@ export async function registerAccountsFromToken(token: string) {
             const balance = await teller.getAccountBalance(account.id, token);
             console.log(`Retrieved balance for account ${account.name}: ${balance.available} / ${balance.ledger}`);
             return {
-                accountId: account.id,
-                tellerAccessToken: token,
+                id: account.id,
+                userId: "0", // TODO: multitenancy
                 name: account.name,
                 institution: account.institution.name,
                 balance: balance.ledger ?? "0",
@@ -24,15 +24,22 @@ export async function registerAccountsFromToken(token: string) {
                 officialName: account.name,
                 transactionsLastRefreshedAt: new Date(0),
                 type: account.type,
-                status: account.status,
+                status: account.status == 'open' ? 'open' : 'closed',
+                tellerAccessToken: token,
             };
         })
     );
 
-    // Write accounts to database (TODO)
+    const accountRepo = await AccountRepository.getInstance();
+
     console.log("Retrieved accounts:");
     accounts.forEach(account => {
-        console.log(account);
+        console.log("Writing account to db: ", account);
+        accountRepo.create(account).then((statusCode) => {
+            console.log(`Account creation status: ${statusCode}`);
+        }).catch((error) => {
+            console.error("Error writing account to db: ", error);
+        });
     });
 }
 
@@ -41,7 +48,8 @@ export async function registerAccountsFromToken(token: string) {
  */
 export async function refresh(accountId: string) {
     // TODO: Get registered account, if it exists.
-    const token = ""
+    const token = "token_vhlf3gfbtfa2xqgih3hnhpvpre"
+    console.log(token);
 
     const account = teller.getAccount(accountId, token);
     const balance = teller.getAccountBalance(accountId, token);
@@ -58,18 +66,29 @@ export async function refresh(accountId: string) {
             const categoryId = "0"
             const counterpartyId = "0"
             return {
-                transactionId: transaction.id,
+                id: transaction.id,
+                userId: "0", // TODO: multitenancy
                 accountId: accountId,
                 amount: transaction.amount,
+                currency: "USD",
                 date: new Date(transaction.date),
                 rawDescription: transaction.description,
+                description: transaction.description,
+                notes: "",
                 status: status,
-                tellerType: transaction.type,
-                tellerCategory: transaction.details.category,
-                tellerCounterparty: transaction.details.counterparty?.name,
+                counterparty: {
+                    id: counterpartyId,
+                    type: "merchant",
+                },
                 categoryId: categoryId,
-                counterpartyId: counterpartyId,
                 tagIds: [],
+                linkedTransactionIds: [],
+                history: [],
+                tellerMetadata: {
+                    type: transaction.type,
+                    category: transaction.details.category,
+                    counterparty: transaction.details.counterparty?.name,
+                },
             }
         })
     );
