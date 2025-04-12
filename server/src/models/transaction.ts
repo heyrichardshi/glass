@@ -12,6 +12,8 @@ export interface Transaction {
     id: string,
     /** The user to which this transaction belongs to. */
     userId: string,
+    /** The household which the user whose acount this transaction belongs to is a part of; defaults to user's own household. */
+    householdId: string,
     /** The ID of the account this transaction belongs to. */
     accountId: string,
     /** The signed amount of the transaction (as a string). */

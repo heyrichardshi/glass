@@ -16,9 +16,23 @@ export class AccountRepository {
                 id: ACCOUNT_CONTAINER_ID,
                 partitionKey: {
                     paths: [
-                        '/userId',
+                        '/householdId',
                     ],
                 },
+                indexingPolicy: {
+                  indexingMode: "consistent",
+                  automatic: true,
+                  includedPaths: [
+                    { path: "/userId/?" },
+                    { path: "/householdId/?" },
+                    { path: "/status/?" },
+                    { path: "/isDeleted/?" },
+                  ],
+                  excludedPaths: [
+                    { path: "/*" } // Exclude everything by default to only index explicitly included properties
+                  ],
+                  compositeIndexes: [],
+                }
             })
         )
         .then((res) => res.container);

@@ -16,7 +16,7 @@ export class TransactionRepository {
                 id: TRANSACTION_CONTAINER_ID,
                 partitionKey: {
                     paths: [
-                        '/accountId',
+                        '/householdId',
                     ],
                 },
                 indexingPolicy: {
@@ -24,11 +24,11 @@ export class TransactionRepository {
                   automatic: true,
                   includedPaths: [
                     { path: "/date/?" },
-                    { path: "/tags/?" },
+                    { path: "/tagIds/?" },
                     { path: "/counterparty/id/?" },
                     { path: "/categoryId/?" },
                     { path: "/accountId/?" },
-                    { path: "/type/?" },
+                    { path: "/householdId/?" },
                     { path: "/isDeleted/?" },
                   ],
                   excludedPaths: [

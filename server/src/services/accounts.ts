@@ -18,6 +18,7 @@ export async function registerAccountsFromToken(token: string) {
             return {
                 id: account.id,
                 userId: "0", // TODO: multitenancy
+                householdId: "0", // TODO: multitenancy
                 name: account.name,
                 institution: account.institution.name,
                 balance: balance.ledger ?? "0",
@@ -85,6 +86,7 @@ export async function refresh(accountId: string) {
             {
                 id: transaction.id,
                 userId: "0", // TODO: multitenancy
+                householdId: "0", // TODO: multitenancy
                 accountId: accountId,
                 amount: transaction.amount,
                 currency: "USD",
