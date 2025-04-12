@@ -1,6 +1,6 @@
-import { Container, StatusCodes } from '@azure/cosmos';
-import { Account } from '../models';
-import { DatabaseProvider } from './database';
+import { Container, StatusCodes } from "@azure/cosmos";
+import { Account } from "../models";
+import { DatabaseProvider } from "./database";
 
 const ACCOUNT_CONTAINER_ID = "accounts";
 
@@ -10,32 +10,30 @@ export class AccountRepository {
 
   constructor() {
     this.promisedContainer = DatabaseProvider.getInstance()
-        .then((provider) => provider.getDatabase())
-        .then((db) =>
-            db.containers.createIfNotExists({
-                id: ACCOUNT_CONTAINER_ID,
-                partitionKey: {
-                    paths: [
-                        '/householdId',
-                    ],
-                },
-                indexingPolicy: {
-                  indexingMode: "consistent",
-                  automatic: true,
-                  includedPaths: [
-                    { path: "/userId/?" },
-                    { path: "/householdId/?" },
-                    { path: "/status/?" },
-                    { path: "/isDeleted/?" },
-                  ],
-                  excludedPaths: [
-                    { path: "/*" } // Exclude everything by default to only index explicitly included properties
-                  ],
-                  compositeIndexes: [],
-                }
-            })
-        )
-        .then((res) => res.container);
+      .then((provider) => provider.getDatabase())
+      .then((db) =>
+        db.containers.createIfNotExists({
+          id: ACCOUNT_CONTAINER_ID,
+          partitionKey: {
+            paths: ["/householdId"],
+          },
+          indexingPolicy: {
+            indexingMode: "consistent",
+            automatic: true,
+            includedPaths: [
+              { path: "/userId/?" },
+              { path: "/householdId/?" },
+              { path: "/status/?" },
+              { path: "/isDeleted/?" },
+            ],
+            excludedPaths: [
+              { path: "/*" }, // Exclude everything by default to only index explicitly included properties
+            ],
+            compositeIndexes: [],
+          },
+        }),
+      )
+      .then((res) => res.container);
   }
 
   public static async getInstance(): Promise<AccountRepository> {
@@ -49,7 +47,7 @@ export class AccountRepository {
     const container = await this.promisedContainer;
 
     const response = await container.items.create(account);
-    console.log('Created account in db: ', response);
+    console.log("Created account in db: ", response);
 
     return response.statusCode;
   }
@@ -65,20 +63,23 @@ export class AccountRepository {
     }
 
     const response = await item.replace(account);
-    console.log('Updated account in db: ', response);
+    console.log("Updated account in db: ", response);
 
     return response.statusCode;
   }
 
-    // Find an account by ID
-    async findById(accountId: string): Promise<Account | undefined> {
-      const container = await this.promisedContainer;
+  // Find an account by ID
+  async findById(accountId: string): Promise<Account | undefined> {
+    const container = await this.promisedContainer;
 
-      const response = await container.items
-        .query<Account>({ query: 'SELECT * FROM c WHERE c.id = @accountId', parameters: [{ name: '@accountId', value: accountId }] })
-        .fetchAll();
-      console.log('Fetching account ', accountId, ' from db: ', response);
+    const response = await container.items
+      .query<Account>({
+        query: "SELECT * FROM c WHERE c.id = @accountId",
+        parameters: [{ name: "@accountId", value: accountId }],
+      })
+      .fetchAll();
+    console.log("Fetching account ", accountId, " from db: ", response);
 
-      return response.resources[0];
-    }
+    return response.resources[0];
+  }
 }

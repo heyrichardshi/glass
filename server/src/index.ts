@@ -18,7 +18,7 @@ dotenv.config();
  */
 
 if (!process.env.PORT) {
-    process.exit(1);
+  process.exit(1);
 }
 
 const PORT: number = parseInt(process.env.PORT as string, 10);
@@ -35,20 +35,19 @@ app.use(express.json());
 
 // Middleware that loads environment variables so routers can access them.
 app.use(function (req, res, next) {
-    next();
+  next();
 });
 
-app.use('/accounts', accounts);
-app.use('/', transactions);
+app.use("/accounts", accounts);
+app.use("/", transactions);
 
 app.use(errorHandler);
 app.use(notFoundHandler);
-
 
 /**
  * Server Activation
  */
 
 app.listen(PORT, () => {
-    console.log(`Listening on port ${PORT}`);
+  console.log(`Listening on port ${PORT}`);
 });

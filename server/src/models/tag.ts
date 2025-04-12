@@ -1,5 +1,5 @@
 export interface Tag {
-    id: string,
-    name: string,
-    usageCount: number,
+  id: string;
+  name: string;
+  usageCount: number;
 }

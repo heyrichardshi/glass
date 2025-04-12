@@ -18,7 +18,7 @@ export class DatabaseProvider {
 
     const databaseId = process.env.COSMOS_DB_NAME!;
     const { database } = await instance.client.databases.createIfNotExists({
-        id: databaseId
+      id: databaseId,
     });
 
     instance.database = database;
@@ -28,7 +28,7 @@ export class DatabaseProvider {
 
   public static async getInstance(): Promise<DatabaseProvider> {
     if (!DatabaseProvider.instance) {
-        DatabaseProvider.instance = await DatabaseProvider.initialize();
+      DatabaseProvider.instance = await DatabaseProvider.initialize();
     }
     return DatabaseProvider.instance;
   }
