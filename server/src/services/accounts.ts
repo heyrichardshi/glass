@@ -1,3 +1,4 @@
+import { NotFoundError } from "../common/errors";
 import { Account, Transaction } from "../models";
 import { AccountRepository } from "../repositories/account";
 import * as teller from "./teller";
@@ -23,6 +24,7 @@ export async function registerAccountsFromToken(token: string) {
                 mask: account.last_four,
                 officialName: account.name,
                 transactionsLastRefreshedAt: new Date(0),
+                lastPostedTransactionId: "",
                 type: account.type,
                 status: account.status == 'open' ? 'open' : 'closed',
                 tellerAccessToken: token,
@@ -47,25 +49,38 @@ export async function registerAccountsFromToken(token: string) {
  * Retrieves latest balance and transaction data for the given account from Teller, and updates the database.
  */
 export async function refresh(accountId: string) {
-    // TODO: Get registered account, if it exists.
-    const token = "token_vhlf3gfbtfa2xqgih3hnhpvpre"
-    console.log(token);
+    const accountRepo = await AccountRepository.getInstance();
 
-    const account = teller.getAccount(accountId, token);
-    const balance = teller.getAccountBalance(accountId, token);
+    const account = await accountRepo.findById(accountId)
+    if (!account) {
+        throw new NotFoundError(`Account with ID '${accountId}' not found`);
+    }
 
     console.log("Fetching transactions...");
-    const tellerTransactions = await teller.listAccountTransactions(accountId, token);
+    const tellerTransactions = await teller.listAccountTransactions(accountId, account.tellerAccessToken);
     console.log(`Fetched ${tellerTransactions.length} transaction(s)`);
 
-    // Convert to own structure
-    const transactions: Transaction[] = await Promise.all(
-        tellerTransactions.map(async (transaction) => {
-            const status = transaction.status == 'posted' ? 'posted' : 'pending'
-            // TODO get category + counterparty dynamically
-            const categoryId = "0"
-            const counterpartyId = "0"
-            return {
+    let newestPostedTransactionId: string | undefined = undefined;
+
+    const transactionsToWrite: Transaction[] = [];
+    for (const transaction of tellerTransactions) {
+        // Once we hit the last posted transaction, stop processing the rest, as there will be no updates.
+        if (transaction.id == account.lastPostedTransactionId) {
+            break;
+        }
+
+        // Since results are in reverse chronological order, the first posted transaction we hit is the newest.
+        if (transaction.status == 'posted' && newestPostedTransactionId == undefined) {
+            newestPostedTransactionId = transaction.id;
+        }
+
+        const status = transaction.status == 'posted' ? 'posted' : 'pending'
+        // TODO get category + counterparty dynamically
+        const categoryId = "0"
+        const counterpartyId = "0"
+
+        transactionsToWrite.push(
+            {
                 id: transaction.id,
                 userId: "0", // TODO: multitenancy
                 accountId: accountId,
@@ -90,8 +105,18 @@ export async function refresh(accountId: string) {
                     counterparty: transaction.details.counterparty?.name,
                 },
             }
-        })
-    );
+        )
+    }
 
-    // TODO: Write transactions to database
+    console.log(`Writing ${transactionsToWrite.length} new transactions`);
+    transactionsToWrite.forEach(transaction => {
+        console.log("Writing transaction to db: ", transaction);
+        // TODO: Write transactions to database
+    });
+
+    if (newestPostedTransactionId !== undefined) {
+        account.lastPostedTransactionId = newestPostedTransactionId;
+
+        // TODO upsert account
+    }
 }

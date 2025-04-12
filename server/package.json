@@ -9,7 +9,7 @@
         "build": "tsc",
         "lint": "eslint .",
         "docker:build": "docker build -t saffron-server .",
-        "docker:run": "docker run -p 7070:7070 saffron-server"
+        "docker:run": "docker build -t saffron-server . && docker run -p 7070:7070 saffron-server"
     },
     "keywords": [],
     "author": "Richard Shi",

@@ -1,4 +1,4 @@
-import { Container } from '@azure/cosmos';
+import { Container, StatusCodes } from '@azure/cosmos';
 import { Account } from '../models';
 import { DatabaseProvider } from './database';
 
@@ -39,4 +39,16 @@ export class AccountRepository {
 
     return response.statusCode;
   }
+
+    // Find an account by ID
+    async findById(accountId: string): Promise<Account | undefined> {
+      const container = await this.promisedContainer;
+
+      const response = await container.items
+        .query<Account>({ query: 'SELECT * FROM c WHERE c.id = @accountId', parameters: [{ name: '@accountId', value: accountId }] })
+        .fetchAll();
+      console.log('Fetching account ', accountId, ' from db: ', response);
+
+      return response.resources[0];
+    }
 }

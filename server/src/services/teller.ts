@@ -23,6 +23,7 @@ async function teller(endpoint: string, token: string) {
 
     // Make the request
     try {
+        console.log(`Making request to ${baseUrl}${endpoint}`);
         const response = await axios
             .get(`${baseUrl}${endpoint}`, {
                 httpsAgent: _tellerHttpsAgent,
@@ -31,7 +32,7 @@ async function teller(endpoint: string, token: string) {
                     password: "", // No password for Teller auth as it relies on cert and key
                 },
             });
-        console.log("Response data:", response.data);
+        // console.log("Response data:", response.data);
         return response.data;
     } catch (error: any) {
         console.error("Error:", error.response ? error.response.data : error.message);
@@ -50,10 +51,20 @@ export async function getAccountBalance(accountId: string, token: string) {
     return await teller(`/accounts/${accountId}/balances`, token) as AccountBalance;
 }
 
+/**
+ * Returns an array of transactions in reverse chronological order (newest first).
+ * 
+ * See https://teller.io/docs/api/account/transactions#list-transactions.
+ * 
+ * @param limit how many transactions to return at once;
+ * @param fromPage the transaction from which to start the page; the first transaction in the response is the one that
+ * is chronologically before this transaction.
+ * @returns 
+ */
 export async function listAccountTransactions(accountId: string, token: string, limit?: number, fromPage?: string) {
     let endpoint = `/accounts/${accountId}/transactions?`;
     if (limit != null) {
-        endpoint += `limit=${limit}`;
+        endpoint += `count=${limit}&`;
     }
     if (fromPage != null) {
         endpoint += `from_id=${fromPage}`
