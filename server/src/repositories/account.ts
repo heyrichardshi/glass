@@ -16,7 +16,7 @@ export class AccountRepository {
                 id: ACCOUNT_CONTAINER_ID,
                 partitionKey: {
                     paths: [
-                        '/id',
+                        '/userId',
                     ],
                 },
             })
@@ -36,6 +36,22 @@ export class AccountRepository {
 
     const response = await container.items.create(account);
     console.log('Created account in db: ', response);
+
+    return response.statusCode;
+  }
+
+  async update(account: Account): Promise<number> {
+    const container = await this.promisedContainer;
+
+    const item = container.item(account.id, account.userId);
+
+    if (!item) {
+      console.log(`Account ${account.id} not found in db.`);
+      return StatusCodes.NotFound;
+    }
+
+    const response = await item.replace(account);
+    console.log('Updated account in db: ', response);
 
     return response.statusCode;
   }

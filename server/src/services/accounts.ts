@@ -1,6 +1,6 @@
 import { NotFoundError } from "../common/errors";
 import { Account, Transaction } from "../models";
-import { AccountRepository } from "../repositories/account";
+import { AccountRepository, TransactionRepository } from "../repositories";
 import * as teller from "./teller";
 
 export async function registerAccountsFromToken(token: string) {
@@ -50,6 +50,7 @@ export async function registerAccountsFromToken(token: string) {
  */
 export async function refresh(accountId: string) {
     const accountRepo = await AccountRepository.getInstance();
+    const transactionRepo = await TransactionRepository.getInstance();
 
     const account = await accountRepo.findById(accountId)
     if (!account) {
@@ -71,6 +72,7 @@ export async function refresh(accountId: string) {
 
         // Since results are in reverse chronological order, the first posted transaction we hit is the newest.
         if (transaction.status == 'posted' && newestPostedTransactionId == undefined) {
+            console.log(`Found newest posted transaction: ${transaction.id}`);
             newestPostedTransactionId = transaction.id;
         }
 
@@ -110,13 +112,14 @@ export async function refresh(accountId: string) {
 
     console.log(`Writing ${transactionsToWrite.length} new transactions`);
     transactionsToWrite.forEach(transaction => {
-        console.log("Writing transaction to db: ", transaction);
-        // TODO: Write transactions to database
+        transactionRepo.upsert(transaction);
     });
 
+    // Update transaction marker in account after all transactions are written so we can naturally redrive failures.
     if (newestPostedTransactionId !== undefined) {
+        console.log(`Updating account ${accountId} with newest posted transaction ID: ${newestPostedTransactionId}`);
         account.lastPostedTransactionId = newestPostedTransactionId;
-
-        // TODO upsert account
+        account.transactionsLastRefreshedAt = new Date(Date.now());
+        accountRepo.update(account);
     }
 }
