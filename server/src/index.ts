@@ -8,7 +8,8 @@ import cors from "cors";
 import helmet from "helmet";
 import { errorHandler } from "./middleware/error.middleware";
 import { notFoundHandler } from "./middleware/not-found.middleware";
-import router from "./routes/accounts";
+import accounts from "./routes/accounts";
+import transactions from "./routes/transactions";
 
 dotenv.config();
 
@@ -37,7 +38,8 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use('/accounts', router);
+app.use('/accounts', accounts);
+app.use('/', transactions);
 
 app.use(errorHandler);
 app.use(notFoundHandler);

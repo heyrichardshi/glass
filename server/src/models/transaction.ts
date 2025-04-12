@@ -61,3 +61,8 @@ export interface TransasctionTellerMetadata {
     /** The inferred counterparty of the transaction, according to Teller. */
     counterparty?: string,
 }
+
+export interface TransactionsList {
+    transactions: Transaction[];
+    paginationToken?: string;
+}
