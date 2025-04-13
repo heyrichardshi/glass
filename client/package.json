@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "@saffron/client",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
     "lint": "prettier . --write"
   },
   "dependencies": {
+    "@saffron/types": "workspace:*",
     "@nuxt/eslint": "1.3.0",
     "@nuxt/fonts": "0.11.1",
     "@nuxt/icon": "1.12.0",
