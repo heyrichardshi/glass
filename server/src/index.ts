@@ -38,7 +38,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use("/accounts", accounts);
+app.use("/", accounts);
 app.use("/", transactions);
 
 app.use(errorHandler);

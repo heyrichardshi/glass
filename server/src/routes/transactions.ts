@@ -3,6 +3,6 @@ import * as transactions from "../controllers/transactions";
 
 const router = Router();
 
-router.get("/transactions", transactions.getByUser);
+router.get("/transactions", transactions.listByUser);
 
 export default router;

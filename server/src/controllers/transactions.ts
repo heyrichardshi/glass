@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as transactions from "../services/transactions";
 
-export async function getByUser(req: Request, res: Response) {
+export async function listByUser(req: Request, res: Response) {
   const userId = req.query.userId as string | undefined; // ?userId=...
   const paginationToken = req.query.paginationToken as string | undefined; // ?paginationToken=...
 

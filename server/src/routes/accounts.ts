@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { refreshAccount, registerAccounts } from "../controllers/accounts";
+import * as accounts from "../controllers/accounts";
 
 const router = Router();
 
-router.post("/register/:token", registerAccounts);
+router.post("/accounts/register/:token", accounts.registerAccounts);
 
-router.post("/refresh/:accountId", refreshAccount);
+router.post("/accounts/:accountId/refresh", accounts.refreshAccount);
 
 export default router;
