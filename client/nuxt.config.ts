@@ -10,4 +10,5 @@ export default defineNuxtConfig({
       SAFFRON_API_URL: process.env.SAFFRON_API_URL || "http://localhost:7070",
     },
   },
+  css: ["~/assets/css/main.css"],
 });

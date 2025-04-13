@@ -1,25 +1,20 @@
 <template>
-  <div>
-    <h1>My Transactions</h1>
+  <div class="p-6">
+    <h1 class="text-2xl font-bold mb-4">My Transactions</h1>
 
     <div v-if="pending">Loading...</div>
     <div v-else-if="error">Error loading transactions: {{ error.message }}</div>
     <div v-else>
-      <ul>
-        <li
-          v-for="tx in transactions"
-          :key="tx.id"
-        >
-          <div>{{ tx.description }}</div>
-          <div>
-            {{ formatDate(tx.date) }} — {{ formatAmount(tx.amount) }}
-          </div>
-        </li>
-      </ul>
+      <TransactionItem
+        v-for="tx in transactions"
+        :key="tx.id"
+        :transaction="tx"
+      />
 
       <button
         v-if="paginationToken"
         @click="loadMore"
+        class="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Load More
       </button>
@@ -62,13 +57,5 @@ async function loadMore() {
     transactions.value.push(...data.value.transactions);
     paginationToken.value = data.value.paginationToken ?? null;
   }
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString();
-}
-
-function formatAmount(amount: number) {
-  return `$${(amount / 100).toFixed(2)}`;
 }
 </script>
