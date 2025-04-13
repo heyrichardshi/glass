@@ -15,13 +15,10 @@
 </template>
 
 <script setup lang="ts">
+import type { Transaction } from "@saffron/types";
+
 const props = defineProps<{
-  transaction: {
-    id: string
-    date: string
-    amount: number
-    description: string
-  };
+  transaction: Transaction;
 }>();
 
 const formattedDate = computed(() =>
@@ -32,10 +29,5 @@ const formattedDate = computed(() =>
   }),
 );
 
-const formattedAmount = computed(() =>
-  props.transaction.amount.toLocaleString(undefined, {
-    style: "currency",
-    currency: "USD",
-  }),
-);
+const formattedAmount = computed(() => props.transaction.amount);
 </script>

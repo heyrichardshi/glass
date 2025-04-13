@@ -1,4 +1,4 @@
-import { TransactionsList } from "../models";
+import { ListTransactionsResponse } from "@saffron/types";
 import { TransactionRepository } from "../repositories";
 
 /**
@@ -7,7 +7,7 @@ import { TransactionRepository } from "../repositories";
 export async function listForUser(
   userId: string,
   paginationToken?: string,
-): Promise<TransactionsList> {
+): Promise<ListTransactionsResponse> {
   const transactionRepo = await TransactionRepository.getInstance();
 
   return transactionRepo.listTransactionsByUser(userId, paginationToken);
