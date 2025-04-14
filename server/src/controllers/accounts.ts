@@ -24,3 +24,21 @@ export async function refreshAccount(req: Request, res: Response) {
     }
   }
 }
+
+export async function listAccountsForUser(req: Request, res: Response) {
+  const userId = req.query.userId as string | undefined; // ?userId=...
+  console.log("userId:", userId);
+
+  if (!userId) {
+    res.status(400).json({ message: "Missing userId" });
+    return;
+  }
+
+  try {
+    const accountsList = await accounts.listForUser(userId);
+    res.status(200).json(accountsList);
+  } catch (error: any) {
+    console.error("Error fetching accounts:", error);
+    res.status(500).json({ message: error.message });
+  }
+}

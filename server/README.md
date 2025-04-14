@@ -22,6 +22,10 @@ COSMOS_DB_NAME=
 
 Start the server locally:
 ```
+pnpm dev
+
+# or
+
 pnpm docker:build
 pnpm docker:run
 ```

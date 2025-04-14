@@ -1,3 +1,4 @@
+import { ListAccountsResponse } from "@saffron/types";
 import { NotFoundError } from "../common/errors";
 import { Account, Transaction } from "../models";
 import { AccountRepository, TransactionRepository } from "../repositories";
@@ -135,4 +136,12 @@ export async function refresh(accountId: string) {
     account.transactionsLastRefreshedAt = new Date(Date.now());
     accountRepo.update(account);
   }
+}
+
+export async function listForUser(userId: string): Promise<ListAccountsResponse> {
+  const accountRepo = await AccountRepository.getInstance();
+  const accounts = await accountRepo.listByUser(userId);
+  return {
+    accounts: accounts,
+  };
 }
