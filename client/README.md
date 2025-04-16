@@ -5,6 +5,8 @@
 Create a `.env` file in `client` root with following keys:
 ```
 SAFFRON_API_URL=...
+
+TELLER_APPLICATION_ID=...
 ```
 
 Start the development server on `http://localhost:3000`:

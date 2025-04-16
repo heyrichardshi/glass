@@ -8,7 +8,14 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       SAFFRON_API_URL: process.env.SAFFRON_API_URL || "http://localhost:7070",
+      TELLER_APPLICATION_ID: process.env.TELLER_APPLICATION_ID || "",
     },
   },
   css: ["~/assets/css/main.css"],
+  app: {
+    head: {
+      title: "Saffron",
+      script: [{ src: "https://cdn.teller.io/connect/connect.js" }],
+    },
+  },
 });
