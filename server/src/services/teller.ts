@@ -1,7 +1,8 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import fs from "fs";
 import https from "https";
 import { Account, AccountBalance, Transaction } from "../models/teller";
+import { ForbiddenError, TellerApiError } from "../common/errors";
 
 const baseUrl = "https://api.teller.io";
 
@@ -33,11 +34,21 @@ async function teller(endpoint: string, token: string) {
     });
     // console.log("Response data:", response.data);
     return response.data;
-  } catch (error: any) {
-    console.error(
-      "Error:",
-      error.response ? error.response.data : error.message,
-    );
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      console.error(
+        `Error when calling Teller API '${baseUrl}${endpoint}': (${error.status} | ${error.code}) ${error.message}`,
+      );
+
+      switch (error.status) {
+        case 403:
+          throw new ForbiddenError(error.message);
+        default:
+          throw new Error(
+            `Error fetching data from Teller API: ${error.message}`,
+          );
+      }
+    }
   }
 }
 

@@ -1,13 +1,23 @@
 import { Request, Response } from "express";
 import * as accounts from "../services/accounts";
-import { NotFoundError } from "../common/errors";
+import { ForbiddenError, NotFoundError } from "../common/errors";
 
 export async function registerAccounts(req: Request, res: Response) {
+  const accessToken = req.query.accessToken as string | undefined;
+  if (!accessToken) {
+    res.status(400).json({ message: "Missing access token" });
+    return;
+  }
+
   try {
-    await accounts.registerAccountsFromToken(req.params.token);
-    res.status(200).send();
+    const response = await accounts.registerAccountsFromToken(accessToken);
+    res.status(200).json(response);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    if (error instanceof ForbiddenError) {
+      res.status(403).send();
+    } else {
+      res.status(500).json({ message: error.message });
+    }
   }
 }
 

@@ -88,16 +88,21 @@ export class AccountRepository {
     const container = await this.promisedContainer;
 
     const response = await container.items
-      .query<Account>({
-        query: "SELECT * FROM c WHERE c.userId = @userId",
-        parameters: [{ name: "@userId", value: userId }],
-      },
-      {
-        // TODO: need to update this to hosueholdId once households are implemented; currently all hosueholds are = userId
-        partitionKey: userId,
-      })
+      .query<Account>(
+        {
+          query: "SELECT * FROM c WHERE c.userId = @userId",
+          parameters: [{ name: "@userId", value: userId }],
+        },
+        {
+          // TODO: need to update this to hosueholdId once households are implemented; currently all hosueholds are = userId
+          partitionKey: userId,
+        },
+      )
       .fetchAll();
-    console.log(`Fetched ${response.resources.length} accounts for user ${userId} from db: `, response);
+    console.log(
+      `Fetched ${response.resources.length} accounts for user ${userId} from db: `,
+      response,
+    );
 
     return response.resources;
   }

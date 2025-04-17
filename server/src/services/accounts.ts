@@ -1,10 +1,12 @@
-import { ListAccountsResponse } from "@saffron/types";
+import { ListAccountsResponse, RegisterAccountsResponse } from "@saffron/types";
 import { NotFoundError } from "../common/errors";
 import { Account, Transaction } from "../models";
 import { AccountRepository, TransactionRepository } from "../repositories";
 import * as teller from "./teller";
 
-export async function registerAccountsFromToken(token: string) {
+export async function registerAccountsFromToken(
+  token: string,
+): Promise<RegisterAccountsResponse> {
   // Retrieve accounts associated with this token from Teller
   console.log("Fetching accounts...");
   const tellerAccounts = await teller.listAccounts(token);
@@ -50,6 +52,10 @@ export async function registerAccountsFromToken(token: string) {
         console.error("Error writing account to db: ", error);
       });
   });
+
+  return {
+    accountsRegisteredCount: accounts.length,
+  };
 }
 
 /**
@@ -138,7 +144,9 @@ export async function refresh(accountId: string) {
   }
 }
 
-export async function listForUser(userId: string): Promise<ListAccountsResponse> {
+export async function listForUser(
+  userId: string,
+): Promise<ListAccountsResponse> {
   const accountRepo = await AccountRepository.getInstance();
   const accounts = await accountRepo.listByUser(userId);
   return {
