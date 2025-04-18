@@ -30,6 +30,7 @@ useFetch(() => `${config.public.SAFFRON_API_URL}/accounts`, {
   server: false,
   onResponse({ response }) {
     accounts.value = response._data.accounts;
+    console.log(accounts.value);
     loading.value = false;
   },
   onRequestError({ error: err }) {
