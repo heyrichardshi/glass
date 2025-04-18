@@ -5,11 +5,15 @@
 </template>
 
 <script setup lang="ts">
+import type { RegisterAccountsResponse } from "@saffron/types";
+
 const config = useRuntimeConfig();
 const tellerApplicationId = config.public.TELLER_APPLICATION_ID;
 
 const isTellerLoaded = ref(false);
 const tellerConnect = ref<any>(null);
+
+const toast = useToast();
 
 interface TellerConnectEnrollment {
   accessToken: string;
@@ -27,9 +31,11 @@ onMounted(() => {
     onInit: function () {
       console.log("Teller Connect has initialized");
     },
-    // Part 3. Handle a successful enrollment's accessToken
     onSuccess: function (enrollment: TellerConnectEnrollment) {
       console.log("User enrolled successfully: ", enrollment);
+      registerAccounts(enrollment.accessToken);
+
+      // TODO: Refresh account list on success, maybe via exposed ref or callback
     },
     onExit: function () {
       console.log("User closed Teller Connect");
@@ -48,5 +54,27 @@ onMounted(() => {
 
 function openTellerConnect() {
   tellerConnect.value.open();
+}
+
+function registerAccounts(accessToken: string) {
+  useFetch(() => `${config.public.SAFFRON_API_URL}/accounts/register`, {
+    query: { accessToken },
+    method: "POST",
+    server: false,
+    onResponse({ response }) {
+      const res = response._data as RegisterAccountsResponse;
+      toast.add({
+        title: `Successfully added ${res.accountsRegisteredCount} accounts`,
+        color: "success",
+      });
+    },
+    onRequestError({ error: err }) {
+      toast.add({
+        title: "Something went wrong",
+        description: `Error adding accounts: ${err.message}`,
+        color: "error",
+      });
+    },
+  });
 }
 </script>
