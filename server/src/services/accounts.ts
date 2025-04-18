@@ -139,9 +139,11 @@ export async function refresh(accountId: string) {
       `Updating account ${accountId} with newest posted transaction ID: ${newestPostedTransactionId}`,
     );
     account.lastPostedTransactionId = newestPostedTransactionId;
-    account.transactionsLastRefreshedAt = new Date(Date.now());
-    accountRepo.update(account);
   }
+
+  // Update refresh marker regardless of whether new transactions were found.
+  account.transactionsLastRefreshedAt = new Date(Date.now());
+  accountRepo.update(account);
 }
 
 export async function listForUser(

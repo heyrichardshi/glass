@@ -91,4 +91,6 @@ function refreshAccount() {
     },
   );
 }
+
+// TODO: Detect when account is unhealthy, call teller connect with enrollment id to fix.
 </script>
