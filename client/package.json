@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.37",
+    "@internationalized/date": "^3.8.0",
     "@nuxt/eslint": "1.3.0",
     "@nuxt/fonts": "0.11.1",
     "@nuxt/icon": "1.12.0",
