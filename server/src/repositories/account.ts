@@ -9,31 +9,26 @@ export class AccountRepository {
   private promisedContainer: Promise<Container>;
 
   constructor() {
-    this.promisedContainer = DatabaseProvider.getInstance()
-      .then((provider) => provider.getDatabase())
-      .then((db) =>
-        db.containers.createIfNotExists({
-          id: ACCOUNT_CONTAINER_ID,
-          partitionKey: {
-            paths: ["/householdId"],
-          },
-          indexingPolicy: {
-            indexingMode: "consistent",
-            automatic: true,
-            includedPaths: [
-              { path: "/userId/?" },
-              { path: "/householdId/?" },
-              { path: "/status/?" },
-              { path: "/isDeleted/?" },
-            ],
-            excludedPaths: [
-              { path: "/*" }, // Exclude everything by default to only index explicitly included properties
-            ],
-            compositeIndexes: [],
-          },
-        }),
-      )
-      .then((res) => res.container);
+    this.promisedContainer = DatabaseProvider.getContainer({
+      id: ACCOUNT_CONTAINER_ID,
+      partitionKey: {
+        paths: ["/householdId"],
+      },
+      indexingPolicy: {
+        indexingMode: "consistent",
+        automatic: true,
+        includedPaths: [
+          { path: "/userId/?" },
+          { path: "/householdId/?" },
+          { path: "/status/?" },
+          { path: "/isDeleted/?" },
+        ],
+        excludedPaths: [
+          { path: "/*" }, // Exclude everything by default to only index explicitly included properties
+        ],
+        compositeIndexes: [],
+      },
+    });
   }
 
   public static async getInstance(): Promise<AccountRepository> {

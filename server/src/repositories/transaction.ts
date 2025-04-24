@@ -9,35 +9,30 @@ export class TransactionRepository {
   private promisedContainer: Promise<Container>;
 
   constructor() {
-    this.promisedContainer = DatabaseProvider.getInstance()
-      .then((provider) => provider.getDatabase())
-      .then((db) =>
-        db.containers.createIfNotExists({
-          id: TRANSACTION_CONTAINER_ID,
-          partitionKey: {
-            paths: ["/householdId"],
-          },
-          indexingPolicy: {
-            indexingMode: "consistent",
-            automatic: true,
-            includedPaths: [
-              { path: "/date/?" },
-              { path: "/tagIds/?" },
-              { path: "/counterparty/id/?" },
-              { path: "/categoryId/?" },
-              { path: "/accountId/?" },
-              { path: "/householdId/?" },
-              { path: "/isDeleted/?" },
-            ],
-            excludedPaths: [
-              { path: "/*" }, // Exclude everything by default to only index explicitly included properties
-            ],
-            // Don't need composite indexes for now, as we are always sorting by date alone, not multi-field sorting.
-            compositeIndexes: [],
-          },
-        }),
-      )
-      .then((res) => res.container);
+    this.promisedContainer = DatabaseProvider.getContainer({
+      id: TRANSACTION_CONTAINER_ID,
+      partitionKey: {
+        paths: ["/householdId"],
+      },
+      indexingPolicy: {
+        indexingMode: "consistent",
+        automatic: true,
+        includedPaths: [
+          { path: "/date/?" },
+          { path: "/tagIds/?" },
+          { path: "/counterparty/id/?" },
+          { path: "/categoryId/?" },
+          { path: "/accountId/?" },
+          { path: "/householdId/?" },
+          { path: "/isDeleted/?" },
+        ],
+        excludedPaths: [
+          { path: "/*" }, // Exclude everything by default to only index explicitly included properties
+        ],
+        // Don't need composite indexes for now, as we are always sorting by date alone, not multi-field sorting.
+        compositeIndexes: [],
+      },
+    });
   }
 
   public static async getInstance(): Promise<TransactionRepository> {
