@@ -79,7 +79,7 @@ export class DatabaseProvider {
         stringifiedExistingPolicy !== stringifiedGivenPolicy
       ) {
         console.log(
-          `Existing indexing policy differs from provided definition:\n==EXISTING==\n${stringifiedGivenPolicy}\n==PROVIDED==\n${stringifiedGivenPolicy}`,
+          `Existing indexing policy differs from provided definition:\n==EXISTING==\n${stringifiedExistingPolicy}\n==PROVIDED==\n${stringifiedGivenPolicy}`,
         );
         existing.indexingPolicy = definition.indexingPolicy;
         needsUpdate = true;

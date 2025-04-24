@@ -3,7 +3,7 @@ export interface Category {
   name: string;
 
   /** The ID of the parent category, if the current one is nested. */
-  parentId: string;
+  parentId?: string;
 
   /**
    * The full path of the category, starting from the root category.
@@ -11,4 +11,50 @@ export interface Category {
    * @example ['Food', 'Restaurants', 'Fast Food']
    */
   fullPath: string[];
+
+  /**
+   * Indicates whether this category is a default category. Default categories are immutable.
+   */
+  isDefault?: boolean;
+
+  /**
+   * The household to which this category belongs. Categories are unique per household.
+   */
+  householdId: string;
+}
+
+export function toApiModel(category: Category): Category {
+  return {
+    id: category.id,
+    name: category.name,
+    parentId: category.parentId,
+    fullPath: category.fullPath,
+    isDefault: category.isDefault,
+    householdId: category.householdId,
+  };
+}
+
+/**
+ * These are immutable categories that are created by default when a user is created.
+ */
+const DEFAULT_CATEGORIES = [
+  "Income",
+  "Transfer",
+  "Food",
+  "Home",
+  "Health",
+  "Auto",
+  "Shopping",
+  "Entertainment",
+  "Travel",
+];
+
+export function getDefaultCategories(householdId: string): Category[] {
+  return DEFAULT_CATEGORIES.map((category) => ({
+    id: `default_${category}`,
+    name: category,
+    fullPath: [category],
+    isDefault: true,
+    householdId,
+  }));
 }

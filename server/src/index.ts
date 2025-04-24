@@ -10,6 +10,7 @@ import { errorHandler } from "./middleware/error.middleware";
 import { notFoundHandler } from "./middleware/not-found.middleware";
 import accounts from "./routes/accounts";
 import transactions from "./routes/transactions";
+import categories from "./routes/categories";
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use(function (req, res, next) {
 
 app.use("/", accounts);
 app.use("/", transactions);
+app.use("/", categories);
 
 app.use(errorHandler);
 app.use(notFoundHandler);
