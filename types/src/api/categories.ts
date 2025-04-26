@@ -7,3 +7,13 @@ export interface ListCategoriesRequest {
 export interface ListCategoriesResponse {
   categories: Category[];
 }
+
+export interface CreateCategoryRequest {
+  householdId: string;
+  name: string;
+  parentId?: string;
+}
+
+export interface CreateCategoryResponse {
+  category: Category;
+}

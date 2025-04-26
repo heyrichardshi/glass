@@ -9,6 +9,8 @@ export {
 } from "./src/api/accounts";
 export { ListTransactionsResponse } from "./src/api/transactions";
 export {
+  CreateCategoryRequest as AddCategoryRequest,
+  CreateCategoryResponse as AddCategoryResponse,
   ListCategoriesRequest,
   ListCategoriesResponse,
 } from "./src/api/categories";
