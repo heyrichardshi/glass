@@ -48,6 +48,7 @@
           <UInputMenu
             v-model="editCategory"
             :items="allCategories"
+            value-key="category"
             class="w-full"
           />
         </UFormField>
@@ -75,13 +76,13 @@
 
     <template #footer>
       <UButton label="Clear" color="neutral" />
-      <UButton label="Save" />
+      <UButton label="Save" @click="commitChanges()" />
     </template>
   </USlideover>
 </template>
 
 <script setup lang="ts">
-import type { Transaction } from "@saffron/types";
+import type { Category, Transaction } from "@saffron/types";
 
 import {
   CalendarDate,
@@ -92,6 +93,8 @@ import {
 const props = defineProps<{
   transaction: Transaction;
 }>();
+
+const userId = "0";
 
 const date = computed(() => new Date(props.transaction.date));
 const formattedDate = computed(() =>
@@ -116,7 +119,16 @@ const editPanelDescription = computed(() => {
 });
 
 // TODO: Create composables for categories and tags for shared state across all transactions and global updates.
-const allCategories = ref(["Test 1", "Test 2", "Test 3"]);
+
+const categoriesApi = useCategoriesApi(userId);
+const allCategories = computed(() => {
+  return categoriesApi.categories.value
+    .map((category) => ({
+      label: category.name,
+      category: category,
+    }))
+    .sort((a, b) => (a.label < b.label ? -1 : 1));
+});
 
 const allTags = ref(["Tag 1", "Tag 2", "Tag 3"]);
 
@@ -136,9 +148,18 @@ const editMerchant = ref("");
 
 const editDescription = ref(props.transaction.description);
 
-const editCategory = ref("Placeholder Category");
+const editCategory = ref<Category | undefined>(
+  categoriesApi.categories.value.find(
+    (category) => category.id === props.transaction.categoryId,
+  ),
+);
 
 const editTags = ref(["test"]);
 
 const editNotes = ref(props.transaction.notes);
+
+function commitChanges() {
+  console.log("Save clicked");
+  console.log("editCategory: ", editCategory.value);
+}
 </script>
