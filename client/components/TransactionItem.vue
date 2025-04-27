@@ -124,7 +124,7 @@ const categoriesApi = useCategoriesApi(userId);
 const allCategories = computed(() => {
   return categoriesApi.categories.value
     .map((category) => ({
-      label: category.name,
+      label: category.fullPath.join(" › "),
       category: category,
     }))
     .sort((a, b) => (a.label < b.label ? -1 : 1));
