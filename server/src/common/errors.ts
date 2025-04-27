@@ -25,3 +25,10 @@ export class DatabaseError extends Error {
     this.name = "DatabaseError";
   }
 }
+
+export class InvalidInputError extends Error {
+  constructor(missingParam: string) {
+    super(`Invalid input: missing parameter '${missingParam}'.`);
+    this.name = "InvalidInputError";
+  }
+}

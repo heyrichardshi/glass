@@ -1,54 +1,30 @@
-import { Request, Response } from "express";
 import * as accounts from "../services/accounts";
-import { ForbiddenError, NotFoundError } from "../common/errors";
+import asyncController from "./asyncController";
+import { InvalidInputError } from "../common/errors";
 
-export async function registerAccounts(req: Request, res: Response) {
+export const registerAccounts = asyncController(async (req, res) => {
   const accessToken = req.query.accessToken as string | undefined;
   if (!accessToken) {
-    res.status(400).json({ message: "Missing access token" });
-    return;
+    throw new InvalidInputError("accessToken");
   }
 
-  try {
-    const response = await accounts.registerAccountsFromToken(accessToken);
-    res.status(200).json(response);
-  } catch (error: any) {
-    if (error instanceof ForbiddenError) {
-      res.status(403).send();
-    } else {
-      res.status(500).json({ message: error.message });
-    }
-  }
-}
+  const response = await accounts.registerAccountsFromToken(accessToken);
+  res.status(200).json(response);
+});
 
-export async function refreshAccount(req: Request, res: Response) {
-  try {
-    await accounts.refresh(req.params.accountId);
-    res.status(200).send();
-  } catch (error: any) {
-    if (error instanceof NotFoundError) {
-      res.status(404).json({ message: error.message });
-    } else {
-      console.error("Unexpected error:", error);
-      res.status(500).json({ message: error.message });
-    }
-  }
-}
+export const refreshAccount = asyncController(async (req, res) => {
+  await accounts.refresh(req.params.accountId);
+  res.status(200).send();
+});
 
-export async function listAccountsForUser(req: Request, res: Response) {
+export const listAccountsForUser = asyncController(async (req, res) => {
   const userId = req.query.userId as string | undefined; // ?userId=...
   console.log("userId:", userId);
 
   if (!userId) {
-    res.status(400).json({ message: "Missing userId" });
-    return;
+    throw new InvalidInputError("userId");
   }
 
-  try {
-    const accountsList = await accounts.listForUser(userId);
-    res.status(200).json(accountsList);
-  } catch (error: any) {
-    console.error("Error fetching accounts:", error);
-    res.status(500).json({ message: error.message });
-  }
-}
+  const accountsList = await accounts.listForUser(userId);
+  res.status(200).json(accountsList);
+});

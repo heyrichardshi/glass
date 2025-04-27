@@ -6,8 +6,7 @@ import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { errorHandler } from "./middleware/error.middleware";
-import { notFoundHandler } from "./middleware/not-found.middleware";
+import errorHandler from "./middleware/errorHandler";
 import accounts from "./routes/accounts";
 import transactions from "./routes/transactions";
 import categories from "./routes/categories";
@@ -44,7 +43,6 @@ app.use("/", transactions);
 app.use("/", categories);
 
 app.use(errorHandler);
-app.use(notFoundHandler);
 
 /**
  * Server Activation
