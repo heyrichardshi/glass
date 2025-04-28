@@ -44,14 +44,7 @@
         </UFormField>
 
         <!-- Category -->
-        <UFormField label="Category">
-          <UInputMenu
-            v-model="editCategory"
-            :items="allCategories"
-            value-key="category"
-            class="w-full"
-          />
-        </UFormField>
+        <CategoryMenu allowCreate @selectedCategory="selectedCategory" />
 
         <!-- Tags -->
         <UFormField label="Tags">
@@ -89,6 +82,7 @@ import {
   DateFormatter,
   getLocalTimeZone,
 } from "@internationalized/date";
+import CategoryMenu from "./CategoryMenu.vue";
 
 const props = defineProps<{
   transaction: Transaction;
@@ -120,16 +114,6 @@ const editPanelDescription = computed(() => {
 
 // TODO: Create composables for categories and tags for shared state across all transactions and global updates.
 
-const categoriesApi = useCategoriesApi(userId);
-const allCategories = computed(() => {
-  return categoriesApi.categories.value
-    .map((category) => ({
-      label: category.fullPath.join(" › "),
-      category: category,
-    }))
-    .sort((a, b) => (a.label < b.label ? -1 : 1));
-});
-
 const allTags = ref(["Tag 1", "Tag 2", "Tag 3"]);
 
 const df = new DateFormatter("en-US", {
@@ -148,11 +132,10 @@ const editMerchant = ref("");
 
 const editDescription = ref(props.transaction.description);
 
-const editCategory = ref<Category | undefined>(
-  categoriesApi.categories.value.find(
-    (category) => category.id === props.transaction.categoryId,
-  ),
-);
+const editCategory = ref<Category | undefined>();
+function selectedCategory(category: Category | undefined) {
+  editCategory.value = category;
+}
 
 const editTags = ref(["test"]);
 
