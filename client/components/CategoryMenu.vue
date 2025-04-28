@@ -35,9 +35,10 @@ const label = computed(() => {
   return props.hideLabel ? "" : "Category";
 });
 
-const categoriesApi = useCategoriesApi(userId);
+const categoriesApi = useCategoriesApi();
+const listCategories = categoriesApi.listCategories(userId);
 const allCategories = computed(() => {
-  return categoriesApi.categories.value
+  return listCategories.categories.value
     .map((category) => ({
       label: category.fullPath.join(" › "),
       category: category,
@@ -60,7 +61,7 @@ async function createCategory(name: string) {
 
 const selectedCategory = ref<Category | undefined>(
   props.prefillWithCategoryId
-    ? categoriesApi.categories.value.find(
+    ? listCategories.categories.value.find(
         (category) => category.id === props.prefillWithCategoryId,
       )
     : undefined,
