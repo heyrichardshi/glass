@@ -1,6 +1,6 @@
 import {
-  AddCategoryRequest,
-  AddCategoryResponse,
+  CreateCategoryRequest,
+  CreateCategoryResponse,
   ListCategoriesRequest,
   ListCategoriesResponse,
 } from "@saffron/types";
@@ -20,8 +20,8 @@ export async function listCategories(
 }
 
 export async function createCategory(
-  request: AddCategoryRequest,
-): Promise<AddCategoryResponse> {
+  request: CreateCategoryRequest,
+): Promise<CreateCategoryResponse> {
   const { householdId, name, parentId } = request;
   console.log(
     `createCategory() called with householdId: ${householdId}, name: ${name}, parentId: ${parentId}`,
