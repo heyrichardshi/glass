@@ -1,6 +1,7 @@
 export { Account } from "./src/models/account";
 export { Transaction, TransactionCounterparty } from "./src/models/transaction";
 export { Category } from "./src/models/category";
+export { Tag } from "./src/models/tag";
 
 export {
   GetAccountResponse,
@@ -14,3 +15,9 @@ export {
   ListCategoriesRequest,
   ListCategoriesResponse,
 } from "./src/api/categories";
+export {
+  CreateTagRequest,
+  CreateTagResponse,
+  ListTagsRequest,
+  ListTagsResponse,
+} from "./src/api/tags";

@@ -2,6 +2,4 @@ export interface Tag {
   id: string;
   name: string;
   householdId: string;
-
-  // TODO: Add `usageCount: number` to track tag usage.
 }

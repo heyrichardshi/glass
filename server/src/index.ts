@@ -10,6 +10,7 @@ import errorHandler from "./middleware/errorHandler";
 import accounts from "./routes/accounts";
 import transactions from "./routes/transactions";
 import categories from "./routes/categories";
+import tags from "./routes/tags";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use(function (req, res, next) {
 app.use("/", accounts);
 app.use("/", transactions);
 app.use("/", categories);
+app.use("/", tags);
 
 app.use(errorHandler);
 

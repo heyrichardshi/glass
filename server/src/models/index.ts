@@ -10,4 +10,4 @@ export {
   TransactionsList,
 } from "./transaction";
 export { User } from "./user";
-export { toApiCategory } from "./api";
+export { toApiCategory, toApiTag } from "./api";
