@@ -148,4 +148,23 @@ export class TransactionRepository {
       paginationToken: response.continuationToken,
     };
   }
+
+  async get(
+    transactionId: string,
+    householdId: string,
+  ): Promise<Transaction | undefined> {
+    const container = await this.promisedContainer;
+
+    try {
+      const { resource } = await container
+        .item(transactionId, householdId)
+        .read<Transaction>();
+      return resource;
+    } catch (err: any) {
+      if (err.code === 404) {
+        return undefined;
+      }
+      throw err;
+    }
+  }
 }

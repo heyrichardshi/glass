@@ -32,3 +32,10 @@ export class InvalidInputError extends Error {
     this.name = "InvalidInputError";
   }
 }
+
+export class InvalidInputWithCustomMessageError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidInputWithCustomMessageError";
+  }
+}

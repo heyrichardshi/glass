@@ -1,5 +1,14 @@
-import { ListTransactionsResponse } from "@saffron/types";
+import {
+  ListTransactionsResponse,
+  UpdateTransactionRequest,
+  UpdateTransactionResponse,
+} from "@saffron/types";
 import { TransactionRepository } from "../repositories";
+import { Transaction } from "../models";
+import {
+  InvalidInputWithCustomMessageError,
+  NotFoundError,
+} from "../common/errors";
 
 /**
  * Retrieves all transactions for a given user, in reverse chronological order.
@@ -11,4 +20,70 @@ export async function listForUser(
   const transactionRepo = await TransactionRepository.getInstance();
 
   return transactionRepo.listTransactionsByUser(userId, paginationToken);
+}
+
+const UPDATE_TRANSACTION_KEYS = [
+  "date",
+  "description",
+  "notes",
+  "categoryId",
+] as const;
+
+export async function update(
+  request: UpdateTransactionRequest,
+): Promise<UpdateTransactionResponse> {
+  // Create a map of the changes in the request
+  let newValues: Partial<Transaction> = {};
+
+  UPDATE_TRANSACTION_KEYS.forEach((key) => {
+    if (request[key] !== undefined) {
+      newValues[key] = request[key];
+    }
+  });
+
+  // The compiler complains about a type mismatch error if we include this in UPDATE_TRANSACTION_KEYS, so handle it separately for now.
+  if (request.tagIds) {
+    newValues["tagIds"] = request.tagIds;
+  }
+
+  // Short-circuit if no changes were requested
+  if (Object.keys(newValues).length === 0) {
+    throw new InvalidInputWithCustomMessageError(
+      "Update request must include at least one key to update.",
+    );
+  }
+
+  const transactionRepo = await TransactionRepository.getInstance();
+
+  // Retrieve existing item to apply changes to
+  const existing = await transactionRepo.get(
+    request.transactionId,
+    request.userId,
+  );
+  if (!existing) {
+    throw new NotFoundError(
+      `The given transaction '${request.transactionId}' does not exist.`,
+    );
+  }
+
+  // Cross-check and remove any keys that are the same as the existing values
+  UPDATE_TRANSACTION_KEYS.forEach((key) => {
+    if (newValues[key] === existing[key]) {
+      delete newValues[key];
+    }
+  });
+
+  // Short-circuit if all requested changes matched the existing values
+  if (Object.keys(newValues).length === 0) {
+    throw new InvalidInputWithCustomMessageError(
+      "Update request had no new values to write.",
+    );
+  }
+
+  const newTransaction = {
+    ...existing,
+    ...newValues,
+  } as Transaction;
+
+  return { transaction: await transactionRepo.upsert(newTransaction) };
 }

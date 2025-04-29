@@ -8,7 +8,11 @@ export {
   ListAccountsResponse,
   RegisterAccountsResponse,
 } from "./src/api/accounts";
-export { ListTransactionsResponse } from "./src/api/transactions";
+export {
+  ListTransactionsResponse,
+  UpdateTransactionRequest,
+  UpdateTransactionResponse,
+} from "./src/api/transactions";
 export {
   CreateCategoryRequest,
   CreateCategoryResponse,
