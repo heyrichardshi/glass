@@ -1,8 +1,5 @@
 <template>
-  <UModal
-    title="Create a Category"
-    :close="{ onClick: () => emit('close', false) }"
-  >
+  <UModal title="Create a Category" :close="{ onClick: () => close() }">
     <template #body>
       <div class="grid grid-cols-1 gap-4">
         <UFormField label="Name">
@@ -17,14 +14,16 @@
         <CategoryMenu
           :disabled="!enableNesting"
           hideLabel
-          @selectedCategory="test"
+          @selectedCategory="selectedCategory"
         />
+
+        <UAlert color="error" :title="submitErrorMessage" v-if="submitError" />
       </div>
     </template>
     <template #footer>
       <div class="flex gap-2 justify-between w-full">
-        <UButton color="neutral" label="Cancel" @click="emit('close', false)" />
-        <UButton label="Create" @click="emit('close', true)" />
+        <UButton color="neutral" label="Cancel" @click="close" />
+        <UButton label="Create" @click="submit" />
       </div>
     </template>
   </UModal>
@@ -38,12 +37,59 @@ const props = defineProps<{
   prefillName: string;
 }>();
 
-const emit = defineEmits<{ close: [boolean] }>();
+const emit = defineEmits<{
+  close: [{ category?: Category }];
+}>();
 
 const name = ref(props.prefillName);
 const enableNesting = ref(false);
 
-function test(category: Category | undefined) {
-  console.log("Selected category from parent component: ", category);
+const parentCategory = ref<Category | undefined>(undefined);
+function selectedCategory(category: Category | undefined) {
+  parentCategory.value = category;
+}
+
+const userId = "0";
+
+const toast = useToast();
+
+const categoriesApi = useCategoriesApi();
+
+const requestInProgress = ref(false);
+const submitErrorMessage = ref("");
+const submitError = computed(() => !!submitErrorMessage.value);
+
+function close() {
+  emit("close", {});
+}
+
+function submit() {
+  const createCategory = categoriesApi.createCategory(
+    userId,
+    name.value,
+    parentCategory.value?.id,
+  );
+
+  watch(
+    createCategory.status,
+    (status) => {
+      if (status === "success") {
+        toast.add({
+          title: `Created category "${name.value}"!`,
+          color: "success",
+          icon: "i-lucide-sparkles",
+        });
+        emit("close", { category: createCategory.category.value });
+      } else if (status === "error") {
+        // Pipe the error message to the ref controlling the alert
+        submitErrorMessage.value =
+          createCategory.errorMessage.value || "An unknown error occurred.";
+      }
+
+      // Disable the "Create" button while the request is in progress
+      requestInProgress.value = status === "pending";
+    },
+    { immediate: true },
+  );
 }
 </script>

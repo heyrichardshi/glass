@@ -55,8 +55,25 @@ async function createCategory(name: string) {
     },
   });
 
-  const isSuccess = await createCategoryModal.open();
-  console.log("isSuccess: ", isSuccess);
+  const result = (await createCategoryModal.open()) as { category?: Category };
+  if (result.category) {
+    console.log("Created category: ", result.category);
+
+    // Since a category was created, we want to refresh the global list of categories to keep everything in sync
+    await listCategories.refresh();
+
+    // Find the category in the new list and select it
+    const newCategoryEntry = allCategories.value.find(
+      (entry) => entry.category.id === result.category?.id,
+    );
+
+    if (!newCategoryEntry) {
+      console.error("Created category not found in the list!");
+      return;
+    }
+
+    selectedCategory.value = newCategoryEntry.category;
+  }
 }
 
 const selectedCategory = ref<Category | undefined>(
