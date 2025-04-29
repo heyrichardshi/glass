@@ -47,14 +47,15 @@
         <CategoryMenu allowCreate @selectedCategory="selectedCategory" />
 
         <!-- Tags -->
-        <UFormField label="Tags">
+        <TagMenu :prefillWithTagIds="loadTags()" @selectedTags="selectedTags" />
+        <!-- <UFormField label="Tags">
           <UInputMenu
             v-model="editTags"
             multiple
             :items="allTags"
             class="w-full"
           />
-        </UFormField>
+        </UFormField> -->
 
         <!-- Notes (full width)-->
         <UFormField
@@ -75,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Category, Transaction } from "@saffron/types";
+import type { Category, Tag, Transaction } from "@saffron/types";
 
 import {
   CalendarDate,
@@ -83,6 +84,7 @@ import {
   getLocalTimeZone,
 } from "@internationalized/date";
 import CategoryMenu from "./CategoryMenu.vue";
+import TagMenu from "./TagMenu.vue";
 
 const props = defineProps<{
   transaction: Transaction;
@@ -112,9 +114,9 @@ const editPanelDescription = computed(() => {
   return `${prefix}${formattedAmount.value} for ${props.transaction.description} on ${formattedDate.value}`;
 });
 
-// TODO: Create composables for categories and tags for shared state across all transactions and global updates.
-
-const allTags = ref(["Tag 1", "Tag 2", "Tag 3"]);
+function loadTags(): string[] {
+  return props.transaction.tagIds;
+}
 
 const df = new DateFormatter("en-US", {
   dateStyle: "medium",
@@ -137,7 +139,11 @@ function selectedCategory(category: Category | undefined) {
   editCategory.value = category;
 }
 
-const editTags = ref(["test"]);
+const editTags = ref<Tag[]>([]);
+function selectedTags(tags: Tag[]) {
+  console.log("Selected tags updated: ", tags);
+  editTags.value = tags;
+}
 
 const editNotes = ref(props.transaction.notes);
 
