@@ -20,8 +20,10 @@ export interface Transaction {
   amount: string;
   /** The currency in which the amount was charged. */
   currency: string;
+  /** The timestamp of the transaction as it appears on the bank statement. */
+  rawDate: string;
   /** The timestamp of the transaction (Unix time). */
-  date: Date;
+  date: string;
   /** The unprocessed transaction description as it appears on the bank statement. */
   rawDescription: string;
   /** The user-provided description of the transaction. Defaults to the raw description. */

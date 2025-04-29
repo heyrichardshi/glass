@@ -1,6 +1,7 @@
-import { Container } from "@azure/cosmos";
+import { Container, StatusCodes } from "@azure/cosmos";
 import { Transaction, TransactionsList } from "../models";
 import { DatabaseProvider } from "./database";
+import { DatabaseError } from "../common/errors";
 
 const TRANSACTION_CONTAINER_ID = "transactions";
 
@@ -43,17 +44,71 @@ export class TransactionRepository {
   }
 
   /**
+   * This method ensures that old records are compliant with the Transaction interface by adding new fields and
+   * modifying updated fields, then writing the updated record to the database, if necessary.
+   */
+  async normalizeTransaction(raw: Partial<Transaction>): Promise<Transaction> {
+    let changed = false;
+
+    let transaction = { ...raw };
+
+    // Changes on 2025 04 29:
+    // - Type of `date` changed from `Date` to `string`
+    // - Added `rawDate: string`
+
+    // Transactions do not have a time of day associated with them, so it doesn't make sense to store the full ISO format.
+    // We only want to store the year-month-day portion as a string.
+    const shortDate = new Date(raw.date!!) // Safe assertion because `date` existed before this change.
+      .toISOString()
+      .substring(0, 10); // Takes the first 10 chars of the ISO string, i.e. "yyyy-MM-dd"
+    if (raw.date != shortDate) {
+      // The record being read has a full format date, so we want to commit this change
+      changed = true;
+      transaction = { ...transaction, date: shortDate };
+    }
+
+    // We want to allow users to modify the date associated with a transaction, but want a reference to the date as it
+    // appears on the bank statement, in case the user wants to revert their changes.
+    if (!raw.rawDate) {
+      changed = true;
+
+      // Take the existing date to be the raw date because at the time this field was introduced, there was no
+      // capability for the user to modify the date.
+      transaction = { ...transaction, rawDate: transaction.date!! };
+    }
+
+    // If we have made mutations to the transaction to normalize it, commit the result and return the record as it
+    // exists in the table.
+    if (changed) {
+      console.log(
+        `Transaction ${transaction.id} has been normalized, writing new object to database.`,
+      );
+      return this.upsert(transaction as Transaction);
+    }
+
+    return transaction as Transaction;
+  }
+
+  /**
    * Creates a new transaction if it doesn't exist, or updates it if it does.
    * @param transaction
    * @returns
    */
-  async upsert(transaction: Transaction): Promise<number> {
+  async upsert(transaction: Transaction): Promise<Transaction> {
     const container = await this.promisedContainer;
 
     const response = await container.items.upsert(transaction);
-    // console.log('Upserted transaction in db: ', response);
 
-    return response.statusCode;
+    if (
+      response.statusCode !== StatusCodes.Ok &&
+      response.statusCode !== StatusCodes.Created
+    ) {
+      throw new DatabaseError(
+        `Failed to upsert transaction ${response.statusCode}: ${response}`,
+      );
+    }
+
+    return response.resource as unknown as Transaction;
   }
 
   async listTransactionsByUser(
@@ -81,8 +136,15 @@ export class TransactionRepository {
       `Fetched ${response.resources.length} transactions for user ${userId} with pagination token ${paginationToken}, got next pagination token: ${response.continuationToken}`,
     );
 
+    // Must normalize transactions to account for added/modified fields.
+    const normalizedTransactions = await Promise.all(
+      response.resources.map(
+        async (transaction) => await this.normalizeTransaction(transaction),
+      ),
+    );
+
     return {
-      transactions: response.resources,
+      transactions: normalizedTransactions,
       paginationToken: response.continuationToken,
     };
   }

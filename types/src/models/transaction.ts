@@ -5,7 +5,8 @@ export interface Transaction {
   accountId: string;
   amount: string;
   currency: string;
-  date: Date;
+  rawDate: string;
+  date: string;
   rawDescription: string;
   description: string;
   notes: string;
