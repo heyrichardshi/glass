@@ -65,12 +65,23 @@
         >
           <UTextarea v-model="editNotes" autoresize class="w-full" />
         </UFormField>
+
+        <UAlert
+          color="error"
+          :title="submitErrorMessage"
+          v-if="submitError"
+          class="col-span-full"
+        />
       </div>
     </template>
 
     <template #footer>
       <UButton label="Clear" color="neutral" />
-      <UButton label="Save" @click="commitChanges()" />
+      <UButton
+        label="Save"
+        :loading="requestInProgress"
+        @click="commitChanges()"
+      />
     </template>
   </USlideover>
 </template>
@@ -85,6 +96,7 @@ import {
 } from "@internationalized/date";
 import CategoryMenu from "./CategoryMenu.vue";
 import TagMenu from "./TagMenu.vue";
+import useTransactionsApi from "~/composables/useTransactionsApi";
 
 const props = defineProps<{
   transaction: Transaction;
@@ -147,8 +159,50 @@ function selectedTags(tags: Tag[]) {
 
 const editNotes = ref(props.transaction.notes);
 
+const transactionsApi = useTransactionsApi();
+const toast = useToast();
+
+const requestInProgress = ref(false);
+const submitErrorMessage = ref("");
+const submitError = computed(() => !!submitErrorMessage.value);
+
 function commitChanges() {
   console.log("Save clicked");
   console.log("editCategory: ", editCategory.value);
+  console.log("editTags: ", editTags.value);
+  console.log("editTransactionDate: ", editTransactionDate.value);
+  console.log("editDescription: ", editDescription.value);
+  console.log("editNotes: ", editNotes.value);
+
+  const updateTransaction = transactionsApi.updateTransaction({
+    userId,
+    transactionId: props.transaction.id,
+    date: editTransactionDate.value.toString(),
+    description: editDescription.value,
+    categoryId: editCategory.value?.id,
+    tagIds: editTags.value.map((tag) => tag.id),
+    notes: editNotes.value,
+  });
+
+  watch(
+    updateTransaction.status,
+    (status) => {
+      if (status === "success") {
+        toast.add({
+          title: "Updated transaction!",
+          color: "success",
+          icon: "i-lucide-sparkles",
+        });
+      } else if (status === "error") {
+        // Pipe the error message to the ref controlling the alert
+        submitErrorMessage.value =
+          updateTransaction.errorMessage.value || "An unknown error occurred.";
+      }
+
+      // Disable the "Save" button while the request is in progress
+      requestInProgress.value = status === "pending";
+    },
+    { immediate: true },
+  );
 }
 </script>
