@@ -82,6 +82,7 @@ export async function refresh(accountId: string) {
   const transactionsToWrite: Transaction[] = [];
   for (const transaction of tellerTransactions) {
     // Once we hit the last posted transaction, stop processing the rest, as there will be no updates.
+    console.log(`Checking transaction ${transaction.id} / ${transaction.date} / ${transaction.description} against last posted transaction ${account.lastPostedTransactionId}`);
     if (transaction.id == account.lastPostedTransactionId) {
       break;
     }
@@ -99,6 +100,7 @@ export async function refresh(accountId: string) {
     // TODO get category + counterparty dynamically
     const categoryId = "0";
     const counterpartyId = "0";
+    const date = new Date(transaction.date).toISOString().substring(0, 10);
 
     transactionsToWrite.push({
       id: transaction.id,
@@ -107,7 +109,8 @@ export async function refresh(accountId: string) {
       accountId: accountId,
       amount: transaction.amount,
       currency: "USD",
-      date: new Date(transaction.date),
+      rawDate: date,
+      date: date,
       rawDescription: transaction.description,
       description: transaction.description,
       notes: "",
@@ -128,8 +131,9 @@ export async function refresh(accountId: string) {
     });
   }
 
-  console.log(`Writing ${transactionsToWrite.length} new transactions`);
+  console.log(`Writing ${transactionsToWrite.length} new transactions: `, transactionsToWrite.map((t) => t.id));
   transactionsToWrite.forEach((transaction) => {
+    // TODO: check if transaction already exists in db so we aren't overwriting all values
     transactionRepo.upsert(transaction);
   });
 
