@@ -68,10 +68,46 @@ export async function update(
 
   // Cross-check and remove any keys that are the same as the existing values
   UPDATE_TRANSACTION_KEYS.forEach((key) => {
+    if (newValues[key] === undefined) {
+      return;
+    }
+    console.log(
+      "Comparing new key to old key: ",
+      key,
+      newValues[key],
+      existing[key],
+      newValues[key] == existing[key],
+      newValues[key] === existing[key],
+    );
     if (newValues[key] === existing[key]) {
+      console.log(
+        `Value for key '${key}' (${newValues[key]}) is the same as existing value (${existing[key]}); removing from new values.`,
+      );
       delete newValues[key];
     }
   });
+
+  // Need to handle tagIds separately since it is a list
+  if (newValues.tagIds !== undefined) {
+    console.log(
+      "Comparing new tagIds to old tagIds: ",
+      newValues.tagIds,
+      existing.tagIds,
+    );
+    const newTagIds = newValues.tagIds || [];
+
+    // Remove any tag IDs that are the same as the existing values
+    newValues.tagIds = newTagIds.filter(
+      (tagId) => !existing.tagIds.includes(tagId),
+    );
+    console.log("New tagIds after filtering: ", newValues.tagIds);
+
+    // If all tag IDs are the same, remove the key from newValues
+    if (newValues.tagIds.length === 0) {
+      console.log("All tagIds are the same; removing from new values.");
+      delete newValues.tagIds;
+    }
+  }
 
   // Short-circuit if all requested changes matched the existing values
   if (Object.keys(newValues).length === 0) {
@@ -79,6 +115,8 @@ export async function update(
       "Update request had no new values to write.",
     );
   }
+
+  console.log("Updating transaction with new values: ", newValues, request);
 
   const newTransaction = {
     ...existing,

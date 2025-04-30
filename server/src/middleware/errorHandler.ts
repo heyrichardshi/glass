@@ -2,6 +2,8 @@ import {
   ConflictError,
   DatabaseError,
   ForbiddenError,
+  InvalidInputError,
+  InvalidInputWithCustomMessageError,
   NotFoundError,
 } from "../common/errors";
 import { Request, Response, NextFunction } from "express";
@@ -12,7 +14,12 @@ const errorHandler = (
   response: Response,
   next: NextFunction,
 ) => {
-  if (error instanceof NotFoundError) {
+  if (
+    error instanceof InvalidInputError ||
+    error instanceof InvalidInputWithCustomMessageError
+  ) {
+    return response.status(400).send({ message: error.message });
+  } else if (error instanceof NotFoundError) {
     return response.status(404).send({ message: error.message });
   } else if (error instanceof ConflictError) {
     return response.status(409).send({ message: error.message });
@@ -23,8 +30,9 @@ const errorHandler = (
   }
 
   // Capture all other cases
+  const { method, url, path, query, params } = request;
   console.error(
-    `An unknown error occurred for request ${JSON.stringify(request)}:`,
+    `An unknown error occurred for request ${JSON.stringify({ method, url, path, query, params })}:`,
     error,
   );
   response.status(500).send("An unknown error occurred.");
