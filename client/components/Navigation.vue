@@ -16,5 +16,10 @@ const items = ref<NavigationMenuItem[]>([
     icon: "i-lucide-landmark",
     to: "/accounts",
   },
+  {
+    label: "Reports",
+    icon: "i-lucide-landmark",
+    to: "/report",
+  },
 ]);
 </script>
