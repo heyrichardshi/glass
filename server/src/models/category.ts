@@ -35,11 +35,15 @@ export function toApiModel(category: Category): Category {
 }
 
 /**
+ * These are categories that are not considered expenses and are included in the default categories.
+ */
+const NON_EXPENSE_CATEGORIES = ["Income", "Transfer"];
+
+/**
  * These are immutable categories that are created by default when a user is created.
  */
 const DEFAULT_CATEGORIES = [
-  "Income",
-  "Transfer",
+  ...NON_EXPENSE_CATEGORIES,
   "Food",
   "Home",
   "Health",

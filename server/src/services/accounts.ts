@@ -82,7 +82,9 @@ export async function refresh(accountId: string) {
   const transactionsToWrite: Transaction[] = [];
   for (const transaction of tellerTransactions) {
     // Once we hit the last posted transaction, stop processing the rest, as there will be no updates.
-    console.log(`Checking transaction ${transaction.id} / ${transaction.date} / ${transaction.description} against last posted transaction ${account.lastPostedTransactionId}`);
+    console.log(
+      `Checking transaction ${transaction.id} / ${transaction.date} / ${transaction.description} against last posted transaction ${account.lastPostedTransactionId}`,
+    );
     if (transaction.id == account.lastPostedTransactionId) {
       break;
     }
@@ -131,7 +133,10 @@ export async function refresh(accountId: string) {
     });
   }
 
-  console.log(`Writing ${transactionsToWrite.length} new transactions: `, transactionsToWrite.map((t) => t.id));
+  console.log(
+    `Writing ${transactionsToWrite.length} new transactions: `,
+    transactionsToWrite.map((t) => t.id),
+  );
   transactionsToWrite.forEach((transaction) => {
     // TODO: check if transaction already exists in db so we aren't overwriting all values
     transactionRepo.upsert(transaction);

@@ -2,6 +2,7 @@ import { Container, StatusCodes } from "@azure/cosmos";
 import { Transaction, TransactionsList } from "../models";
 import { DatabaseProvider } from "./database";
 import { DatabaseError } from "../common/errors";
+import { formatDate } from "../common/utils";
 
 const TRANSACTION_CONTAINER_ID = "transactions";
 
@@ -125,7 +126,7 @@ export class TransactionRepository {
           parameters: [{ name: "@userId", value: userId }],
         },
         {
-          // TODO: need to update this to hosueholdId once households are implemented; currently all hosueholds are = userId
+          // TODO: need to update this to householdId once households are implemented; currently all hosueholds are = userId
           partitionKey: userId,
           maxItemCount: 50,
           continuationToken: paginationToken,
@@ -166,5 +167,40 @@ export class TransactionRepository {
       }
       throw err;
     }
+  }
+
+  async listByDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Transaction[]> {
+    const container = await this.promisedContainer;
+
+    const startDateString = formatDate(startDate);
+    const endDateString = formatDate(endDate);
+
+    const response = await container.items
+      .query<Transaction>(
+        {
+          query:
+            "SELECT * FROM c WHERE c.userId = @userId AND c.date >= @startDate AND c.date <= @endDate ORDER BY c.date DESC",
+          parameters: [
+            { name: "@userId", value: userId },
+            { name: "@startDate", value: startDateString },
+            { name: "@endDate", value: endDateString },
+          ],
+        },
+        {
+          // TODO: need to update this to householdId once households are implemented; currently all hosueholds are = userId
+          partitionKey: userId,
+        },
+      )
+      .fetchAll();
+
+    console.log(
+      `Fetched ${response.resources.length} transactions for user ${userId} between ${startDateString} and ${endDateString}`,
+    );
+
+    return response.resources;
   }
 }

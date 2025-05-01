@@ -11,6 +11,7 @@ import accounts from "./routes/accounts";
 import transactions from "./routes/transactions";
 import categories from "./routes/categories";
 import tags from "./routes/tags";
+import reports from "./routes/reports";
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use("/", accounts);
 app.use("/", transactions);
 app.use("/", categories);
 app.use("/", tags);
+app.use("/", reports);
 
 app.use(errorHandler);
 
