@@ -3,6 +3,7 @@ import { NotFoundError } from "../common/errors";
 import { Account, Transaction } from "../models";
 import { AccountRepository, TransactionRepository } from "../repositories";
 import * as teller from "./teller";
+import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
 
 export async function registerAccountsFromToken(
   token: string,
@@ -100,7 +101,7 @@ export async function refresh(accountId: string) {
 
     const status = transaction.status == "posted" ? "posted" : "pending";
     // TODO get category + counterparty dynamically
-    const categoryId = "0";
+    const categoryId = UNCATEGORIZED_CATEGORY_ID;
     const counterpartyId = "0";
     const date = new Date(transaction.date).toISOString().substring(0, 10);
 

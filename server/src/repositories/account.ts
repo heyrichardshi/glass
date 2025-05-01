@@ -94,10 +94,6 @@ export class AccountRepository {
         },
       )
       .fetchAll();
-    console.log(
-      `Fetched ${response.resources.length} accounts for user ${userId} from db: `,
-      response,
-    );
 
     return response.resources;
   }

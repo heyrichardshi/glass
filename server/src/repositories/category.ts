@@ -109,11 +109,6 @@ export class CategoryRepository {
       )
       .fetchAll();
 
-    console.log(
-      `Fetched ${response.resources.length} categories for householdId ${householdId} from db: `,
-      response,
-    );
-
     return response.resources;
   }
 

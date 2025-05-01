@@ -84,11 +84,6 @@ export class TagRepository {
       )
       .fetchAll();
 
-    console.log(
-      `Fetched ${response.resources.length} tags for householdId ${householdId} from db: `,
-      response,
-    );
-
     return response.resources;
   }
 
