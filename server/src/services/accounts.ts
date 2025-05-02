@@ -1,9 +1,11 @@
 import { ListAccountsResponse, RegisterAccountsResponse } from "@saffron/types";
 import { NotFoundError } from "../common/errors";
 import { Account, Transaction } from "../models";
+import { Transaction as TellerTransaction } from "../models/teller";
 import { AccountRepository, TransactionRepository } from "../repositories";
 import * as teller from "./teller";
 import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
+import { formatDate } from "../common/utils";
 
 export async function registerAccountsFromToken(
   token: string,
@@ -80,7 +82,7 @@ export async function refresh(accountId: string) {
 
   let newestPostedTransactionId: string | undefined = undefined;
 
-  const transactionsToWrite: Transaction[] = [];
+  const newTellerTransactions: TellerTransaction[] = [];
   for (const transaction of tellerTransactions) {
     // Once we hit the last posted transaction, stop processing the rest, as there will be no updates.
     console.log(
@@ -99,39 +101,81 @@ export async function refresh(accountId: string) {
       newestPostedTransactionId = transaction.id;
     }
 
-    const status = transaction.status == "posted" ? "posted" : "pending";
-    // TODO get category + counterparty dynamically
-    const categoryId = UNCATEGORIZED_CATEGORY_ID;
-    const counterpartyId = "0";
-    const date = new Date(transaction.date).toISOString().substring(0, 10);
+    newTellerTransactions.push(transaction);
+  }
 
-    transactionsToWrite.push({
-      id: transaction.id,
-      userId: "0", // TODO: multitenancy
-      householdId: "0", // TODO: multitenancy
-      accountId: accountId,
-      amount: transaction.amount,
-      currency: "USD",
-      rawDate: date,
-      date: date,
-      rawDescription: transaction.description,
-      description: transaction.description,
-      notes: "",
-      status: status,
-      counterparty: {
-        id: counterpartyId,
-        type: "merchant",
-      },
-      categoryId: categoryId,
-      tagIds: [],
-      linkedTransactionIds: [],
-      history: [],
-      tellerMetadata: {
-        type: transaction.type,
-        category: transaction.details.category,
-        counterparty: transaction.details.counterparty?.name,
-      },
-    });
+  // Get any existing transactions, e.g. for previously pending items, in order to update the status, date, etc.
+  const newTellerTransactionIds = newTellerTransactions.map((t) => t.id);
+  const existingTransactions = await transactionRepo.getBulk(
+    newTellerTransactionIds,
+    account.householdId,
+  );
+
+  const existingTransactionIds = Object.values(existingTransactions)
+    .filter((t) => t !== undefined)
+    .map((t) => t.id);
+  console.log(
+    `Found ${existingTransactionIds.length} existing transactions: `,
+    existingTransactionIds,
+  );
+
+  const transactionsToWrite: Transaction[] = [];
+  for (const transaction of newTellerTransactions) {
+    const status = transaction.status == "posted" ? "posted" : "pending";
+    const date = formatDate(new Date(transaction.date));
+
+    const existingTransaction = existingTransactions[transaction.id];
+
+    if (existingTransaction) {
+      // Transaction already exists, so we want to keep user-defined values
+      const isOriginalDate =
+        existingTransaction.date === existingTransaction.rawDate;
+      const isOriginalDescription =
+        existingTransaction.description === existingTransaction.rawDescription;
+
+      transactionsToWrite.push({
+        ...existingTransaction,
+        rawDate: date,
+        date: isOriginalDate ? date : existingTransaction.date,
+        rawDescription: transaction.description,
+        description: isOriginalDescription
+          ? transaction.description
+          : existingTransaction.description,
+        status: status,
+      });
+    } else {
+      // TODO get category + counterparty dynamically
+      const categoryId = UNCATEGORIZED_CATEGORY_ID;
+      const counterpartyId = "0";
+
+      transactionsToWrite.push({
+        id: transaction.id,
+        userId: "0", // TODO: multitenancy
+        householdId: "0", // TODO: multitenancy
+        accountId: accountId,
+        amount: transaction.amount,
+        currency: "USD",
+        rawDate: date,
+        date: date,
+        rawDescription: transaction.description,
+        description: transaction.description,
+        notes: "",
+        status: status,
+        counterparty: {
+          id: counterpartyId,
+          type: "merchant",
+        },
+        categoryId: categoryId,
+        tagIds: [],
+        linkedTransactionIds: [],
+        history: [],
+        tellerMetadata: {
+          type: transaction.type,
+          category: transaction.details.category,
+          counterparty: transaction.details.counterparty?.name,
+        },
+      });
+    }
   }
 
   console.log(
@@ -139,7 +183,6 @@ export async function refresh(accountId: string) {
     transactionsToWrite.map((t) => t.id),
   );
   transactionsToWrite.forEach((transaction) => {
-    // TODO: check if transaction already exists in db so we aren't overwriting all values
     transactionRepo.upsert(transaction);
   });
 

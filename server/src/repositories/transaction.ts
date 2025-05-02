@@ -1,4 +1,9 @@
-import { Container, StatusCodes } from "@azure/cosmos";
+import {
+  BulkOperationResponse,
+  Container,
+  ReadOperationInput,
+  StatusCodes,
+} from "@azure/cosmos";
 import { Transaction, TransactionsList } from "../models";
 import { DatabaseProvider } from "./database";
 import { DatabaseError } from "../common/errors";
@@ -167,6 +172,48 @@ export class TransactionRepository {
       }
       throw err;
     }
+  }
+
+  async getBulk(
+    transactionIds: string[],
+    householdId: string,
+  ): Promise<Record<string, Transaction | undefined>> {
+    const container = await this.promisedContainer;
+
+    const operations: ReadOperationInput[] = transactionIds.map(
+      (transactionId) => {
+        return {
+          operationType: "Read",
+          id: transactionId,
+          partitionKey: householdId,
+        };
+      },
+    );
+
+    const response = await container.items.bulk(operations);
+    if (response.length != transactionIds.length) {
+      throw new DatabaseError(
+        `Failed to read ${transactionIds.length} transactions, got ${response.length} responses`,
+      );
+    }
+
+    return transactionIds.reduce(
+      (acc, transactionId, index) => {
+        const { statusCode, resourceBody } = response[index];
+        if (statusCode === StatusCodes.Ok) {
+          const transaction = resourceBody as unknown as Transaction;
+          acc[transactionId] = transaction;
+        } else if (statusCode === StatusCodes.NotFound) {
+          acc[transactionId] = undefined;
+        } else {
+          throw new DatabaseError(
+            `Failed to read transaction ${transactionId}: ${statusCode}: ${resourceBody}`,
+          );
+        }
+        return acc;
+      },
+      {} as Record<string, Transaction | undefined>,
+    );
   }
 
   async listByDateRange(
