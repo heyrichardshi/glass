@@ -70,6 +70,7 @@ export class TransactionRepository {
     if (raw.date != shortDate) {
       // The record being read has a full format date, so we want to commit this change
       changed = true;
+      console.log(`Transaction ${transaction.id} does not have expected date string, expected '${shortDate}' but was '${raw.date}'.`);
       transaction = { ...transaction, date: shortDate };
     }
 
@@ -77,6 +78,7 @@ export class TransactionRepository {
     // appears on the bank statement, in case the user wants to revert their changes.
     if (!raw.rawDate) {
       changed = true;
+      console.log(`Transaction ${transaction.id} does not have rawDate.`);
 
       // Take the existing date to be the raw date because at the time this field was introduced, there was no
       // capability for the user to modify the date.
