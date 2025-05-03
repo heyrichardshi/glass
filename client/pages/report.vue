@@ -1,5 +1,6 @@
 <template>
-  <div class="w-full flex justify-center">
+  <div class="w-full flex justify-center gap-2">
+    <YearMonthSelector @selection="selectedYearMonth" />
     <UButton
       label="Generate Report"
       :loading="requestInProgress"
@@ -44,13 +45,20 @@ const submitError = computed(() => !!submitErrorMessage.value);
 const monthlyReport = ref<GetMonthlyReportResponse | undefined>(undefined);
 const loadedMonthlyReport = computed(() => !!monthlyReport.value);
 
+const year = ref<string>("");
+const month = ref<string>("");
+function selectedYearMonth(d: { year: string; month: string }) {
+  year.value = d.year;
+  month.value = d.month;
+}
+
 function generateReport() {
   console.log("Generating report...");
 
   const monthlyReportRes = reportsApi.getMonthlyReport({
     userId: "0",
-    year: "2025",
-    month: "4",
+    year: year.value,
+    month: month.value,
   });
 
   watch(
