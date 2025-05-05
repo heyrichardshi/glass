@@ -1,4 +1,8 @@
-import type { UpdateTransactionRequest } from "@saffron/types";
+import type {
+  Transaction,
+  UpdateTransactionRequest,
+  UpdateTransactionResponse,
+} from "@saffron/types";
 
 export default function (request: UpdateTransactionRequest) {
   const config = useRuntimeConfig();
@@ -19,5 +23,9 @@ export default function (request: UpdateTransactionRequest) {
     },
   );
 
-  return { data, status, errorMessage, error, refresh };
+  const transaction = computed<Transaction | undefined>(
+    () => (data.value as UpdateTransactionResponse)?.transaction,
+  );
+
+  return { transaction, status, errorMessage, error, refresh };
 }

@@ -46,7 +46,8 @@ async function createTag(name: string) {
     },
   });
 
-  const result = (await createTagModal.open()) as { tag?: Tag };
+  const instance = createTagModal.open();
+  const result = (await instance.result) as { tag?: Tag };
   if (result.tag) {
     console.log("Created tag: ", result.tag);
 

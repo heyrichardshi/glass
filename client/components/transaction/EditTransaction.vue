@@ -1,25 +1,16 @@
 <template>
-  <USlideover title="Edit Transaction" :description="editPanelDescription">
-    <div
-      class="w-full rounded-xl bg-gray-100 p-4 flex items-center justify-between shadow-sm mb-2"
-    >
-      <div class="text-sm text-gray-600">{{ transactionDateField }}</div>
-      <div
-        class="text-base font-medium text-gray-800 truncate mx-4 flex-1 text-center"
-      >
-        {{ transaction.description }}
-      </div>
-      <div class="text-sm font-semibold text-right text-gray-900">
-        {{ formattedAmount }}
-      </div>
-    </div>
-
+  <USlideover
+    title="Edit Transaction"
+    :description="editPanelDescription"
+    :close="{ onClick: () => close() }"
+  >
     <template #body>
       <div class="grid grid-cols-2 gap-4">
         <!-- Date -->
         <UFormField label="Date">
           <UPopover>
             <UButton color="neutral" variant="subtle" icon="i-lucide-calendar">
+              <!-- TODO: Fix same timezone bug where depending on time of day the displayed date is 1 day before the actual date -->
               {{
                 editTransactionDate
                   ? df.format(editTransactionDate.toDate(getLocalTimeZone()))
@@ -94,13 +85,21 @@ import {
   DateFormatter,
   getLocalTimeZone,
 } from "@internationalized/date";
-import CategoryMenu from "./CategoryMenu.vue";
-import TagMenu from "./TagMenu.vue";
+import CategoryMenu from "../CategoryMenu.vue";
+import TagMenu from "../TagMenu.vue";
 import useTransactionsApi from "~/composables/useTransactionsApi";
 
 const props = defineProps<{
   transaction: Transaction;
 }>();
+
+const emit = defineEmits<{
+  close: [{ newTransaction?: Transaction }];
+}>();
+
+function close() {
+  emit("close", {});
+}
 
 const userId = "0";
 
@@ -193,6 +192,7 @@ function commitChanges() {
           color: "success",
           icon: "i-lucide-sparkles",
         });
+        emit("close", { newTransaction: updateTransaction.transaction.value });
       } else if (status === "error") {
         // Pipe the error message to the ref controlling the alert
         submitErrorMessage.value =

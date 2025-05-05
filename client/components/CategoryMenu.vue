@@ -55,7 +55,8 @@ async function createCategory(name: string) {
     },
   });
 
-  const result = (await createCategoryModal.open()) as { category?: Category };
+  const instance = createCategoryModal.open();
+  const result = (await instance.result) as { category?: Category };
   if (result.category) {
     console.log("Created category: ", result.category);
 
