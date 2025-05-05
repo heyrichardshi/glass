@@ -70,7 +70,9 @@ export class TransactionRepository {
     if (raw.date != shortDate) {
       // The record being read has a full format date, so we want to commit this change
       changed = true;
-      console.log(`Transaction ${transaction.id} does not have expected date string, expected '${shortDate}' but was '${raw.date}'.`);
+      console.log(
+        `Transaction ${transaction.id} does not have expected date string, expected '${shortDate}' but was '${raw.date}'.`,
+      );
       transaction = { ...transaction, date: shortDate };
     }
 

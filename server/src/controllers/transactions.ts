@@ -6,9 +6,6 @@ export const listByUser = asyncController(async (req, res) => {
   const userId = req.query.userId as string | undefined; // ?userId=...
   const paginationToken = req.query.paginationToken as string | undefined; // ?paginationToken=...
 
-  console.log("userId:", userId);
-  console.log("paginationToken:", paginationToken);
-
   if (!userId) {
     throw new InvalidInputError("userId");
   }

@@ -3,9 +3,7 @@ import asyncController from "./asyncController";
 import { InvalidInputError } from "../common/errors";
 
 export const listTags = asyncController(async (req, res) => {
-  const userId = req.query.userId as string | undefined; // ?userId=...
-  console.log("userId:", userId);
-
+  const userId = req.query.userId as string | undefined;
   if (!userId) {
     throw new InvalidInputError("userId");
   }
