@@ -1,17 +1,12 @@
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">My Transactions</h1>
+    <h1 class="text-2xl font-bold mb-4">Transactions</h1>
 
-    <TransactionTable :transactions="transactions" :loading="pending" />
-
-    <!-- <div v-if="pending">Loading...</div>
-    <div v-else-if="error">Error loading transactions: {{ error.message }}</div>
-    <div v-else>
-      <TransactionItem
-        v-for="tx in transactions"
-        :key="tx.id"
-        :transaction="tx"
-      /> -->
+    <TransactionTable
+      :transactions="transactions"
+      :loading="pending"
+      @updatedTransaction="updateTransaction"
+    />
 
     <button
       v-if="paginationToken"
@@ -20,11 +15,12 @@
     >
       Load More
     </button>
-    <!-- </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Transaction } from "@saffron/types";
+
 const config = useRuntimeConfig();
 const userId = 0;
 
@@ -59,5 +55,9 @@ async function loadMore() {
     transactions.value.push(...data.value.transactions);
     paginationToken.value = data.value.paginationToken ?? null;
   }
+}
+
+function updateTransaction(tx: { index: number; transaction: Transaction }) {
+  transactions.value[tx.index] = tx.transaction;
 }
 </script>

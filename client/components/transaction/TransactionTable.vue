@@ -19,6 +19,15 @@ const props = defineProps<{
   loading?: boolean;
 }>();
 
+const emit = defineEmits<{
+  updatedTransaction: [
+    {
+      index: number;
+      transaction: Transaction;
+    },
+  ];
+}>();
+
 const userId = "0";
 
 const overlay = useOverlay();
@@ -34,7 +43,10 @@ const columns: TableColumn<Transaction>[] = [
   {
     accessorKey: "date",
     header: "Date",
-    cell: ({ row }) => formatDisplayDate(row.getValue("date")),
+    cell: ({ row }) =>
+      row.original.status == "pending"
+        ? "Pending"
+        : formatDisplayDate(row.getValue("date")),
   },
   {
     accessorKey: "categoryId",
@@ -79,9 +91,12 @@ async function onSelect(row: TableRow<Transaction>, e?: Event) {
   const instance = editPane.open();
 
   const editPaneResult = (await instance.result) as {
-    newTranasction: Transaction;
+    newTransaction: Transaction;
   };
 
-  console.log("Updated transaction: ", editPaneResult);
+  emit("updatedTransaction", {
+    index: row.index,
+    transaction: editPaneResult.newTransaction,
+  });
 }
 </script>
