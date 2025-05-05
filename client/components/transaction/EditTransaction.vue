@@ -35,18 +35,17 @@
         </UFormField>
 
         <!-- Category -->
-        <CategoryMenu allowCreate @selectedCategory="selectedCategory" />
+        <CategoryMenu
+          allowCreate
+          :prefillWithCategoryId="transaction.categoryId"
+          @selectedCategory="selectedCategory"
+        />
 
         <!-- Tags -->
-        <TagMenu :prefillWithTagIds="loadTags()" @selectedTags="selectedTags" />
-        <!-- <UFormField label="Tags">
-          <UInputMenu
-            v-model="editTags"
-            multiple
-            :items="allTags"
-            class="w-full"
-          />
-        </UFormField> -->
+        <TagMenu
+          :prefillWithTagIds="transaction.tagIds"
+          @selectedTags="selectedTags"
+        />
 
         <!-- Notes (full width)-->
         <UFormField
@@ -112,22 +111,12 @@ const formattedDate = computed(() =>
   }),
 );
 
-const transactionDateField = computed(() => {
-  return props.transaction.status == "pending"
-    ? "Pending"
-    : formattedDate.value;
-});
-
 const formattedAmount = computed(() => `$${props.transaction.amount}`);
 
 const editPanelDescription = computed(() => {
   const prefix = props.transaction.status === "pending" ? "Pending " : "";
   return `${prefix}${formattedAmount.value} for ${props.transaction.description} on ${formattedDate.value}`;
 });
-
-function loadTags(): string[] {
-  return props.transaction.tagIds;
-}
 
 const df = new DateFormatter("en-US", {
   dateStyle: "medium",
