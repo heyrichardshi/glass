@@ -28,6 +28,13 @@
         {{ monthlyReport?.totalExpense }}
       </p>
     </div>
+    <div class="w-full">
+      <h1>Expenses by Category</h1>
+      <AnalyticsCategoryBreakdown
+        :categoryTransactions="monthlyReport!!.categoryExpenses"
+        :transactions="monthlyReport!!.transactions"
+      />
+    </div>
   </div>
 </template>
 
