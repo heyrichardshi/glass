@@ -6,7 +6,11 @@
     class="flex-1 w-full"
     :loading="loading"
     @select="onSelect"
-  />
+  >
+    <template #tagIds-cell="{ getValue }">
+      <TagBadge v-for="tagId in getValue()" :tagId="tagId" />
+    </template>
+  </UTable>
 </template>
 
 <script setup lang="ts">
@@ -57,11 +61,10 @@ const columns: TableColumn<Transaction>[] = [
     accessorKey: "description",
     header: "Description",
   },
-  // TODO: Need a custom element to convert this to tag badges
-  // {
-  //     accessorKey: "tagIds",
-  //     header: "Tags",
-  // },
+  {
+    accessorKey: "tagIds",
+    header: "Tags",
+  },
   {
     accessorKey: "amount",
     header: "Amount",
