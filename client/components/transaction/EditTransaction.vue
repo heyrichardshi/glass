@@ -7,22 +7,10 @@
     <template #body>
       <div class="grid grid-cols-2 gap-4">
         <!-- Date -->
-        <UFormField label="Date">
-          <UPopover>
-            <UButton color="neutral" variant="subtle" icon="i-lucide-calendar">
-              <!-- TODO: Fix same timezone bug where depending on time of day the displayed date is 1 day before the actual date -->
-              {{
-                editTransactionDate
-                  ? df.format(editTransactionDate.toDate(getLocalTimeZone()))
-                  : "Select a date"
-              }}
-            </UButton>
-
-            <template #content>
-              <UCalendar v-model="editTransactionDate" class="p-2" />
-            </template>
-          </UPopover>
-        </UFormField>
+        <DatePicker
+          :prefillWithDate="transaction.date"
+          @selectedDate="selectedDate"
+        />
 
         <!-- Merchant / Counterparty -->
         <UFormField label="Merchant">
@@ -79,15 +67,6 @@
 <script setup lang="ts">
 import type { Category, Tag, Transaction } from "@saffron/types";
 
-import {
-  CalendarDate,
-  DateFormatter,
-  getLocalTimeZone,
-} from "@internationalized/date";
-import CategoryMenu from "../CategoryMenu.vue";
-import TagMenu from "../TagMenu.vue";
-import useTransactionsApi from "~/composables/useTransactionsApi";
-
 const props = defineProps<{
   transaction: Transaction;
 }>();
@@ -102,33 +81,17 @@ function close() {
 
 const userId = "0";
 
-const date = computed(() => new Date(props.transaction.date));
-const formattedDate = computed(() =>
-  date.value.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }),
-);
-
 const formattedAmount = computed(() => `$${props.transaction.amount}`);
 
 const editPanelDescription = computed(() => {
   const prefix = props.transaction.status === "pending" ? "Pending " : "";
-  return `${prefix}${formattedAmount.value} for ${props.transaction.description} on ${formattedDate.value}`;
+  return `${prefix}${formattedAmount.value} for ${props.transaction.description} on ${formatDisplayDate(props.transaction.date)}`;
 });
 
-const df = new DateFormatter("en-US", {
-  dateStyle: "medium",
-});
-
-const editTransactionDate = shallowRef(
-  new CalendarDate(
-    date.value.getFullYear(),
-    date.value.getMonth(),
-    date.value.getDate(),
-  ),
-);
+const editDate = ref("");
+function selectedDate(date: string) {
+  editDate.value = date;
+}
 
 const editMerchant = ref("");
 
@@ -158,14 +121,14 @@ function commitChanges() {
   console.log("Save clicked");
   console.log("editCategory: ", editCategory.value);
   console.log("editTags: ", editTags.value);
-  console.log("editTransactionDate: ", editTransactionDate.value);
+  console.log("editDate: ", editDate.value);
   console.log("editDescription: ", editDescription.value);
   console.log("editNotes: ", editNotes.value);
 
   const updateTransaction = transactionsApi.updateTransaction({
     userId,
     transactionId: props.transaction.id,
-    date: editTransactionDate.value.toString(),
+    date: editDate.value,
     description: editDescription.value,
     categoryId: editCategory.value?.id,
     tagIds: editTags.value.map((tag) => tag.id),
