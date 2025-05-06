@@ -19,7 +19,7 @@
 import type { Account } from "@saffron/types";
 
 const config = useRuntimeConfig();
-const userId = 0;
+const userId = "0";
 
 const accounts = ref<Account[]>([]);
 const loading = ref(true);

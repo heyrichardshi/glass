@@ -81,11 +81,20 @@ function close() {
 
 const userId = "0";
 
+const accountsApi = useAccountsApi();
+const listAccountsResponse = accountsApi.listAccounts(userId);
+
 const formattedAmount = computed(() => `$${props.transaction.amount}`);
 
 const editPanelDescription = computed(() => {
   const prefix = props.transaction.status === "pending" ? "Pending " : "";
-  return `${prefix}${formattedAmount.value} for ${props.transaction.description} on ${formatDisplayDate(props.transaction.date)}`;
+  const description = props.transaction.description;
+  const date = formatDisplayDate(props.transaction.date);
+  const accountName =
+    listAccountsResponse.accounts.value.find(
+      (acc) => acc.id == props.transaction.accountId,
+    )?.name || "Unknown Account";
+  return `${prefix}${formattedAmount.value} for ${description} on ${date} via ${accountName}`;
 });
 
 const editDate = ref("");
