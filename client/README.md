@@ -34,3 +34,6 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 ## References
 
 - [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction)
+- [Tailwind documentation](https://tailwindcss.com/docs/installation)
+- [Nuxt UI documentation](https://ui.nuxt.com/getting-started)
+- [Lucide icons](https://icon-sets.iconify.design/lucide/)
