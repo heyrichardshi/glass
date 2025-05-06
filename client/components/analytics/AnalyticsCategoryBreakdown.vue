@@ -48,7 +48,55 @@ onUnmounted(() => {
 });
 // End block of code concerning previous comment.
 
+type DonutDatum = {
+  name: string;
+  value: number;
+};
+
 const tooltip = ref<HTMLElement | null>(null);
+
+function handleMouseOver(
+  event: MouseEvent,
+  d: d3.PieArcDatum<DonutDatum>,
+  targetNode: SVGPathElement,
+): void {
+  if (tooltip.value) {
+    tooltip.value.classList.remove("hidden");
+    tooltip.value.textContent = `${d.data.name}: \$${d.data.value}`;
+  }
+
+  // Dim all but the hovered slice
+  d3.selectAll<SVGPathElement, d3.PieArcDatum<DonutDatum>>(".donut-slice")
+    // The first value is the data bound to the element, the second is the index, and the third is the list of nodes
+    // corresponding to the graph.
+    .filter((_, i, nodes) => nodes[i] !== targetNode)
+    .classed("opacity-30", true);
+
+  d3.select(targetNode)
+    .raise()
+    .transition()
+    .duration(150)
+    .attr("transform", "scale(1.05)");
+}
+
+function handleMouseOut(): void {
+  if (tooltip.value) {
+    tooltip.value.classList.add("hidden");
+  }
+
+  d3.selectAll<SVGPathElement, d3.PieArcDatum<DonutDatum>>(".donut-slice")
+    .classed("opacity-30", false)
+    .transition()
+    .duration(150)
+    .attr("transform", "scale(1)");
+}
+
+function handleMouseMove(event: MouseEvent) {
+  if (tooltip.value) {
+    tooltip.value.style.left = `${event.pageX + 10}px`;
+    tooltip.value.style.top = `${event.pageY + 10}px`;
+  }
+}
 
 // See https://observablehq.com/@d3/donut-chart/2
 function createDonutChart(
@@ -64,10 +112,12 @@ function createDonutChart(
     .outerRadius(radius - 1);
 
   const pie = d3
-    .pie()
+    .pie<DonutDatum>()
     .padAngle(4 / radius)
     .sort(null)
     .value((d) => d.value);
+
+  arc.cornerRadius(5);
 
   const color = d3
     .scaleOrdinal()
@@ -85,30 +135,19 @@ function createDonutChart(
     .attr("viewBox", [-width / 2, -height / 2, width, height])
     .attr("style", "max-width: 100%; height: auto;");
 
-  svg
+  const slices = svg
     .append("g")
     .selectAll()
     .data(pie(data))
     .join("path")
+    .attr("class", "donut-slice transition-opacity duration-150")
     .attr("fill", (d) => color(d.data.name))
     .attr("d", arc)
-    .on("mouseover", (event, d) => {
-      if (tooltip.value) {
-        tooltip.value.classList.remove("hidden");
-        tooltip.value.innerText = `${d.data.name}: ${d.data.value.toLocaleString()}`;
-      }
-    })
-    .on("mousemove", (event) => {
-      if (tooltip.value) {
-        tooltip.value.style.left = `${event.pageX + 10}px`;
-        tooltip.value.style.top = `${event.pageY + 10}px`;
-      }
-    })
-    .on("mouseout", () => {
-      if (tooltip.value) {
-        tooltip.value.classList.add("hidden");
-      }
-    });
+    .on("mouseover", (event, d) =>
+      handleMouseOver(event, d, event.currentTarget),
+    )
+    .on("mousemove", handleMouseMove)
+    .on("mouseout", handleMouseOut);
 
   svg
     .append("g")
@@ -119,6 +158,15 @@ function createDonutChart(
     .data(pie(data))
     .join("text")
     .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+    .on("mouseover", function (event, d) {
+      // Find corresponding path element
+      const sliceNode = slices
+        .nodes()
+        .find((node) => node.__data__.index === d.index);
+      handleMouseOver(event, d, sliceNode);
+    })
+    .on("mousemove", (event) => handleMouseMove)
+    .on("mouseout", handleMouseOut)
     .call((text) =>
       text
         .filter((d) => d.endAngle - d.startAngle > 0.25)
@@ -134,7 +182,7 @@ function createDonutChart(
         .attr("x", 0)
         .attr("y", "0.7em")
         .attr("fill-opacity", 0.7)
-        .text((d) => d.data.value.toLocaleString("en-US")),
+        .text((d) => `\$${d.data.value}`),
     );
 
   return svg.node();
