@@ -10,9 +10,14 @@
     <div class="text-sm text-gray-500">
       {{ account.institution }} / {{ account.type }}
     </div>
-    <div class="text-sm text-gray-500 text-right">
+    <div v-if="!isDisconnected" class="text-sm text-gray-500 text-right">
       last refreshed {{ lastRefreshedAt }}
       <UButton icon="i-lucide-refresh-cw" @click="refreshAccount()"></UButton>
+    </div>
+    <div v-else class="text-sm text-red-800 text-right">
+      action required: re-connect account
+      <!-- TODO: update connect component to take enrollment ID e.g. -->
+      <!-- <TellerConnect :enrollment-id="account.tellerEnrollmentId" /> -->
     </div>
   </div>
 </template>
@@ -23,6 +28,8 @@ import type { Account } from "@saffron/types";
 const props = defineProps<{
   account: Account;
 }>();
+
+const isDisconnected = computed(() => props.account.status === "disconnected");
 
 const lastRefreshedAt = ref<string>(
   toRelativeDate(props.account.transactionsLastRefreshedAt),
@@ -91,6 +98,4 @@ function refreshAccount() {
     },
   );
 }
-
-// TODO: Detect when account is unhealthy, call teller connect with enrollment id to fix.
 </script>

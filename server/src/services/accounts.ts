@@ -1,5 +1,8 @@
 import { ListAccountsResponse, RegisterAccountsResponse } from "@saffron/types";
-import { NotFoundError } from "../common/errors";
+import {
+  NotFoundError,
+  TellerAccountDisconnectedError,
+} from "../common/errors";
 import { Account, Transaction } from "../models";
 import { Transaction as TellerTransaction } from "../models/teller";
 import { AccountRepository, TransactionRepository } from "../repositories";
@@ -204,7 +207,40 @@ export async function listForUser(
 ): Promise<ListAccountsResponse> {
   const accountRepo = await AccountRepository.getInstance();
   const accounts = await accountRepo.listByUser(userId);
+
+  // Perform a health check on all accounts and set status appropriately.
+  const healthCheckedAccounts = await Promise.all(
+    accounts.map(async (account) => {
+      const isHealthy = await isAccountHealthy(account);
+      if (!isHealthy) {
+        return {
+          ...account,
+          status: "disconnected" as const, // Explicitly type the status to avoid type inference issues due to spread.
+          // TODO: need to store the enrollment ID so we can pass to client to re-connect.
+        };
+      } else {
+        return account;
+      }
+    }),
+  );
+
   return {
-    accounts: accounts,
+    accounts: healthCheckedAccounts,
   };
+}
+
+async function isAccountHealthy(account: Account): Promise<boolean> {
+  try {
+    await teller.getAccount(account.id, account.tellerAccessToken);
+  } catch (error: unknown) {
+    if (error instanceof TellerAccountDisconnectedError) {
+      return false;
+    }
+
+    // Log unknown error for triaging but consider it healthy for now.
+    console.error(
+      `Unknown error checking health of account ${account.id}: ${JSON.stringify(error)}`,
+    );
+  }
+  return true;
 }

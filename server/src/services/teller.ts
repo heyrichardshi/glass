@@ -2,9 +2,14 @@ import axios, { AxiosError } from "axios";
 import fs from "fs";
 import https from "https";
 import { Account, AccountBalance, Transaction } from "../models/teller";
-import { ForbiddenError, TellerApiError } from "../common/errors";
+import {
+  ForbiddenError,
+  TellerAccountDisconnectedError,
+} from "../common/errors";
 
 const baseUrl = "https://api.teller.io";
+const ENROLLMENT_DISCONNECTED_ERROR_CODE =
+  "enrollment.disconnected.user_action.mfa_required";
 
 // Cache the HTTPS agent to minimize fs reads
 let _tellerHttpsAgent: https.Agent | undefined;
@@ -43,9 +48,17 @@ async function teller(endpoint: string, token: string) {
       switch (error.status) {
         case 403:
           throw new ForbiddenError(error.message);
+        case 404:
+          const errorCode = error.response?.data?.error?.code;
+          if (errorCode === ENROLLMENT_DISCONNECTED_ERROR_CODE) {
+            throw new TellerAccountDisconnectedError(error.message);
+          }
+          throw new Error(
+            `Error fetching data from Teller API (unknown 404): ${JSON.stringify(error.response?.data, null, 2)}`,
+          );
         default:
           throw new Error(
-            `Error fetching data from Teller API: ${error.message}`,
+            `Error fetching data from Teller API: ${error.status} / ${JSON.stringify(error.response?.data, null, 2)}`,
           );
       }
     }

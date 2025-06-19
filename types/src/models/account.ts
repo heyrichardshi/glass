@@ -11,5 +11,6 @@ export interface Account {
   transactionsLastRefreshedAt: Date;
   /** The type of the account, e.g. checking, savings, credit card. */
   type: string;
-  status: "open" | "closed";
+  status: "open" | "closed" | "disconnected";
+  tellerEnrollmentId?: string;
 }
