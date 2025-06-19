@@ -16,4 +16,5 @@ export interface Account {
   type: string;
   status: "open" | "closed";
   tellerAccessToken: string;
+  tellerEnrollmentId: string;
 }

@@ -58,7 +58,6 @@ export class AccountRepository {
     }
 
     const response = await item.replace(account);
-    console.log("Updated account in db: ", response);
 
     return response.statusCode;
   }

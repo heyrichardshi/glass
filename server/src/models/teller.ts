@@ -9,6 +9,7 @@ export interface Account {
     id: string;
   };
   id: string;
+  enrollment_id: string;
 }
 
 // https://teller.io/docs/api/account/balances

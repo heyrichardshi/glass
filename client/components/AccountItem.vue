@@ -16,8 +16,10 @@
     </div>
     <div v-else class="text-sm text-red-800 text-right">
       action required: re-connect account
-      <!-- TODO: update connect component to take enrollment ID e.g. -->
-      <!-- <TellerConnect :enrollment-id="account.tellerEnrollmentId" /> -->
+      <TellerConnect
+        :enrollment-id="account.tellerEnrollmentId"
+        button-text=""
+      />
     </div>
   </div>
 </template>

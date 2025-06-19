@@ -40,6 +40,7 @@ export async function registerAccountsFromToken(
         type: account.type,
         status: account.status == "open" ? "open" : "closed",
         tellerAccessToken: token,
+        tellerEnrollmentId: account.enrollment_id,
       };
     }),
   );
@@ -216,7 +217,7 @@ export async function listForUser(
         return {
           ...account,
           status: "disconnected" as const, // Explicitly type the status to avoid type inference issues due to spread.
-          // TODO: need to store the enrollment ID so we can pass to client to re-connect.
+          tellerEnrollmentId: account.tellerEnrollmentId,
         };
       } else {
         return account;

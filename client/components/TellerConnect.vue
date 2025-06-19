@@ -1,11 +1,34 @@
 <template>
-  <UButton v-if="isTellerLoaded" @click="openTellerConnect()">
-    Connect an account
+  <UButton
+    v-if="isTellerLoaded"
+    @click="openTellerConnect()"
+    :icon="buttonIcon"
+  >
+    {{ buttonText }}
   </UButton>
 </template>
 
 <script setup lang="ts">
 import type { RegisterAccountsResponse } from "@saffron/types";
+
+// Declare the global TellerConnect object loaded from the CDN
+declare global {
+  const TellerConnect: {
+    setup: (config: any) => any;
+  };
+}
+
+const props = withDefaults(
+  defineProps<{
+    buttonText?: string;
+    buttonIcon?: string;
+    enrollmentId?: string;
+  }>(),
+  {
+    buttonText: "Connect an account",
+    buttonIcon: "i-lucide-link",
+  },
+);
 
 const config = useRuntimeConfig();
 const tellerApplicationId = config.public.TELLER_APPLICATION_ID;
@@ -22,32 +45,42 @@ interface TellerConnectEnrollment {
   signatures?: string[];
 }
 
-onMounted(() => {
-  tellerConnect.value = TellerConnect.setup({
-    applicationId: tellerApplicationId,
-    environment: "development",
-    products: ["verify", "balance", "transactions"],
-    selectAccount: "multiple",
-    onInit: function () {
-      console.log("Teller Connect has initialized");
-    },
-    onSuccess: function (enrollment: TellerConnectEnrollment) {
-      console.log("User enrolled successfully: ", enrollment);
-      registerAccounts(enrollment.accessToken);
+const defaultSetupArgs = {
+  applicationId: tellerApplicationId,
+  environment: "development",
+  products: ["verify", "balance", "transactions"],
+  selectAccount: "multiple",
+  onInit: function () {
+    console.log("Teller Connect has initialized");
+  },
+  onSuccess: function (enrollment: TellerConnectEnrollment) {
+    console.log("User enrolled successfully: ", enrollment);
+    registerAccounts(enrollment.accessToken);
 
-      // TODO: Refresh account list on success, maybe via exposed ref or callback
-    },
-    onExit: function () {
-      console.log("User closed Teller Connect");
-    },
-    onFailure: function (failure: {
-      type: string;
-      code: string;
-      message: string;
-    }) {
-      console.error("Teller Connect failed: ", failure);
-    },
-  });
+    // TODO: Refresh account list on success, maybe via exposed ref or callback
+  },
+  onExit: function () {
+    console.log("User closed Teller Connect");
+  },
+  onFailure: function (failure: {
+    type: string;
+    code: string;
+    message: string;
+  }) {
+    console.error("Teller Connect failed: ", failure);
+  },
+};
+
+onMounted(() => {
+  // Use enrollment ID if provided, otherwise use default setup args.
+  const setupArgs = props.enrollmentId
+    ? {
+        ...defaultSetupArgs,
+        enrollmentId: props.enrollmentId,
+      }
+    : defaultSetupArgs;
+
+  tellerConnect.value = TellerConnect.setup(setupArgs);
 
   isTellerLoaded.value = true;
 });
