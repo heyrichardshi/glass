@@ -159,6 +159,44 @@ export class TransactionRepository {
     };
   }
 
+  async listAllTransactionsForAccount(
+    userId: string,
+    accountId: string,
+  ): Promise<TransactionsList> {
+    const container = await this.promisedContainer;
+
+    const response = await container.items
+      .query<Transaction>(
+        {
+          query:
+            "SELECT * FROM c WHERE c.userId = @userId AND c.accountId = @accountId ORDER BY c.date DESC",
+          parameters: [
+            { name: "@userId", value: userId },
+            { name: "@accountId", value: accountId },
+          ],
+        },
+        {
+          // TODO: need to update this to householdId once households are implemented; currently all hosueholds are = userId
+          partitionKey: userId,
+        },
+      )
+      .fetchNext();
+    console.log(
+      `Fetched ${response.resources.length} transactions for user ${userId} and account ${accountId}`,
+    );
+
+    // Must normalize transactions to account for added/modified fields.
+    const normalizedTransactions = await Promise.all(
+      response.resources.map(
+        async (transaction) => await this.normalizeTransaction(transaction),
+      ),
+    );
+
+    return {
+      transactions: normalizedTransactions,
+    };
+  }
+
   async get(
     transactionId: string,
     householdId: string,
@@ -253,5 +291,10 @@ export class TransactionRepository {
     );
 
     return response.resources;
+  }
+
+  async delete(transactionId: string, householdId: string): Promise<void> {
+    const container = await this.promisedContainer;
+    await container.item(transactionId, householdId).delete();
   }
 }

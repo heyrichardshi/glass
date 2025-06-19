@@ -84,70 +84,49 @@ export async function refresh(accountId: string) {
   );
   console.log(`Fetched ${tellerTransactions.length} transaction(s)`);
 
-  let newestPostedTransactionId: string | undefined = undefined;
+  /**
+   * TODO: Reduce the number of transactions we need to process by only processing transactions that are not already in the database or pending transactions in the database. Need to account for:
+   * - long-standing pending transactions (i.e. pending transactions that have posted transactions after them)
+   * - pending transactions that are removed (i.e. never posted)
+   */
 
-  const newTellerTransactions: TellerTransaction[] = [];
-  for (const transaction of tellerTransactions) {
-    // Once we hit the last posted transaction, stop processing the rest, as there will be no updates.
-    console.log(
-      `Checking transaction ${transaction.id} / ${transaction.date} / ${transaction.description} against last posted transaction ${account.lastPostedTransactionId}`,
-    );
-    if (transaction.id == account.lastPostedTransactionId) {
-      break;
-    }
+  // Get all known transactions for this account.
+  const knownTransactions = await transactionRepo.listAllTransactionsForAccount(
+    account.userId,
+    accountId,
+  );
+  console.log(
+    `Found ${knownTransactions.transactions.length} existing transactions for account ${accountId}.`,
+  );
 
-    // Since results are in reverse chronological order, the first posted transaction we hit is the newest.
-    if (
-      transaction.status == "posted" &&
-      newestPostedTransactionId == undefined
-    ) {
-      console.log(`Found newest posted transaction: ${transaction.id}`);
-      newestPostedTransactionId = transaction.id;
-    }
-
-    newTellerTransactions.push(transaction);
+  // Create a map of known transaction ids to their index in the list for easy lookup.
+  const knownTransactionIdToIndex = new Map<string, number>();
+  for (let i = 0; i < knownTransactions.transactions.length; i++) {
+    const transaction = knownTransactions.transactions[i];
+    knownTransactionIdToIndex.set(transaction.id, i);
   }
 
-  // Get any existing transactions, e.g. for previously pending items, in order to update the status, date, etc.
-  const newTellerTransactionIds = newTellerTransactions.map((t) => t.id);
-  const existingTransactions = await transactionRepo.getBulk(
-    newTellerTransactionIds,
-    account.householdId,
-  );
-
-  const existingTransactionIds = Object.values(existingTransactions)
-    .filter((t) => t !== undefined)
-    .map((t) => t.id);
-  console.log(
-    `Found ${existingTransactionIds.length} existing transactions: `,
-    existingTransactionIds,
-  );
-
   const transactionsToWrite: Transaction[] = [];
-  for (const transaction of newTellerTransactions) {
-    const status = transaction.status == "posted" ? "posted" : "pending";
-    const date = formatDate(new Date(transaction.date));
 
-    const existingTransaction = existingTransactions[transaction.id];
+  for (const transaction of tellerTransactions) {
+    const existingTransactionIndex = knownTransactionIdToIndex.get(
+      transaction.id,
+    );
+    if (existingTransactionIndex !== undefined) {
+      const existingTransaction =
+        knownTransactions.transactions[existingTransactionIndex];
 
-    if (existingTransaction) {
-      // Transaction already exists, so we want to keep user-defined values
-      const isOriginalDate =
-        existingTransaction.date === existingTransaction.rawDate;
-      const isOriginalDescription =
-        existingTransaction.description === existingTransaction.rawDescription;
+      const updatedTransaction = buildUpdatedTransaction(
+        existingTransaction,
+        transaction,
+      );
+      if (updatedTransaction) {
+        transactionsToWrite.push(updatedTransaction);
+      }
 
-      transactionsToWrite.push({
-        ...existingTransaction,
-        rawDate: date,
-        date: isOriginalDate ? date : existingTransaction.date,
-        rawDescription: transaction.description,
-        description: isOriginalDescription
-          ? transaction.description
-          : existingTransaction.description,
-        status: status,
-      });
+      knownTransactionIdToIndex.delete(transaction.id);
     } else {
+      // This transaction does not exist in the database, so we need to create it.
       // TODO get category + counterparty dynamically
       const categoryId = UNCATEGORIZED_CATEGORY_ID;
       const counterpartyId = "0";
@@ -159,12 +138,12 @@ export async function refresh(accountId: string) {
         accountId: accountId,
         amount: transaction.amount,
         currency: "USD",
-        rawDate: date,
-        date: date,
+        rawDate: transaction.date,
+        date: transaction.date,
         rawDescription: transaction.description,
         description: transaction.description,
         notes: "",
-        status: status,
+        status: transaction.status == "posted" ? "posted" : "pending",
         counterparty: {
           id: counterpartyId,
           type: "merchant",
@@ -182,25 +161,58 @@ export async function refresh(accountId: string) {
     }
   }
 
-  console.log(
-    `Writing ${transactionsToWrite.length} new transactions: `,
-    transactionsToWrite.map((t) => t.id),
+  // Any remaining transactions in the map are pending transactions that have have been removed without posting, so should be deleted.
+  const transactionIdsToDelete: string[] = Array.from(
+    knownTransactionIdToIndex.keys(),
   );
+
+  console.log(
+    `Writing ${transactionsToWrite.length} new transactions and deleting ${transactionIdsToDelete.length} previously pending transactions.`,
+  );
+
   transactionsToWrite.forEach((transaction) => {
     transactionRepo.upsert(transaction);
   });
 
-  // Update transaction marker in account after all transactions are written so we can naturally redrive failures.
-  if (newestPostedTransactionId !== undefined) {
-    console.log(
-      `Updating account ${accountId} with newest posted transaction ID: ${newestPostedTransactionId}`,
-    );
-    account.lastPostedTransactionId = newestPostedTransactionId;
-  }
+  transactionIdsToDelete.forEach((transactionId) => {
+    transactionRepo.delete(transactionId, account.householdId);
+  });
 
   // Update refresh marker regardless of whether new transactions were found.
   account.transactionsLastRefreshedAt = new Date(Date.now());
   accountRepo.update(account);
+}
+
+// Helper function to build an updated transaction to write, if necessary.
+function buildUpdatedTransaction(
+  existingTransaction: Transaction,
+  tellerTransaction: TellerTransaction,
+): Transaction | undefined {
+  // Only need to update if the raw date, description, or status has changed.
+  if (
+    existingTransaction.rawDate === tellerTransaction.date &&
+    existingTransaction.rawDescription === tellerTransaction.description &&
+    existingTransaction.status === tellerTransaction.status
+  ) {
+    return undefined;
+  }
+
+  // We want to keep user-defined values, so check if the raw values match.
+  const isOriginalDate =
+    existingTransaction.date === existingTransaction.rawDate;
+  const isOriginalDescription =
+    existingTransaction.description === existingTransaction.rawDescription;
+
+  return {
+    ...existingTransaction,
+    rawDate: tellerTransaction.date,
+    date: isOriginalDate ? tellerTransaction.date : existingTransaction.date,
+    rawDescription: tellerTransaction.description,
+    description: isOriginalDescription
+      ? tellerTransaction.description
+      : existingTransaction.description,
+    status: tellerTransaction.status == "posted" ? "posted" : "pending",
+  };
 }
 
 export async function listForUser(
