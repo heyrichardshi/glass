@@ -7,8 +7,13 @@
     :loading="loading"
     @select="onSelect"
   >
-    <template #tagIds-cell="{ getValue }">
-      <TagBadge v-for="tagId in getValue()" :tagId="tagId" />
+    <template #description-cell="{ row }">
+      <div>
+        <div>{{ row.original.description }}</div>
+        <div class="mt-1">
+          <TagBadge v-for="tagId in row.original.tagIds" :key="tagId" :tagId="tagId" />
+        </div>
+      </div>
     </template>
   </UTable>
 </template>
@@ -17,6 +22,7 @@
 import type { TableColumn, TableRow } from "@nuxt/ui";
 import type { Category, Transaction } from "@saffron/types";
 import EditTransaction from "./EditTransaction.vue";
+import TagBadge from "../tag/TagBadge.vue";
 
 const props = defineProps<{
   transactions: Transaction[];
@@ -60,10 +66,6 @@ const columns: TableColumn<Transaction>[] = [
   {
     accessorKey: "description",
     header: "Description",
-  },
-  {
-    accessorKey: "tagIds",
-    header: "Tags",
   },
   {
     accessorKey: "amount",
