@@ -96,15 +96,14 @@ export async function update(
     );
     const newTagIds = newValues.tagIds || [];
 
-    // Remove any tag IDs that are the same as the existing values
-    newValues.tagIds = newTagIds.filter(
-      (tagId) => !existing.tagIds.includes(tagId),
-    );
-    console.log("New tagIds after filtering: ", newValues.tagIds);
+    // Check if the arrays are different (different length or different content)
+    const areArraysDifferent =
+      newTagIds.length !== existing.tagIds.length ||
+      newTagIds.some((tagId) => !existing.tagIds.includes(tagId)) ||
+      existing.tagIds.some((tagId) => !newTagIds.includes(tagId));
 
-    // If all tag IDs are the same, remove the key from newValues
-    if (newValues.tagIds.length === 0) {
-      console.log("All tagIds are the same; removing from new values.");
+    if (!areArraysDifferent) {
+      console.log("Tag arrays are the same; removing from new values.");
       delete newValues.tagIds;
     }
   }

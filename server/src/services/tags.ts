@@ -14,8 +14,14 @@ export async function listTags(
 ): Promise<ListTagsResponse> {
   const tagRepository = await TagRepository.getInstance();
   const tags = await tagRepository.listAll(request.householdId);
+
+  // Sort tags alphabetically by name
+  const sortedTags = tags.sort((a, b) =>
+    a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
+  );
+
   return {
-    tags: tags.map((tag) => toApiTag(tag)),
+    tags: sortedTags.map((tag) => toApiTag(tag)),
   };
 }
 

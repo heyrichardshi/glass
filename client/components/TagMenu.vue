@@ -21,7 +21,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  selectedTags: Tag[];
+  selectedTags: [Tag[]];
 }>();
 
 const userId = "0";
@@ -84,7 +84,7 @@ const selectedTags = ref<Tag[]>(
 
 watch(
   selectedTags,
-  (newTags) => {
+  (newTags: Tag[]) => {
     emit("selectedTags", newTags);
   },
   { immediate: true },
