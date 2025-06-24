@@ -3,7 +3,7 @@ import {
   UpdateTransactionRequest,
   UpdateTransactionResponse,
 } from "@saffron/types";
-import { TransactionRepository } from "../repositories";
+import { TransactionRepository, TagRepository } from "../repositories";
 import { Transaction } from "../models";
 import {
   InvalidInputWithCustomMessageError,
@@ -54,6 +54,7 @@ export async function update(
   }
 
   const transactionRepo = await TransactionRepository.getInstance();
+  const tagRepo = await TagRepository.getInstance();
 
   // Retrieve existing item to apply changes to
   const existing = await transactionRepo.get(
@@ -105,6 +106,16 @@ export async function update(
     if (!areArraysDifferent) {
       console.log("Tag arrays are the same; removing from new values.");
       delete newValues.tagIds;
+    } else {
+      // Sort tagIds by their corresponding tag names before saving
+      const tags = await tagRepo.listAll(request.userId);
+      const tagMap = new Map(tags.map((tag) => [tag.id, tag.name]));
+
+      newValues.tagIds = newTagIds.sort((a, b) => {
+        const nameA = tagMap.get(a) || "";
+        const nameB = tagMap.get(b) || "";
+        return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+      });
     }
   }
 
