@@ -77,8 +77,13 @@ const columns: TableColumn<Transaction>[] = [
         isNegative = true;
       }
 
+      // Parse the amount as a number and format to always show 2 decimal places
+      const numericAmount = parseFloat(amount);
+      const formattedAmount = numericAmount.toFixed(2);
+      
       const prefix = isNegative ? "-" : "";
-      return `${prefix}\$${amount}`;
+      const textColor = isNegative ? "text-emerald-600" : "";
+      return h('div', { class: `text-right ${textColor}` }, `${prefix}\$${formattedAmount}`);
     },
   },
 ];
