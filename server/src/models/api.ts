@@ -3,6 +3,7 @@ import { Category } from "./category";
 import { Tag } from "./tag";
 import { Account } from "./account";
 import { Transaction } from "./transaction";
+import { Merchant } from "./merchant";
 
 export function toApiAccount(account: Account): apiTypes.Account {
   return {
@@ -57,5 +58,14 @@ export function toApiTag(tag: Tag): apiTypes.Tag {
     id: tag.id,
     name: tag.name,
     householdId: tag.householdId,
+  };
+}
+
+export function toApiMerchant(merchant: Merchant): apiTypes.Merchant {
+  return {
+    id: merchant.id,
+    name: merchant.name,
+    defaultCategoryId: merchant.defaultCategoryId,
+    descriptionMatchers: merchant.descriptionMatchers,
   };
 }

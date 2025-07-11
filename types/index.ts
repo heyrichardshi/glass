@@ -2,6 +2,7 @@ export { Account } from "./src/models/account";
 export { Transaction, TransactionCounterparty } from "./src/models/transaction";
 export { Category } from "./src/models/category";
 export { Tag } from "./src/models/tag";
+export { Merchant } from "./src/models/merchant";
 export { CategoryTransactions, TagTransactions } from "./src/models/analytics";
 
 export {
@@ -26,6 +27,12 @@ export {
   ListTagsRequest,
   ListTagsResponse,
 } from "./src/api/tags";
+export {
+  CreateMerchantRequest,
+  CreateMerchantResponse,
+  ListMerchantsRequest,
+  ListMerchantsResponse,
+} from "./src/api/merchants";
 export {
   GetMonthlyReportRequest,
   GetMonthlyReportResponse,

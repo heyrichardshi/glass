@@ -4,6 +4,9 @@
 export interface Merchant {
   id: string;
   name: string;
-  normalizedNames: string[];
+  householdId: string;
   defaultCategoryId: string;
+
+  /** A list of regex patterns to match against lowercased transaction descriptions for automatic merchant assignment. */
+  descriptionMatchers: string[];
 }

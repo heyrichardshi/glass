@@ -20,7 +20,10 @@ export class ForbiddenError extends Error {
 }
 
 export class ConflictError extends Error {
-  constructor(entityType: "Category" | "Tag", resourceName: string) {
+  constructor(
+    entityType: "Category" | "Tag" | "Merchant",
+    resourceName: string,
+  ) {
     super(`${entityType} with name '${resourceName}' already exists.`);
     this.name = "ConflictError";
   }
