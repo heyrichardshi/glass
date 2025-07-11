@@ -13,9 +13,7 @@
         />
 
         <!-- Merchant / Counterparty -->
-        <UFormField label="Merchant">
-          <UInput v-model="editMerchant" disabled />
-        </UFormField>
+        <MerchantMenu allowCreate @selectedMerchant="selectedMerchant" />
 
         <!-- Description (full width)-->
         <UFormField label="Description" class="col-span-full">
@@ -65,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Category, Tag, Transaction } from "@saffron/types";
+import type { Category, Tag, Transaction, Merchant } from "@saffron/types";
 
 const props = defineProps<{
   transaction: Transaction;
@@ -102,7 +100,10 @@ function selectedDate(date: string) {
   editDate.value = date;
 }
 
-const editMerchant = ref("");
+const editMerchant = ref<Merchant | undefined>();
+function selectedMerchant(merchant: Merchant | undefined) {
+  editMerchant.value = merchant;
+}
 
 const editDescription = ref(props.transaction.description);
 
@@ -133,6 +134,7 @@ function commitChanges() {
   console.log("editDate: ", editDate.value);
   console.log("editDescription: ", editDescription.value);
   console.log("editNotes: ", editNotes.value);
+  console.log("editMerchant: ", editMerchant.value);
 
   const updateTransaction = transactionsApi.updateTransaction({
     userId,
@@ -142,6 +144,7 @@ function commitChanges() {
     categoryId: editCategory.value?.id,
     tagIds: editTags.value.map((tag) => tag.id),
     notes: editNotes.value,
+    // TODO: add updated merchant to request
   });
 
   watch(

@@ -11,7 +11,11 @@
       <div>
         <div>{{ row.original.description }}</div>
         <div class="mt-1">
-          <TagBadge v-for="tagId in row.original.tagIds" :key="tagId" :tagId="tagId" />
+          <TagBadge
+            v-for="tagId in row.original.tagIds"
+            :key="tagId"
+            :tagId="tagId"
+          />
         </div>
       </div>
     </template>
@@ -82,10 +86,14 @@ const columns: TableColumn<Transaction>[] = [
       // Parse the amount as a number and format to always show 2 decimal places
       const numericAmount = parseFloat(amount);
       const formattedAmount = numericAmount.toFixed(2);
-      
+
       const prefix = isNegative ? "-" : "";
       const textColor = isNegative ? "text-emerald-600" : "";
-      return h('div', { class: `text-right ${textColor}` }, `${prefix}\$${formattedAmount}`);
+      return h(
+        "div",
+        { class: `text-right ${textColor}` },
+        `${prefix}\$${formattedAmount}`,
+      );
     },
   },
 ];
