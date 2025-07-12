@@ -1,4 +1,4 @@
-import { Transaction } from "../models/transaction";
+import { Transaction, TransactionCounterparty } from "../models/transaction";
 
 export interface ListTransactionsResponse {
   transactions: Transaction[];
@@ -13,6 +13,7 @@ export interface UpdateTransactionRequest {
   notes?: string;
   categoryId?: string;
   tagIds?: string[];
+  counterparty?: TransactionCounterparty;
 }
 
 export interface UpdateTransactionResponse {

@@ -27,6 +27,7 @@ const UPDATE_TRANSACTION_KEYS = [
   "description",
   "notes",
   "categoryId",
+  "counterparty",
 ] as const;
 
 export async function update(
@@ -37,7 +38,8 @@ export async function update(
 
   UPDATE_TRANSACTION_KEYS.forEach((key) => {
     if (request[key] !== undefined) {
-      newValues[key] = request[key];
+      // Sidestep TS type checking, we are assigning type-correct values to each key.
+      (newValues as any)[key] = request[key];
     }
   });
 

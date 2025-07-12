@@ -13,6 +13,7 @@
         />
 
         <!-- Merchant / Counterparty -->
+        <!-- TODO: Need to toggle between account selector and merchant selector depending on the category -->
         <MerchantMenu allowCreate @selectedMerchant="selectedMerchant" />
 
         <!-- Description (full width)-->
@@ -144,7 +145,13 @@ function commitChanges() {
     categoryId: editCategory.value?.id,
     tagIds: editTags.value.map((tag) => tag.id),
     notes: editNotes.value,
-    // TODO: add updated merchant to request
+    // TODO: when account/merchant selector is implemented, need to determine which value to use
+    counterparty: editMerchant.value
+      ? {
+          id: editMerchant.value.id,
+          type: "merchant",
+        }
+      : undefined,
   });
 
   watch(
