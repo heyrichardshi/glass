@@ -1,6 +1,7 @@
 <template>
   <UTable
     sticky
+    ref="table"
     :data="transactions"
     :columns="columns"
     class="flex-1 w-full"
@@ -20,6 +21,24 @@
       </div>
     </template>
   </UTable>
+
+  <Transition
+    enter-active-class="transition-opacity duration-300 ease-in-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition-opacity duration-300 ease-in-out"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="selectedTransactions.length > 0"
+      class="sticky bottom-0 px-4 py-3.5 border-t border-accented text-sm text-muted backdrop-blur-lg flex justify-between items-center"
+    >
+      <span>{{ transactionCountString }} selected.</span>
+
+      <UButton :label="`Edit ${transactionCountString}`" />
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -53,7 +72,40 @@ function getCategoryById(categoryId: string): Category | undefined {
   return listCategories.categories.value.find((c) => c.id === categoryId);
 }
 
+const UCheckbox = resolveComponent("UCheckbox");
+const table = useTemplateRef("table");
+const selectedTransactions = computed(() => {
+  return (
+    table.value?.tableApi
+      ?.getFilteredSelectedRowModel()
+      .rows.map((row) => row.original.id) || []
+  );
+});
+const transactionCountString = computed<string>(() => {
+  const count = selectedTransactions.value.length;
+  return `${count} transaction${count !== 1 ? "s" : ""}`;
+});
+
 const columns: TableColumn<Transaction>[] = [
+  {
+    id: "select",
+    header: ({ table }) =>
+      h(UCheckbox, {
+        modelValue: table.getIsSomePageRowsSelected()
+          ? "indeterminate"
+          : table.getIsAllPageRowsSelected(),
+        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
+          table.toggleAllPageRowsSelected(!!value),
+        "aria-label": "Select all",
+      }),
+    cell: ({ row }) =>
+      h(UCheckbox, {
+        modelValue: row.getIsSelected(),
+        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
+          row.toggleSelected(!!value),
+        "aria-label": "Select row",
+      }),
+  },
   {
     accessorKey: "date",
     header: "Date",
