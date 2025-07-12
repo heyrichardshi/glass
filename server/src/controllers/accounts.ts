@@ -3,13 +3,13 @@ import asyncController from "./asyncController";
 import { InvalidInputError } from "../common/errors";
 
 export const registerAccounts = asyncController(async (req, res) => {
-  const accessToken = req.query.accessToken as string | undefined;
+  const { accessToken } = req.body;
   if (!accessToken) {
     throw new InvalidInputError("accessToken");
   }
 
   const response = await accounts.registerAccountsFromToken(accessToken);
-  res.status(200).json(response);
+  res.status(201).json(response);
 });
 
 export const refreshAccount = asyncController(async (req, res) => {

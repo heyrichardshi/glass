@@ -19,15 +19,7 @@ export const listByUser = asyncController(async (req, res) => {
 
 export const updateTransaction = asyncController(async (req, res) => {
   const transactionId = req.params.transactionId as string | undefined;
-  const userId = req.query.userId as string | undefined;
-  const date = req.query.date as string | undefined;
-  const description = req.query.description as string | undefined;
-  const notes = req.query.notes as string | undefined;
-  const categoryId = req.query.categoryId as string | undefined;
-  const rawTagIds = req.query.tagIds;
-  const tagIds = (
-    Array.isArray(rawTagIds) ? rawTagIds : [rawTagIds].filter(Boolean)
-  ) as string[];
+  const { userId, date, description, notes, categoryId, tagIds } = req.body;
 
   if (!transactionId) {
     throw new NotFoundError("No such transaction found");
@@ -43,7 +35,7 @@ export const updateTransaction = asyncController(async (req, res) => {
     description,
     notes,
     categoryId,
-    tagIds,
+    tagIds: Array.isArray(tagIds) ? tagIds : [tagIds].filter(Boolean),
   });
 
   res.status(200).json(response);

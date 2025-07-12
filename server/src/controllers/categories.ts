@@ -15,9 +15,7 @@ export const listCategories = asyncController(async (req, res) => {
 });
 
 export const createCategory = asyncController(async (req, res) => {
-  const userId = req.query.userId as string | undefined; // ?userId=...
-  const name = req.query.name as string | undefined; // ?name=...
-  const parentId = req.query.parentId as string | undefined; // ?parentId=...
+  const { userId, name, parentId } = req.body;
 
   if (!userId) {
     throw new InvalidInputError("userId");
@@ -32,5 +30,5 @@ export const createCategory = asyncController(async (req, res) => {
     name,
     parentId,
   });
-  res.status(200).json(category);
+  res.status(201).json(category);
 });

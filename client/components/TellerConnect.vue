@@ -91,8 +91,8 @@ function openTellerConnect() {
 
 function registerAccounts(accessToken: string) {
   useFetch(() => `${config.public.SAFFRON_API_URL}/accounts/register`, {
-    query: { accessToken },
     method: "POST",
+    body: { accessToken },
     server: false,
     onResponse({ response }) {
       const res = response._data as RegisterAccountsResponse;

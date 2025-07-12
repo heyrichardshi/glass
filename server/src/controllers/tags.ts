@@ -15,8 +15,7 @@ export const listTags = asyncController(async (req, res) => {
 });
 
 export const createTag = asyncController(async (req, res) => {
-  const userId = req.query.userId as string | undefined; // ?userId=...
-  const name = req.query.name as string | undefined; // ?name=...
+  const { userId, name } = req.body;
 
   if (!userId) {
     throw new InvalidInputError("userId");
@@ -30,5 +29,5 @@ export const createTag = asyncController(async (req, res) => {
     householdId: userId,
     name,
   });
-  res.status(200).json(tag);
+  res.status(201).json(tag);
 });

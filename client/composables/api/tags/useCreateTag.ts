@@ -8,7 +8,7 @@ export default function (userId: string, name: string, parentId?: string) {
     () => `${config.public.SAFFRON_API_URL}/tags`,
     {
       method: "POST",
-      query: { userId, name, parentId },
+      body: { userId, name, parentId },
       server: false,
       onResponseError: (e) => {
         console.error("Error creating tag:", e);

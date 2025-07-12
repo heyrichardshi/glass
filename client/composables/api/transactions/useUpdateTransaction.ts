@@ -12,8 +12,8 @@ export default function (request: UpdateTransactionRequest) {
     () =>
       `${config.public.SAFFRON_API_URL}/transactions/${request.transactionId}`,
     {
-      method: "POST",
-      query: request,
+      method: "PUT",
+      body: request,
       server: false,
       onResponseError: (e) => {
         console.error("Error updating transaction:", e);
