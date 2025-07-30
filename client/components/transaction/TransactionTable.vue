@@ -34,7 +34,10 @@
       v-if="selectedTransactions.length > 0"
       class="sticky bottom-0 px-4 py-3.5 border-t border-accented text-sm text-muted backdrop-blur-lg flex justify-between items-center"
     >
-      <span>{{ transactionCountString }} selected.</span>
+      <span
+        >{{ transactionCountString }} selected. Total:
+        {{ transactionTotalString }}</span
+      >
 
       <UButton
         :label="`Edit ${transactionCountString}`"
@@ -77,17 +80,28 @@ function getCategoryById(categoryId: string): Category | undefined {
 }
 
 const UCheckbox = resolveComponent("UCheckbox");
-const table = useTemplateRef("table");
-const selectedTransactions = computed(() => {
+const table = useTemplateRef<{
+  tableApi: {
+    getFilteredSelectedRowModel: () => { rows: { original: Transaction }[] };
+  };
+}>("table");
+const selectedTransactions = computed<Transaction[]>(() => {
   return (
     table.value?.tableApi
       ?.getFilteredSelectedRowModel()
-      .rows.map((row) => row.original) || []
+      .rows.map((row: { original: Transaction }) => row.original) || []
   );
 });
 const transactionCountString = computed<string>(() => {
   const count = selectedTransactions.value.length;
   return `${count} transaction${count !== 1 ? "s" : ""}`;
+});
+const transactionTotalString = computed<string>(() => {
+  const total = selectedTransactions.value.reduce(
+    (acc: number, transaction: Transaction) => acc + parseFloat(transaction.amount),
+    0,
+  );
+  return `\$${total.toFixed(2)}`;
 });
 
 const columns: TableColumn<Transaction>[] = [
