@@ -19,3 +19,21 @@ export interface UpdateTransactionRequest {
 export interface UpdateTransactionResponse {
   transaction: Transaction;
 }
+
+export interface BulkUpdateTransactionsRequest {
+  userId: string;
+  transactionIds: string[];
+  updates: {
+    categoryId?: string;
+    tagIds?: string[];
+    counterparty?: TransactionCounterparty;
+  };
+}
+
+export interface BulkUpdateTransactionsResponse {
+  updatedTransactions: Transaction[];
+  failedUpdates: {
+    transactionId: string;
+    error: string;
+  }[];
+}

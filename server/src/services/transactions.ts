@@ -2,6 +2,8 @@ import {
   ListTransactionsResponse,
   UpdateTransactionRequest,
   UpdateTransactionResponse,
+  BulkUpdateTransactionsRequest,
+  BulkUpdateTransactionsResponse,
 } from "@saffron/types";
 import { TransactionRepository, TagRepository } from "../repositories";
 import { Transaction } from "../models";
@@ -136,4 +138,89 @@ export async function update(
   } as Transaction;
 
   return { transaction: await transactionRepo.upsert(newTransaction) };
+}
+
+/**
+ * Updates multiple transactions in bulk. Tags are updated additively (existing tags are preserved).
+ *
+ * @param request - The request object containing the transaction IDs and updates.
+ * @returns A response object containing the updated transactions and any failures.
+ */
+export async function bulkUpdate(
+  request: BulkUpdateTransactionsRequest,
+): Promise<BulkUpdateTransactionsResponse> {
+  const { userId, transactionIds, updates } = request;
+
+  if (!transactionIds || transactionIds.length === 0) {
+    throw new InvalidInputWithCustomMessageError(
+      "At least one transaction ID must be provided for bulk update.",
+    );
+  }
+
+  if (Object.keys(updates).length === 0) {
+    throw new InvalidInputWithCustomMessageError(
+      "At least one field must be provided for bulk update.",
+    );
+  }
+
+  const transactionRepo = await TransactionRepository.getInstance();
+  const tagRepo = await TagRepository.getInstance();
+
+  const existingTransactions = await transactionRepo.getBulk(
+    transactionIds,
+    userId,
+  );
+
+  const updatedTransactions: Transaction[] = [];
+  const failedUpdates: { transactionId: string; error: string }[] = [];
+
+  for (const transactionId of transactionIds) {
+    try {
+      const existing = existingTransactions[transactionId];
+
+      if (!existing) {
+        failedUpdates.push({
+          transactionId,
+          error: `Transaction '${transactionId}' not found.`,
+        });
+        continue;
+      }
+
+      // Apply updates to the existing transaction
+      const updatedTransaction = {
+        ...existing,
+        ...updates,
+      } as Transaction;
+
+      // Handle tagIds sorting if provided
+      if (updates.tagIds !== undefined) {
+        const tags = await tagRepo.listAll(userId);
+        const tagMap = new Map(tags.map((tag) => [tag.id, tag.name]));
+
+        updatedTransaction.tagIds = updates.tagIds.sort(
+          (a: string, b: string) => {
+            const nameA = tagMap.get(a) || "";
+            const nameB = tagMap.get(b) || "";
+            return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+          },
+        );
+      }
+
+      // Save the updated transaction
+      const savedTransaction = await transactionRepo.upsert(updatedTransaction);
+      updatedTransactions.push(savedTransaction);
+    } catch (error) {
+      console.error(`Failed to update transaction ${transactionId}:`, error);
+      failedUpdates.push({
+        transactionId,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  }
+
+  return {
+    updatedTransactions,
+    failedUpdates,
+  };
 }

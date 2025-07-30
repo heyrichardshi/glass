@@ -42,3 +42,35 @@ export const updateTransaction = asyncController(async (req, res) => {
 
   res.status(200).json(response);
 });
+
+export const bulkUpdateTransactions = asyncController(async (req, res) => {
+  const { userId, transactionIds, updates } = req.body;
+
+  if (!userId) {
+    throw new InvalidInputError("userId");
+  }
+
+  if (!transactionIds || !Array.isArray(transactionIds)) {
+    throw new InvalidInputError("transactionIds must be an array");
+  }
+
+  if (!updates || typeof updates !== "object") {
+    throw new InvalidInputError("updates must be an object");
+  }
+
+  // Handle tagIds array conversion if present
+  const processedUpdates = { ...updates };
+  if (updates.tagIds) {
+    processedUpdates.tagIds = Array.isArray(updates.tagIds)
+      ? updates.tagIds
+      : [updates.tagIds].filter(Boolean);
+  }
+
+  const response = await transactions.bulkUpdate({
+    userId,
+    transactionIds,
+    updates: processedUpdates,
+  });
+
+  res.status(200).json(response);
+});

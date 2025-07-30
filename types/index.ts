@@ -14,6 +14,8 @@ export {
   ListTransactionsResponse,
   UpdateTransactionRequest,
   UpdateTransactionResponse,
+  BulkUpdateTransactionsRequest,
+  BulkUpdateTransactionsResponse,
 } from "./src/api/transactions";
 export {
   CreateCategoryRequest,
