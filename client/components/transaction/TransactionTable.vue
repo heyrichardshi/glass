@@ -36,7 +36,10 @@
     >
       <span>{{ transactionCountString }} selected.</span>
 
-      <UButton :label="`Edit ${transactionCountString}`" />
+      <UButton
+        :label="`Edit ${transactionCountString}`"
+        @click="onBulkEdit()"
+      />
     </div>
   </Transition>
 </template>
@@ -45,6 +48,7 @@
 import type { TableColumn, TableRow } from "@nuxt/ui";
 import type { Category, Transaction } from "@saffron/types";
 import EditTransaction from "./EditTransaction.vue";
+import BulkEditTransaction from "./BulkEditTransaction.vue";
 import TagBadge from "../tag/TagBadge.vue";
 
 const props = defineProps<{
@@ -78,7 +82,7 @@ const selectedTransactions = computed(() => {
   return (
     table.value?.tableApi
       ?.getFilteredSelectedRowModel()
-      .rows.map((row) => row.original.id) || []
+      .rows.map((row) => row.original) || []
   );
 });
 const transactionCountString = computed<string>(() => {
@@ -168,5 +172,23 @@ async function onSelect(row: TableRow<Transaction>, e?: Event) {
     index: row.index,
     transaction: editPaneResult.newTransaction,
   });
+}
+
+async function onBulkEdit() {
+  const bulkEditPane = overlay.create(BulkEditTransaction, {
+    props: {
+      transactions: selectedTransactions.value,
+    },
+  });
+
+  const instance = bulkEditPane.open();
+
+  const bulkEditPaneResult = (await instance.result) as {
+    newTransactions: Transaction[];
+  };
+
+  // TODO: Update the table with the new transactions.
+  //   To do so, we need to modify the emit of the table to support multiple transactions.
+  // emit("updatedTransactions", bulkEditPaneResult.newTransactions);
 }
 </script>
