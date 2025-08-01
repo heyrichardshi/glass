@@ -98,7 +98,8 @@ const transactionCountString = computed<string>(() => {
 });
 const transactionTotalString = computed<string>(() => {
   const total = selectedTransactions.value.reduce(
-    (acc: number, transaction: Transaction) => acc + parseFloat(transaction.amount),
+    (acc: number, transaction: Transaction) =>
+      acc + parseFloat(transaction.amount),
     0,
   );
   return `\$${total.toFixed(2)}`;
