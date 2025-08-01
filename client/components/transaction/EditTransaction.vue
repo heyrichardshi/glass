@@ -19,6 +19,11 @@
         <!-- Description (full width)-->
         <UFormField label="Description" class="col-span-full">
           <UInput v-model="editDescription" class="w-full" />
+          <p class="text-xs italic text-gray-500 mt-1">
+            Appears on your statement as:
+            <br />
+            {{ transaction.rawDescription }}
+          </p>
         </UFormField>
 
         <!-- Category -->
