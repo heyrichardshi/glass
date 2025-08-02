@@ -3,6 +3,8 @@ import {
   CreateMerchantResponse,
   ListMerchantsRequest,
   ListMerchantsResponse,
+  UpdateMerchantRequest,
+  UpdateMerchantResponse,
 } from "@saffron/types";
 import { CategoryRepository, MerchantRepository } from "../repositories";
 import { Merchant } from "../models";
@@ -58,5 +60,65 @@ export async function createMerchant(
 
   return {
     merchant: toApiMerchant(createdMerchant),
+  };
+}
+
+export async function updateMerchant(
+  merchantId: string,
+  request: UpdateMerchantRequest,
+): Promise<UpdateMerchantResponse> {
+  const merchantRepository = await MerchantRepository.getInstance();
+  const categoryRepository = await CategoryRepository.getInstance();
+
+  // Get the existing merchant
+  const existingMerchant = await merchantRepository.get(
+    merchantId,
+    request.householdId,
+  );
+  if (!existingMerchant) {
+    throw new NotFoundError(`Merchant with ID '${merchantId}' not found.`);
+  }
+
+  // Check if name is being changed and if it conflicts with existing merchant
+  if (request.name && request.name !== existingMerchant.name) {
+    const conflictingMerchant = await merchantRepository.getByName(
+      request.name.toLowerCase(),
+      request.householdId,
+    );
+    if (conflictingMerchant && conflictingMerchant.id !== merchantId) {
+      throw new ConflictError("Merchant", request.name);
+    }
+  }
+
+  // Check if default category is being changed and if it exists
+  if (
+    request.defaultCategoryId &&
+    request.defaultCategoryId !== existingMerchant.defaultCategoryId
+  ) {
+    const category = await categoryRepository.findById(
+      request.defaultCategoryId,
+      request.householdId,
+    );
+    if (!category) {
+      throw new NotFoundError(
+        `Category with ID '${request.defaultCategoryId}' not found.`,
+      );
+    }
+  }
+
+  // Update the merchant with new values
+  const updatedMerchant: Merchant = {
+    ...existingMerchant,
+    name: request.name || existingMerchant.name,
+    defaultCategoryId:
+      request.defaultCategoryId || existingMerchant.defaultCategoryId,
+    descriptionMatchers:
+      request.descriptionMatchers || existingMerchant.descriptionMatchers,
+  };
+
+  const savedMerchant = await merchantRepository.update(updatedMerchant);
+
+  return {
+    merchant: toApiMerchant(savedMerchant),
   };
 }

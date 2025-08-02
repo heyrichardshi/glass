@@ -34,6 +34,8 @@ export {
   CreateMerchantResponse,
   ListMerchantsRequest,
   ListMerchantsResponse,
+  UpdateMerchantRequest,
+  UpdateMerchantResponse,
 } from "./src/api/merchants";
 export {
   GetMonthlyReportRequest,

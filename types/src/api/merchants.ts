@@ -18,3 +18,14 @@ export interface CreateMerchantRequest {
 export interface CreateMerchantResponse {
   merchant: Merchant;
 }
+
+export interface UpdateMerchantRequest {
+  householdId: string;
+  name?: string;
+  defaultCategoryId?: string;
+  descriptionMatchers?: string[];
+}
+
+export interface UpdateMerchantResponse {
+  merchant: Merchant;
+}

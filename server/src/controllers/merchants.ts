@@ -39,3 +39,26 @@ export const createMerchant = asyncController(async (req, res) => {
 
   res.status(201).json(merchant);
 });
+
+export const updateMerchant = asyncController(async (req, res) => {
+  const { householdId, name, defaultCategoryId, descriptionMatchers } =
+    req.body;
+  const merchantId = req.params.merchantId;
+
+  if (!householdId) {
+    throw new InvalidInputError("householdId");
+  }
+
+  if (!merchantId) {
+    throw new InvalidInputError("merchantId");
+  }
+
+  const merchant = await merchants.updateMerchant(merchantId, {
+    householdId,
+    name,
+    defaultCategoryId,
+    descriptionMatchers,
+  });
+
+  res.status(200).json(merchant);
+});
