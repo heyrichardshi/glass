@@ -17,6 +17,11 @@ const items = ref<NavigationMenuItem[]>([
     to: "/accounts",
   },
   {
+    label: "Merchants",
+    icon: "i-lucide-store",
+    to: "/merchants",
+  },
+  {
     label: "Reports",
     icon: "i-lucide-file-chart-pie",
     to: "/report",
