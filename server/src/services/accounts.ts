@@ -8,7 +8,7 @@ import { Transaction as TellerTransaction } from "../models/teller";
 import { AccountRepository, TransactionRepository } from "../repositories";
 import * as teller from "./teller";
 import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
-import { formatDate } from "../common/utils";
+import { toApiAccount } from "../models/api";
 
 export async function registerAccountsFromToken(
   token: string,
@@ -35,7 +35,7 @@ export async function registerAccountsFromToken(
         balance: balance.ledger ?? "0",
         mask: account.last_four,
         officialName: account.name,
-        transactionsLastRefreshedAt: new Date(0),
+        transactionsLastRefreshedAt: new Date(0).toISOString(),
         lastPostedTransactionId: "",
         type: account.type,
         status: account.status == "open" ? "open" : "closed",
@@ -179,7 +179,7 @@ export async function refresh(accountId: string) {
   });
 
   // Update refresh marker regardless of whether new transactions were found.
-  account.transactionsLastRefreshedAt = new Date(Date.now());
+  account.transactionsLastRefreshedAt = new Date(Date.now()).toISOString();
   accountRepo.update(account);
 }
 

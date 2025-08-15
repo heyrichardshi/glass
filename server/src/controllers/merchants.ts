@@ -1,12 +1,21 @@
 import * as merchants from "../services/merchants";
-import asyncController from "./asyncController";
-import { InvalidInputError } from "../common/errors";
+import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
+import {
+  CreateMerchantBody,
+  CreateMerchantResponse,
+  ListMerchantsQuery,
+  ListMerchantsResponse,
+  UpdateMerchantBody,
+  UpdateMerchantResponse,
+} from "@saffron/types/schemas";
 
-export const listMerchants = asyncController(async (req, res) => {
-  const householdId = req.query.householdId as string | undefined;
-  if (!householdId) {
-    throw new InvalidInputError("householdId");
-  }
+export const listMerchants = asyncController<
+  NoParams,
+  ListMerchantsQuery,
+  NoBody,
+  ListMerchantsResponse
+>(async (req, res) => {
+  const { householdId } = req.query;
 
   const merchantsList = await merchants.listMerchants({
     householdId: householdId,
@@ -14,21 +23,14 @@ export const listMerchants = asyncController(async (req, res) => {
   res.status(200).json(merchantsList);
 });
 
-export const createMerchant = asyncController(async (req, res) => {
+export const createMerchant = asyncController<
+  NoParams,
+  NoQuery,
+  CreateMerchantBody,
+  CreateMerchantResponse
+>(async (req, res) => {
   const { householdId, name, defaultCategoryId, descriptionMatchers } =
     req.body;
-
-  if (!householdId) {
-    throw new InvalidInputError("householdId");
-  }
-
-  if (!name) {
-    throw new InvalidInputError("name");
-  }
-
-  if (!defaultCategoryId) {
-    throw new InvalidInputError("defaultCategoryId");
-  }
 
   const merchant = await merchants.createMerchant({
     householdId,
@@ -40,18 +42,15 @@ export const createMerchant = asyncController(async (req, res) => {
   res.status(201).json(merchant);
 });
 
-export const updateMerchant = asyncController(async (req, res) => {
+export const updateMerchant = asyncController<
+  NoParams,
+  NoQuery,
+  UpdateMerchantBody,
+  UpdateMerchantResponse
+>(async (req, res) => {
   const { householdId, name, defaultCategoryId, descriptionMatchers } =
     req.body;
   const merchantId = req.params.merchantId;
-
-  if (!householdId) {
-    throw new InvalidInputError("householdId");
-  }
-
-  if (!merchantId) {
-    throw new InvalidInputError("merchantId");
-  }
 
   const merchant = await merchants.updateMerchant(merchantId, {
     householdId,

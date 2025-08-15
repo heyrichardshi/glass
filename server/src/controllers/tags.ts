@@ -1,12 +1,19 @@
 import * as tags from "../services/tags";
-import asyncController from "./asyncController";
-import { InvalidInputError } from "../common/errors";
+import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
+import {
+  CreateTagBody,
+  CreateTagResponse,
+  ListTagsQuery,
+  ListTagsResponse,
+} from "@saffron/types/schemas";
 
-export const listTags = asyncController(async (req, res) => {
-  const userId = req.query.userId as string | undefined;
-  if (!userId) {
-    throw new InvalidInputError("userId");
-  }
+export const listTags = asyncController<
+  NoParams,
+  ListTagsQuery,
+  NoBody,
+  ListTagsResponse
+>(async (req, res) => {
+  const { userId } = req.query;
 
   const tagsList = await tags.listTags({
     householdId: userId,
@@ -14,16 +21,13 @@ export const listTags = asyncController(async (req, res) => {
   res.status(200).json(tagsList);
 });
 
-export const createTag = asyncController(async (req, res) => {
+export const createTag = asyncController<
+  NoParams,
+  NoQuery,
+  CreateTagBody,
+  CreateTagResponse
+>(async (req, res) => {
   const { userId, name } = req.body;
-
-  if (!userId) {
-    throw new InvalidInputError("userId");
-  }
-
-  if (!name) {
-    throw new InvalidInputError("name");
-  }
 
   const tag = await tags.createTag({
     householdId: userId,

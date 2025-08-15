@@ -9,7 +9,7 @@ export interface Account {
   mask: string;
   /** What the financial institution refers to the account as. */
   officialName: string;
-  transactionsLastRefreshedAt: Date;
+  transactionsLastRefreshedAt: string;
   /** Used to keep track of the last posted transaction ID, to prevent extra reads. */
   lastPostedTransactionId: String;
   /** The type of the account, e.g. checking, savings, credit card. */

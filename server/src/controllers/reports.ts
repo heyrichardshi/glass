@@ -1,21 +1,17 @@
 import * as analytics from "../services/analytics";
-import asyncController from "./asyncController";
-import { InvalidInputError } from "../common/errors";
+import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
+import {
+  GetMonthlyReportQuery,
+  GetMonthlyReportResponse,
+} from "@saffron/types/schemas";
 
-export const getMonthlyReport = asyncController(async (req, res) => {
-  const userId = req.query.userId as string | undefined;
-  const year = req.query.year as string | undefined;
-  const month = req.query.month as string | undefined;
-
-  if (!userId) {
-    throw new InvalidInputError("userId");
-  }
-  if (!year) {
-    throw new InvalidInputError("year");
-  }
-  if (!month) {
-    throw new InvalidInputError("month");
-  }
+export const getMonthlyReport = asyncController<
+  NoParams,
+  GetMonthlyReportQuery,
+  NoBody,
+  GetMonthlyReportResponse
+>(async (req, res) => {
+  const { userId, year, month } = req.query;
 
   const response = await analytics.getMonthlyReport({ userId, year, month });
 

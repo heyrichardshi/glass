@@ -32,3 +32,4 @@ pnpm docker:run
 
 ## References
 - [`@azure/cosmos` SDK Documentation](https://learn.microsoft.com/en-us/javascript/api/@azure/cosmos/?view=azure-node-latest)
+- [Zod Documentation](https://zod.dev/)

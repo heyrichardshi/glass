@@ -1,12 +1,19 @@
 import * as categories from "../services/categories";
-import asyncController from "./asyncController";
-import { InvalidInputError } from "../common/errors";
+import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
+import {
+  CreateCategoryBody,
+  CreateCategoryResponse,
+  ListCategoriesQuery,
+  ListCategoriesResponse,
+} from "@saffron/types/schemas";
 
-export const listCategories = asyncController(async (req, res) => {
-  const userId = req.query.userId as string | undefined;
-  if (!userId) {
-    throw new InvalidInputError("userId");
-  }
+export const listCategories = asyncController<
+  NoParams,
+  ListCategoriesQuery,
+  NoBody,
+  ListCategoriesResponse
+>(async (req, res) => {
+  const { userId } = req.query;
 
   const categoriesList = await categories.listCategories({
     householdId: userId,
@@ -14,16 +21,13 @@ export const listCategories = asyncController(async (req, res) => {
   res.status(200).json(categoriesList);
 });
 
-export const createCategory = asyncController(async (req, res) => {
+export const createCategory = asyncController<
+  NoParams,
+  NoQuery,
+  CreateCategoryBody,
+  CreateCategoryResponse
+>(async (req, res) => {
   const { userId, name, parentId } = req.body;
-
-  if (!userId) {
-    throw new InvalidInputError("userId");
-  }
-
-  if (!name) {
-    throw new InvalidInputError("name");
-  }
 
   const category = await categories.createCategory({
     householdId: userId,

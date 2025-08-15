@@ -8,7 +8,7 @@ export interface Account {
   mask: string;
   /** What the financial institution refers to the account as. */
   officialName: string;
-  transactionsLastRefreshedAt: Date;
+  transactionsLastRefreshedAt: string;
   /** The type of the account, e.g. checking, savings, credit card. */
   type: string;
   status: "open" | "closed" | "disconnected";
