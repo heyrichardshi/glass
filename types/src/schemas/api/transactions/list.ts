@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { TransactionSchema } from '../../models';
+import { z } from "zod";
+import { TransactionSchema } from "../../models";
 
 export const ListTransactionsQuerySchema = z.object({
   userId: z.string(),
@@ -11,4 +11,6 @@ export const ListTransactionsResponseSchema = z.object({
   transactions: z.array(TransactionSchema),
   paginationToken: z.string().optional(),
 });
-export type ListTransactionsResponse = z.infer<typeof ListTransactionsResponseSchema>; 
+export type ListTransactionsResponse = z.infer<
+  typeof ListTransactionsResponseSchema
+>;

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const MerchantSchema = z.object({
   id: z.string(),
@@ -7,4 +7,4 @@ export const MerchantSchema = z.object({
   descriptionMatchers: z.array(z.string()),
 });
 
-export type Merchant = z.infer<typeof MerchantSchema>; 
+export type Merchant = z.infer<typeof MerchantSchema>;

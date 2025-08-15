@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const CategorySchema = z.object({
   id: z.string(),
@@ -8,4 +8,4 @@ export const CategorySchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export type Category = z.infer<typeof CategorySchema>; 
+export type Category = z.infer<typeof CategorySchema>;

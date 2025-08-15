@@ -1,10 +1,12 @@
-import { z } from 'zod';
-import { TransactionSchema, TransactionCounterpartySchema } from '../../models';
+import { z } from "zod";
+import { TransactionSchema, TransactionCounterpartySchema } from "../../models";
 
 export const UpdateTransactionParamsSchema = z.object({
   transactionId: z.string(),
 });
-export type UpdateTransactionParams = z.infer<typeof UpdateTransactionParamsSchema>;
+export type UpdateTransactionParams = z.infer<
+  typeof UpdateTransactionParamsSchema
+>;
 
 export const UpdateTransactionBodySchema = z.object({
   userId: z.string(),
@@ -20,4 +22,6 @@ export type UpdateTransactionBody = z.infer<typeof UpdateTransactionBodySchema>;
 export const UpdateTransactionResponseSchema = z.object({
   transaction: TransactionSchema,
 });
-export type UpdateTransactionResponse = z.infer<typeof UpdateTransactionResponseSchema>; 
+export type UpdateTransactionResponse = z.infer<
+  typeof UpdateTransactionResponseSchema
+>;

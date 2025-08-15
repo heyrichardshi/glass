@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { MerchantSchema } from '../../models';
+import { z } from "zod";
+import { MerchantSchema } from "../../models";
 
 export const UpdateMerchantParamsSchema = z.object({
   merchantId: z.string(),
@@ -17,4 +17,6 @@ export type UpdateMerchantBody = z.infer<typeof UpdateMerchantBodySchema>;
 export const UpdateMerchantResponseSchema = z.object({
   merchant: MerchantSchema,
 });
-export type UpdateMerchantResponse = z.infer<typeof UpdateMerchantResponseSchema>; 
+export type UpdateMerchantResponse = z.infer<
+  typeof UpdateMerchantResponseSchema
+>;

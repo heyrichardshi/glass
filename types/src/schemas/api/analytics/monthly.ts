@@ -1,5 +1,10 @@
-import { z } from 'zod';
-import { AccountSchema, CategorySchema, TagSchema, TransactionSchema } from '../../models';
+import { z } from "zod";
+import {
+  AccountSchema,
+  CategorySchema,
+  TagSchema,
+  TransactionSchema,
+} from "../../models";
 
 export const GetMonthlyReportQuerySchema = z.object({
   userId: z.string(),
@@ -32,4 +37,6 @@ export const GetMonthlyReportResponseSchema = z.object({
   accounts: z.record(z.string(), AccountSchema),
   transactions: z.record(z.string(), TransactionSchema),
 });
-export type GetMonthlyReportResponse = z.infer<typeof GetMonthlyReportResponseSchema>; 
+export type GetMonthlyReportResponse = z.infer<
+  typeof GetMonthlyReportResponseSchema
+>;

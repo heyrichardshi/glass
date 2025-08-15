@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const AccountSchema = z.object({
   id: z.string(),
@@ -14,4 +14,4 @@ export const AccountSchema = z.object({
   tellerEnrollmentId: z.string().optional(),
 });
 
-export type Account = z.infer<typeof AccountSchema>; 
+export type Account = z.infer<typeof AccountSchema>;
