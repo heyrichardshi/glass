@@ -5,6 +5,8 @@ import {
   BulkUpdateTransactionsResponse,
   ListTransactionsQuery,
   ListTransactionsResponse,
+  SearchTransactionsBody,
+  SearchTransactionsResponse,
   UpdateTransactionBody,
   UpdateTransactionParams,
   UpdateTransactionResponse,
@@ -23,6 +25,24 @@ export const listByUser = asyncController<
     paginationToken,
   );
   res.status(200).json(transactionsList);
+});
+
+export const search = asyncController<
+  NoParams,
+  SearchTransactionsBody,
+  NoBody,
+  SearchTransactionsResponse
+>(async (req, res) => {
+  const userId = "0";
+  const { filters, paginationToken } = req.body;
+
+  const response = await transactions.list({
+    userId,
+    filters,
+    paginationToken,
+  });
+
+  res.status(200).json(response);
 });
 
 export const updateTransaction = asyncController<

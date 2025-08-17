@@ -3,6 +3,8 @@ import {
   Container,
   ReadOperationInput,
   StatusCodes,
+  SqlParameter,
+  SqlQuerySpec,
 } from "@azure/cosmos";
 import { Transaction, TransactionsList } from "../models";
 import { DatabaseProvider } from "./database";
@@ -119,6 +121,86 @@ export class TransactionRepository {
     }
 
     return response.resource as unknown as Transaction;
+  }
+
+  async list(params: {
+    userId: string;
+    searchText?: string;
+    accountIds?: string[];
+    merchantIds?: string[];
+    categoryIds?: string[];
+    tagIds?: string[];
+    startDate?: string;
+    endDate?: string;
+    paginationToken?: string;
+  }): Promise<TransactionsList> {
+    const container = await this.promisedContainer;
+
+    let query = "SELECT * FROM c WHERE c.userId = @userId";
+    const parameters: SqlParameter[] = [
+      { name: "@userId", value: params.userId },
+    ];
+
+    if (params.searchText) {
+      // Case-insensitive search for the search text in the description.
+      // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/contains
+      query += " AND CONTAINS(c.description, @searchText, true)";
+      parameters.push({ name: "@searchText", value: params.searchText });
+    }
+
+    if (params.accountIds) {
+      // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/array-contains
+      query += " AND ARRAY_CONTAINS(@accountIds, c.accountId)";
+      parameters.push({ name: "@accountIds", value: params.accountIds });
+    }
+
+    if (params.merchantIds) {
+      query += " AND ARRAY_CONTAINS(@merchantIds, c.merchantId)";
+      parameters.push({ name: "@merchantIds", value: params.merchantIds });
+    }
+
+    if (params.categoryIds) {
+      query += " AND ARRAY_CONTAINS(@categoryIds, c.categoryId)";
+      parameters.push({ name: "@categoryIds", value: params.categoryIds });
+    }
+
+    if (params.tagIds) {
+      query += " AND ARRAY_CONTAINS(@tagIds, c.tagId)";
+      parameters.push({ name: "@tagIds", value: params.tagIds });
+    }
+
+    if (params.startDate) {
+      query += " AND c.date >= @startDate";
+      parameters.push({ name: "@startDate", value: params.startDate });
+    }
+
+    if (params.endDate) {
+      query += " AND c.date <= @endDate";
+      parameters.push({ name: "@endDate", value: params.endDate });
+    }
+
+    query += " ORDER BY c.date DESC";
+
+    const querySpec: SqlQuerySpec = { query, parameters };
+
+    const response = await container.items
+      .query<Transaction>(querySpec, {
+        partitionKey: params.userId,
+        maxItemCount: 50,
+        continuationToken: params.paginationToken,
+      })
+      .fetchNext();
+
+    const normalizedTransactions = await Promise.all(
+      response.resources.map(
+        async (transaction) => await this.normalizeTransaction(transaction),
+      ),
+    );
+
+    return {
+      transactions: normalizedTransactions,
+      paginationToken: response.continuationToken,
+    };
   }
 
   async listTransactionsByUser(

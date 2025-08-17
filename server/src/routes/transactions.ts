@@ -14,6 +14,8 @@ import {
   ListTransactionsResponseSchema,
   BulkUpdateTransactionsResponseSchema,
   UpdateTransactionResponseSchema,
+  SearchTransactionsBodySchema,
+  SearchTransactionsResponseSchema,
 } from "@saffron/types/schemas";
 
 const router = Router();
@@ -23,6 +25,12 @@ router.get(
   validateQuery(ListTransactionsQuerySchema),
   validateResponse(ListTransactionsResponseSchema),
   transactions.listByUser,
+);
+
+router.post(
+  "/transactions/search",
+  validateRequest(SearchTransactionsBodySchema),
+  validateResponse(SearchTransactionsResponseSchema),
 );
 
 router.put(

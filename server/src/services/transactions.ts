@@ -1,5 +1,4 @@
 import {
-  ListTransactionsResponse,
   UpdateTransactionRequest,
   UpdateTransactionResponse,
   BulkUpdateTransactionsRequest,
@@ -11,6 +10,10 @@ import {
   InvalidInputWithCustomMessageError,
   NotFoundError,
 } from "../common/errors";
+import {
+  ListTransactionsResponse,
+  TransactionSearchFilters,
+} from "@saffron/types/schemas";
 
 /**
  * Retrieves all transactions for a given user, in reverse chronological order.
@@ -22,6 +25,25 @@ export async function listForUser(
   const transactionRepo = await TransactionRepository.getInstance();
 
   return transactionRepo.listTransactionsByUser(userId, paginationToken);
+}
+
+export async function list(params: {
+  userId: string;
+  filters: TransactionSearchFilters;
+  paginationToken?: string;
+}): Promise<ListTransactionsResponse> {
+  const transactionRepo = await TransactionRepository.getInstance();
+  return transactionRepo.list({
+    userId: params.userId,
+    searchText: params.filters.searchText,
+    accountIds: params.filters.accountIds,
+    merchantIds: params.filters.merchantIds,
+    categoryIds: params.filters.categoryIds,
+    tagIds: params.filters.tagIds,
+    startDate: params.filters.startDate,
+    endDate: params.filters.endDate,
+    paginationToken: params.paginationToken,
+  });
 }
 
 const UPDATE_TRANSACTION_KEYS = [
