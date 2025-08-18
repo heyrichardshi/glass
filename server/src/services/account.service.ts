@@ -6,7 +6,7 @@ import {
 import { Account, Transaction } from "../models";
 import { Transaction as TellerTransaction } from "../models/teller";
 import { AccountRepository, TransactionRepository } from "../repositories";
-import * as teller from "./teller";
+import * as teller from "./teller.service";
 import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
 import { toApiAccount } from "../models/api";
 

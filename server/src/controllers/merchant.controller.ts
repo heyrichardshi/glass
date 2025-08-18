@@ -1,4 +1,4 @@
-import * as merchants from "../services/merchants";
+import * as merchants from "../services/merchant.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   CreateMerchantBody,

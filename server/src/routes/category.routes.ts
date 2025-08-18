@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as categories from "../controllers/categories";
+import * as categories from "../controllers/category.controller";
 import {
   validateQuery,
   validateRequest,

@@ -1,4 +1,4 @@
-import * as analytics from "../services/analytics";
+import * as analytics from "../services/analytics.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   GetMonthlyReportQuery,

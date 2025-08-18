@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as merchants from "../controllers/merchants";
+import * as merchants from "../controllers/merchant.controller";
 import {
   validateQuery,
   validateRequest,

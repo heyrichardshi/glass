@@ -1,4 +1,4 @@
-import * as categories from "../services/categories";
+import * as categories from "../services/category.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   CreateCategoryBody,

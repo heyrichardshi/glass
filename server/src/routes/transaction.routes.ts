@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as transactions from "../controllers/transactions";
+import * as transactions from "../controllers/transaction.controller";
 import {
   validateQuery,
   validateRequest,

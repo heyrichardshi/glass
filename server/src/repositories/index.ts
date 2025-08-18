@@ -1,5 +1,5 @@
-export { AccountRepository } from "./account";
-export { CategoryRepository } from "./category";
-export { TagRepository } from "./tag";
-export { TransactionRepository } from "./transaction";
-export { MerchantRepository } from "./merchant";
+export { AccountRepository } from "./account.repo";
+export { CategoryRepository } from "./category.repo";
+export { TagRepository } from "./tag.repo";
+export { TransactionRepository } from "./transaction.repo";
+export { MerchantRepository } from "./merchant.repo";

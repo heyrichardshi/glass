@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as reports from "../controllers/reports";
+import * as reports from "../controllers/report.controller";
 import { validateQuery, validateResponse } from "../middleware/validation";
 import {
   GetMonthlyReportQuerySchema,

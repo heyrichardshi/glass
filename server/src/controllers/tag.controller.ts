@@ -1,4 +1,4 @@
-import * as tags from "../services/tags";
+import * as tags from "../services/tag.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   CreateTagBody,

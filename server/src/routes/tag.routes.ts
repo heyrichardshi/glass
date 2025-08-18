@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as tags from "../controllers/tags";
+import * as tags from "../controllers/tag.controller";
 import {
   validateQuery,
   validateRequest,

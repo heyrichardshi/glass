@@ -1,4 +1,4 @@
-import * as accounts from "../services/accounts";
+import * as accounts from "../services/account.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   ListAccountsQuery,

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as accounts from "../controllers/accounts";
+import * as accounts from "../controllers/account.controller";
 import {
   validateQuery,
   validateRequest,

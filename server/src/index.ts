@@ -7,12 +7,12 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import errorHandler from "./middleware/errorHandler";
-import accounts from "./routes/accounts";
-import transactions from "./routes/transactions";
-import categories from "./routes/categories";
-import tags from "./routes/tags";
-import merchants from "./routes/merchants";
-import reports from "./routes/reports";
+import accounts from "./routes/account.routes";
+import transactions from "./routes/transaction.routes";
+import categories from "./routes/category.routes";
+import tags from "./routes/tag.routes";
+import merchants from "./routes/merchant.routes";
+import reports from "./routes/report.routes";
 
 dotenv.config();
 

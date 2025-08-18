@@ -1,4 +1,4 @@
-import * as transactions from "../services/transactions";
+import * as transactions from "../services/transaction.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   BulkUpdateTransactionsBody,
