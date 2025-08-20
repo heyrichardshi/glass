@@ -5,6 +5,7 @@ export default defineNuxtConfig({
 
   modules: ["@nuxt/eslint", "@nuxt/fonts", "@nuxt/icon", "@nuxt/ui"],
   ssr: false,
+  components: [{ path: "~/components", pathPrefix: false }],
   runtimeConfig: {
     public: {
       SAFFRON_API_URL: process.env.SAFFRON_API_URL || "http://localhost:7070",
