@@ -31,6 +31,7 @@ router.post(
   "/transactions/search",
   validateRequest(SearchTransactionsBodySchema),
   validateResponse(SearchTransactionsResponseSchema),
+  transactions.search,
 );
 
 router.put(

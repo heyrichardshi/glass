@@ -148,24 +148,27 @@ export class TransactionRepository {
       parameters.push({ name: "@searchText", value: params.searchText });
     }
 
-    if (params.accountIds) {
+    if (params.accountIds && params.accountIds.length > 0) {
       // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/array-contains
       query += " AND ARRAY_CONTAINS(@accountIds, c.accountId)";
       parameters.push({ name: "@accountIds", value: params.accountIds });
     }
 
-    if (params.merchantIds) {
-      query += " AND ARRAY_CONTAINS(@merchantIds, c.merchantId)";
+    if (params.merchantIds && params.merchantIds.length > 0) {
+      query += " AND ARRAY_CONTAINS(@merchantIds, c.counterparty.id)";
       parameters.push({ name: "@merchantIds", value: params.merchantIds });
     }
 
-    if (params.categoryIds) {
+    if (params.categoryIds && params.categoryIds.length > 0) {
       query += " AND ARRAY_CONTAINS(@categoryIds, c.categoryId)";
       parameters.push({ name: "@categoryIds", value: params.categoryIds });
     }
 
-    if (params.tagIds) {
-      query += " AND ARRAY_CONTAINS(@tagIds, c.tagId)";
+    if (params.tagIds && params.tagIds.length > 0) {
+      // ARRAY_CONTAINS_ANY is variadic, so the simpler approach than spreading the array is to loop through the tagIds
+      // array in the record
+      query +=
+        " AND EXISTS(SELECT VALUE t FROM t IN c.tagIds WHERE ARRAY_CONTAINS(@tagIds, t))";
       parameters.push({ name: "@tagIds", value: params.tagIds });
     }
 

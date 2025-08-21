@@ -29,8 +29,8 @@ export const listByUser = asyncController<
 
 export const search = asyncController<
   NoParams,
+  NoQuery,
   SearchTransactionsBody,
-  NoBody,
   SearchTransactionsResponse
 >(async (req, res) => {
   const userId = "0";

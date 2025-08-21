@@ -5,6 +5,7 @@
       placeholder="Search transactions"
       size="xl"
       class="w-full"
+      @keyup.enter="search()"
       :ui="{
         base:
           'transition-all duration-200 ease-out ' +
@@ -54,6 +55,18 @@ type FilterItem = {
 };
 
 const searchText = ref("");
+
+type SearchFilters = {
+  searchText?: string;
+  accountIds?: string[];
+  merchantIds?: string[];
+  categoryIds?: string[];
+  tagIds?: string[];
+};
+
+const emit = defineEmits<{
+  search: [filters: SearchFilters];
+}>();
 
 const accountsApi = useAccountsApi();
 const merchantsApi = useMerchantsApi();
@@ -107,7 +120,7 @@ const tagItems = computed<FilterItem[]>(() =>
 );
 
 function search() {
-  console.log("search: " + searchText.value);
+  emit("search", searchFilters.value);
 }
 
 const filterGroups = computed(() => [
@@ -120,7 +133,7 @@ const selectedFilters = ref<Array<FilterItem>>([]);
 
 const searchFilters = computed(() => {
   return {
-    searchText: searchText.value,
+    searchText: searchText.value || undefined,
     accountIds: selectedFilters.value
       .filter((filter) => filter.type === "account")
       .map((filter) => filter.value),
@@ -133,6 +146,6 @@ const searchFilters = computed(() => {
     tagIds: selectedFilters.value
       .filter((filter) => filter.type === "tag")
       .map((filter) => filter.value),
-  };
+  } as SearchFilters;
 });
 </script>
