@@ -19,6 +19,7 @@
           :key="filter.value"
           :icon="filter.icon"
           :label="filter.label"
+          @remove="removeFilter(filter)"
         />
       </template>
     </UInput>
@@ -148,4 +149,13 @@ const searchFilters = computed(() => {
       .map((filter) => filter.value),
   } as SearchFilters;
 });
+
+function removeFilter(filterToRemove: FilterItem) {
+  const indexToRemove = selectedFilters.value.findIndex(
+    (f) => f.value === filterToRemove.value && f.type === filterToRemove.type,
+  );
+  if (indexToRemove !== -1) {
+    selectedFilters.value.splice(indexToRemove, 1);
+  }
+}
 </script>

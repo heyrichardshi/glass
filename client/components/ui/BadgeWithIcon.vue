@@ -1,10 +1,13 @@
 <template>
   <UBadge
     :label="label"
-    :icon="icon"
+    :icon="isHovered ? 'i-lucide-x' : icon"
     color="neutral"
     variant="outline"
-    class="mx-0.5"
+    class="mx-0.5 cursor-pointer"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
+    @click="onClick"
   />
 </template>
 
@@ -13,4 +16,14 @@ const props = defineProps<{
   icon: string;
   label: string;
 }>();
+
+const emit = defineEmits<{
+  remove: [];
+}>();
+
+function onClick() {
+  emit("remove");
+}
+
+const isHovered = ref(false);
 </script>
