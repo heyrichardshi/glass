@@ -10,7 +10,17 @@
   >
     <template #description-cell="{ row }">
       <div>
-        <div>{{ row.original.description }}</div>
+        <div>
+          <MerchantBadge
+            v-if="
+              row.original.counterparty.type === 'merchant' &&
+              row.original.counterparty.id != '0'
+            "
+            :merchantId="row.original.counterparty.id"
+          />
+
+          {{ row.original.description }}
+        </div>
         <div class="mt-1">
           <TagBadge
             v-for="tagId in row.original.tagIds"
