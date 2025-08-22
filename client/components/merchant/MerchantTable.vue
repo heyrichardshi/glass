@@ -31,6 +31,7 @@
 </template>
 
 <script setup lang="ts">
+import EditMerchant from "./EditMerchant.vue";
 import type { TableColumn, TableRow } from "@nuxt/ui";
 import type { Merchant, Category } from "@saffron/types";
 
@@ -59,8 +60,24 @@ function getCategoryById(categoryId: string): Category | undefined {
   return listCategories.categories.value.find((c) => c.id === categoryId);
 }
 
-function onSelect(row: TableRow<Merchant>, e?: Event) {
+async function onSelect(row: TableRow<Merchant>, e?: Event) {
   console.log("onSelect", row, e);
+  const editPane = overlay.create(EditMerchant, {
+    props: {
+      merchant: row.original,
+    },
+  });
+
+  const instance = editPane.open();
+
+  const editPaneResult = (await instance.result) as {
+    newMerchant: Merchant;
+  };
+
+  emit("updatedMerchants", {
+    index: row.index,
+    merchant: editPaneResult.newMerchant,
+  });
 }
 
 const columns: TableColumn<Merchant>[] = [
