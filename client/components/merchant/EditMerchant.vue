@@ -16,7 +16,7 @@
           <UButtonGroup class="w-full">
             <!-- Input with embedded search button -->
             <UInput v-model="newMatcher" class="w-full">
-              <template v-if="newMatcher.length > 0" #trailing>
+              <template v-if="hasMatcherInput" #trailing>
                 <UTooltip
                   text="Search for transaction with this matcher"
                   :content="{ side: 'right' }"
@@ -40,6 +40,7 @@
                 icon="i-lucide-plus"
                 size="lg"
                 class="px-4"
+                :disabled="!hasMatcherInput"
                 @click="addMatcher()"
               />
             </UTooltip>
@@ -96,11 +97,36 @@ const newMatcher = ref("");
 const matchers = ref(props.merchant.descriptionMatchers);
 
 function searchTransactions() {
-  console.log("Search clicked with value: ", newMatcher.value);
+  const text = newMatcher.value.trim();
+  if (!text) {
+    return;
+  }
+
+  const overlay = useOverlay();
+  const preview = overlay.create(
+    // Lazy import to avoid circular refs
+    defineAsyncComponent(
+      () => import("../transaction/TransactionSearchPreviewModal.vue"),
+    ),
+    {
+      props: {
+        filters: {
+          searchText: text,
+        },
+      },
+    },
+  );
+
+  preview.open();
 }
 
 function addMatcher() {
-  matchers.value.push(newMatcher.value);
+  const text = newMatcher.value.trim();
+  if (!text) {
+    return;
+  }
+
+  matchers.value.push(text);
   newMatcher.value = "";
 }
 
@@ -110,6 +136,8 @@ const toast = useToast();
 const requestInProgress = ref(false);
 const submitErrorMessage = ref("");
 const submitError = computed(() => !!submitErrorMessage.value);
+
+const hasMatcherInput = computed(() => newMatcher.value.trim().length > 0);
 
 function commitChanges() {
   console.log("Save clicked");

@@ -5,11 +5,16 @@
       <UButton icon="i-lucide-plus" label="Create Merchant" disabled />
     </div>
 
-    <MerchantTable :merchants="merchants" :loading="loading" />
+    <MerchantTable
+      :merchants="displayMerchants"
+      :loading="loading"
+      @updatedMerchants="onUpdatedMerchant"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Merchant } from "@saffron/types";
 const config = useRuntimeConfig();
 const userId = "0";
 
@@ -24,4 +29,17 @@ const loading = computed(() => status.value === "pending");
 const error = computed(() =>
   status.value === "error" ? "Error loading merchants" : "",
 );
+
+const displayMerchants = ref<Merchant[]>([]);
+watch(
+  merchants,
+  (newMerchants) => {
+    displayMerchants.value = newMerchants.slice();
+  },
+  { immediate: true },
+);
+
+function onUpdatedMerchant(payload: { index: number; merchant: Merchant }) {
+  displayMerchants.value[payload.index] = payload.merchant;
+}
 </script>
