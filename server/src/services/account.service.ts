@@ -3,9 +3,13 @@ import {
   NotFoundError,
   TellerAccountDisconnectedError,
 } from "../common/errors";
-import { Account, Transaction } from "../models";
+import { Account, Transaction, Merchant } from "../models";
 import { Transaction as TellerTransaction } from "../models/teller";
-import { AccountRepository, TransactionRepository } from "../repositories";
+import {
+  AccountRepository,
+  TransactionRepository,
+  MerchantRepository,
+} from "../repositories";
 import * as teller from "./teller.service";
 import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
 import { toApiAccount } from "../models/api";
@@ -71,6 +75,7 @@ export async function registerAccountsFromToken(
 export async function refresh(accountId: string) {
   const accountRepo = await AccountRepository.getInstance();
   const transactionRepo = await TransactionRepository.getInstance();
+  const merchantRepo = await MerchantRepository.getInstance();
 
   const account = await accountRepo.findById(accountId);
   if (!account) {
@@ -108,6 +113,9 @@ export async function refresh(accountId: string) {
 
   const transactionsToWrite: Transaction[] = [];
 
+  // Fetch merchants to apply matchers to auto set merchant and category on new transactions
+  const merchants: Merchant[] = await merchantRepo.listAll(account.householdId);
+
   for (const transaction of tellerTransactions) {
     const existingTransactionIndex = knownTransactionIdToIndex.get(
       transaction.id,
@@ -127,9 +135,18 @@ export async function refresh(accountId: string) {
       knownTransactionIdToIndex.delete(transaction.id);
     } else {
       // This transaction does not exist in the database, so we need to create it.
-      // TODO get category + counterparty dynamically
-      const categoryId = UNCATEGORIZED_CATEGORY_ID;
-      const counterpartyId = "0";
+
+      let categoryId = UNCATEGORIZED_CATEGORY_ID;
+      let counterpartyId = "0";
+
+      const matchedMerchant = findFirstMatchingMerchant(
+        transaction.description,
+        merchants,
+      );
+      if (matchedMerchant) {
+        counterpartyId = matchedMerchant.id;
+        categoryId = matchedMerchant.defaultCategoryId;
+      }
 
       transactionsToWrite.push({
         id: transaction.id,
@@ -213,6 +230,34 @@ function buildUpdatedTransaction(
       : existingTransaction.description,
     status: tellerTransaction.status == "posted" ? "posted" : "pending",
   };
+}
+
+// Finds the first merchant whose description matchers match the provided raw description.
+function findFirstMatchingMerchant(
+  rawDescription: string,
+  merchants: Merchant[],
+): Merchant | undefined {
+  for (const merchant of merchants) {
+    if (
+      !merchant.descriptionMatchers ||
+      merchant.descriptionMatchers.length === 0
+    ) {
+      continue;
+    }
+    for (const pattern of merchant.descriptionMatchers) {
+      try {
+        // Use case-insensitive matching.
+        const regex = new RegExp(pattern, "i");
+        if (regex.test(rawDescription)) {
+          return merchant;
+        }
+      } catch (e) {
+        // Skip invalid regex patterns silently
+        continue;
+      }
+    }
+  }
+  return undefined;
 }
 
 export async function listForUser(
