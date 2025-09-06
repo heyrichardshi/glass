@@ -2,7 +2,11 @@
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Merchants</h1>
-      <UButton icon="i-lucide-plus" label="Create Merchant" disabled />
+      <UButton
+        icon="i-lucide-plus"
+        label="Create Merchant"
+        @click="openCreateMerchant"
+      />
     </div>
 
     <MerchantTable
@@ -15,6 +19,7 @@
 
 <script setup lang="ts">
 import type { Merchant } from "@saffron/types";
+import CreateMerchant from "../components/merchant/CreateMerchant.vue";
 const config = useRuntimeConfig();
 const userId = "0";
 
@@ -31,6 +36,7 @@ const error = computed(() =>
 );
 
 const displayMerchants = ref<Merchant[]>([]);
+const overlay = useOverlay();
 watch(
   merchants,
   (newMerchants) => {
@@ -41,5 +47,20 @@ watch(
 
 function onUpdatedMerchant(payload: { index: number; merchant: Merchant }) {
   displayMerchants.value[payload.index] = payload.merchant;
+}
+
+async function openCreateMerchant() {
+  const createModal = overlay.create(CreateMerchant, {
+    props: {
+      prefillName: "",
+    },
+  });
+
+  const instance = createModal.open();
+  const result = (await instance.result) as { merchant?: Merchant };
+
+  if (result.merchant) {
+    await refresh();
+  }
 }
 </script>
