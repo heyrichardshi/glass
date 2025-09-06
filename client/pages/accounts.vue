@@ -57,8 +57,11 @@ async function refreshAllAccounts() {
   refreshingAll.value = true;
 
   try {
-    // Refresh each account individually using the existing endpoint
-    const refreshPromises = accounts.value.map(async (account) => {
+    // Refresh each account individually using the existing endpoint with a 1s delay between calls
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    for (const account of accounts.value) {
       try {
         await $fetch(
           `${config.public.SAFFRON_API_URL}/accounts/${account.id}/refresh`,
@@ -72,9 +75,8 @@ async function refreshAllAccounts() {
         console.error(`Failed to refresh account ${account.id}:`, err);
         // Continue with other accounts even if one fails
       }
-    });
-
-    await Promise.allSettled(refreshPromises);
+      await delay(1000);
+    }
 
     // Refresh the accounts list to show updated data
     await refresh();
