@@ -1,35 +1,41 @@
 services:
-  db:
-    container_name: cosmosdb
-    image: "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"
-    tty: true
-    restart: always
-    mem_limit: 4G
-    cpu_count: 2
-    environment:
-      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=10
-      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
-    ports:
-       - "8081:8081"
-       - "8900:8900"
-       - "8901:8901"
-       - "8979:8979"
-       - "10250:10250"
-       - "10251:10251"
-       - "10252:10252"
-       - "10253:10253"
-       - "10254:10254"
-       - "10255:10255"
-       - "10256:10256"
-       - "10350:10350"
-    volumes:
-       - vol_cosmos:/data/db
   server:
     container_name: saffron_server
-    depends_on:
-      - db
-    build: ./server
+    image: node:20-alpine
+    working_dir: /workspace
     ports:
       - "7070:7070"
+    environment:
+      - NODE_ENV=development
+      - PORT=7070
+      - CHOKIDAR_USEPOLLING=1
+      - PNPM_STORE_DIR=/pnpm-store
+    volumes:
+      - ./:/workspace
+      - server_node_modules:/workspace/server/node_modules
+      - types_node_modules:/workspace/types/node_modules
+      - pnpm_store:/pnpm-store
+    command: sh -c "corepack enable && corepack prepare pnpm@10.6.5 --activate && [ -x server/node_modules/.bin/ts-node-dev ] || pnpm -C server install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C server dev"
+  client:
+    container_name: saffron_client
+    image: node:20-alpine
+    working_dir: /workspace
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"
+    environment:
+      - SAFFRON_API_URL=http://localhost:7070
+      - CHOKIDAR_USEPOLLING=1
+      - PNPM_STORE_DIR=/pnpm-store
+    volumes:
+      - ./:/workspace
+      - client_node_modules:/workspace/client/node_modules
+      - types_node_modules:/workspace/types/node_modules
+      - pnpm_store:/pnpm-store
+    command: sh -c "corepack enable && corepack prepare pnpm@10.6.5 --activate && [ -x client/node_modules/.bin/nuxt ] || pnpm -C client install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C client dev --port 3000 --host 0.0.0.0"
 volumes:
-  vol_cosmos:
+  server_node_modules:
+  client_node_modules:
+  types_node_modules:
+  pnpm_store:
