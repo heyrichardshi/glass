@@ -75,7 +75,7 @@ async function refreshAllAccounts() {
         console.error(`Failed to refresh account ${account.id}:`, err);
         // Continue with other accounts even if one fails
       }
-      await delay(1000);
+      await delay(1500);
     }
 
     // Refresh the accounts list to show updated data
