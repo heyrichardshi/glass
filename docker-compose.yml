@@ -10,12 +10,13 @@ services:
       - PORT=7070
       - CHOKIDAR_USEPOLLING=1
       - PNPM_STORE_DIR=/pnpm-store
+      - CI=true
     volumes:
       - ./:/workspace
       - server_node_modules:/workspace/server/node_modules
       - types_node_modules:/workspace/types/node_modules
       - pnpm_store:/pnpm-store
-    command: sh -c "corepack enable && corepack prepare pnpm@10.6.5 --activate && [ -x server/node_modules/.bin/ts-node-dev ] || pnpm -C server install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C server dev"
+    command: sh -c "corepack enable && corepack prepare pnpm@10.26.1 --activate && [ -x server/node_modules/.bin/ts-node-dev ] || pnpm -C server install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C server dev"
   client:
     container_name: saffron_client
     image: node:20-alpine
@@ -28,12 +29,13 @@ services:
       - SAFFRON_API_URL=http://localhost:7070
       - CHOKIDAR_USEPOLLING=1
       - PNPM_STORE_DIR=/pnpm-store
+      - CI=true
     volumes:
       - ./:/workspace
       - client_node_modules:/workspace/client/node_modules
       - types_node_modules:/workspace/types/node_modules
       - pnpm_store:/pnpm-store
-    command: sh -c "corepack enable && corepack prepare pnpm@10.6.5 --activate && [ -x client/node_modules/.bin/nuxt ] || pnpm -C client install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C client dev --port 3000 --host 0.0.0.0"
+    command: sh -c "corepack enable && corepack prepare pnpm@10.26.1 --activate && [ -x client/node_modules/.bin/nuxt ] || pnpm -C client install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C client dev --port 3000 --host 0.0.0.0"
 volumes:
   server_node_modules:
   client_node_modules:
