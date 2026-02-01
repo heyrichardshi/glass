@@ -266,21 +266,20 @@ export async function listForUser(
   const accountRepo = await AccountRepository.getInstance();
   const accounts = await accountRepo.listByUser(userId);
 
-  // Perform a health check on all accounts and set status appropriately.
-  const healthCheckedAccounts = await Promise.all(
-    accounts.map(async (account) => {
-      const isHealthy = await isAccountHealthy(account);
-      if (!isHealthy) {
-        return {
-          ...account,
-          status: "disconnected" as const, // Explicitly type the status to avoid type inference issues due to spread.
-          tellerEnrollmentId: account.tellerEnrollmentId,
-        };
-      } else {
-        return account;
-      }
-    }),
-  );
+  // Perform a health check on all accounts in series to avoid hammering Teller and hitting rate limits.
+  const healthCheckedAccounts = [];
+  for (const account of accounts) {
+    const isHealthy = await isAccountHealthy(account);
+    if (!isHealthy) {
+      healthCheckedAccounts.push({
+        ...account,
+        status: "disconnected" as const, // Explicitly type the status to avoid type inference issues due to spread.
+        tellerEnrollmentId: account.tellerEnrollmentId,
+      });
+    } else {
+      healthCheckedAccounts.push(account);
+    }
+  }
 
   return {
     accounts: healthCheckedAccounts,
