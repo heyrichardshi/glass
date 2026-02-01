@@ -1,6 +1,7 @@
 import { ListAccountsResponse, RegisterAccountsResponse } from "@saffron/types";
 import {
   NotFoundError,
+  TellerAccountClosedError,
   TellerAccountDisconnectedError,
 } from "../common/errors";
 import { Account, Transaction, Merchant } from "../models";
@@ -82,11 +83,31 @@ export async function refresh(accountId: string) {
     throw new NotFoundError(`Account with ID '${accountId}' not found`);
   }
 
+  if (account.status === "closed") {
+    console.log(
+      `Account ${accountId} is marked closed; skipping Teller refresh.`,
+    );
+    return;
+  }
+
   console.log("Fetching transactions...");
-  const tellerTransactions = await teller.listAccountTransactions(
-    accountId,
-    account.tellerAccessToken,
-  );
+  let tellerTransactions: TellerTransaction[];
+  try {
+    tellerTransactions = await teller.listAccountTransactions(
+      accountId,
+      account.tellerAccessToken,
+    );
+  } catch (error: unknown) {
+    if (error instanceof TellerAccountClosedError) {
+      console.log(
+        `Teller reports account ${accountId} is closed; marking account and skipping further refresh attempts.`,
+      );
+      account.status = "closed";
+      await accountRepo.update(account);
+      return;
+    }
+    throw error;
+  }
   console.log(`Fetched ${tellerTransactions.length} transaction(s)`);
 
   /**
@@ -287,9 +308,23 @@ export async function listForUser(
 }
 
 async function isAccountHealthy(account: Account): Promise<boolean> {
+  if (account.status === "closed") {
+    return true;
+  }
+
   try {
     await teller.getAccount(account.id, account.tellerAccessToken);
   } catch (error: unknown) {
+    if (error instanceof TellerAccountClosedError) {
+      console.log(
+        `Teller reports account ${account.id} is closed during health check; marking account closed and skipping future calls.`,
+      );
+      account.status = "closed";
+      const accountRepo = await AccountRepository.getInstance();
+      await accountRepo.update(account);
+      return true;
+    }
+
     if (error instanceof TellerAccountDisconnectedError) {
       return false;
     }

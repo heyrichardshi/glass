@@ -19,6 +19,13 @@ export class ForbiddenError extends Error {
   }
 }
 
+export class TellerAccountClosedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TellerAccountClosedError";
+  }
+}
+
 export class ConflictError extends Error {
   constructor(
     entityType: "Category" | "Tag" | "Merchant",

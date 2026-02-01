@@ -72,7 +72,6 @@ export class AccountRepository {
         parameters: [{ name: "@accountId", value: accountId }],
       })
       .fetchAll();
-    console.log("Fetching account ", accountId, " from db: ", response);
 
     return response.resources[0];
   }

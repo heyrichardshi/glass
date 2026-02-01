@@ -4,6 +4,7 @@ import https from "https";
 import { Account, AccountBalance, Transaction } from "../models/teller";
 import {
   ForbiddenError,
+  TellerAccountClosedError,
   TellerAccountDisconnectedError,
 } from "../common/errors";
 
@@ -78,6 +79,13 @@ async function teller(endpoint: string, token: string) {
         switch (status) {
           case 403:
             throw new ForbiddenError(error.message);
+        case 410:
+          if (error.response?.data?.error?.code === "account.closed") {
+            throw new TellerAccountClosedError(error.message);
+          }
+          throw new Error(
+            `Error fetching data from Teller API (410): ${JSON.stringify(error.response?.data, null, 2)}`,
+          );
           case 404:
             const errorCode = error.response?.data?.error?.code;
             if (errorCode === ENROLLMENT_DISCONNECTED_ERROR_CODE) {
