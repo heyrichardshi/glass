@@ -5,7 +5,7 @@
 
       <div class="flex items-center gap-2">
         <UButton
-          v-if="!loading && accounts.length > 0"
+          v-if="!loading && refreshableAccounts.length > 0"
           :loading="refreshingAll"
           :disabled="refreshingAll"
           icon="i-lucide-refresh-cw"
@@ -50,6 +50,9 @@ const loading = computed(() => status.value === "pending");
 const error = computed(() =>
   status.value === "error" ? "Error loading accounts" : "",
 );
+const refreshableAccounts = computed(() =>
+  accounts.value.filter((account) => account.status === "open"),
+);
 
 async function refreshAllAccounts() {
   if (refreshingAll.value) return;
@@ -61,7 +64,7 @@ async function refreshAllAccounts() {
     const delay = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
 
-    for (const account of accounts.value) {
+    for (const account of refreshableAccounts.value) {
       try {
         await $fetch(
           `${config.public.SAFFRON_API_URL}/accounts/${account.id}/refresh`,

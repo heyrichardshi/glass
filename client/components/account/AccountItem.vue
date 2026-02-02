@@ -2,19 +2,34 @@
   <div
     class="rounded-xl p-4 shadow mb-3 border border-gray-200 grid grid-cols-2"
   >
-    <div class="text-lg font-semibold">
-      {{ account.name }} ({{ account.mask }})
+    <div class="text-lg font-semibold flex items-center gap-2">
+      <span>{{ account.name }} ({{ account.mask }})</span>
+      <span
+        v-if="isClosed"
+        class="text-xs font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded"
+      >
+        Closed
+      </span>
+      <span
+        v-else-if="isDisconnected"
+        class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded"
+      >
+        Disconnected
+      </span>
     </div>
     <div class="text-lg font-semibold text-right">$ {{ account.balance }}</div>
 
     <div class="text-sm text-gray-500">
       {{ account.institution }} / {{ account.type }}
     </div>
-    <div v-if="!isDisconnected" class="text-sm text-gray-500 text-right">
+    <div
+      v-if="!isDisconnected && !isClosed"
+      class="text-sm text-gray-500 text-right"
+    >
       last refreshed {{ lastRefreshedAt }}
       <UButton icon="i-lucide-refresh-cw" @click="refreshAccount()"></UButton>
     </div>
-    <div v-else class="text-sm text-red-800 text-right">
+    <div v-else-if="isDisconnected" class="text-sm text-red-800 text-right">
       action required: re-connect account
       <TellerConnect
         :enrollment-id="account.tellerEnrollmentId"
@@ -32,6 +47,7 @@ const props = defineProps<{
 }>();
 
 const isDisconnected = computed(() => props.account.status === "disconnected");
+const isClosed = computed(() => props.account.status === "closed");
 
 const lastRefreshedAt = ref<string>(
   toRelativeDate(props.account.transactionsLastRefreshedAt),
@@ -69,6 +85,8 @@ function toRelativeDate(date: Date | string | number): string {
 }
 
 function refreshAccount() {
+  if (isClosed.value) return;
+
   toast.add({
     title: `Getting new transactions for account ${props.account.name}`,
   });
