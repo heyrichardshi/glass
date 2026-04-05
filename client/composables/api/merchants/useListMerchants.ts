@@ -7,15 +7,18 @@ import type {
 export default function (request: ListMerchantsRequest) {
   const config = useRuntimeConfig();
 
-  const cacheKey = `ListMerchants:${request.householdId}`;
-  const cachedFetch = useState(cacheKey, () => {
-    return useFetch(`${config.public.SAFFRON_API_URL}/merchants`, {
+  const key = `ListMerchants:${request.householdId}`;
+  const { data, status, error, refresh } = useFetch(
+    `${config.public.SAFFRON_API_URL}/merchants`,
+    {
+      key,
       query: request,
-      server: false,
-    });
-  });
-
-  const { data, status, error, refresh, clear } = cachedFetch.value;
+      // Without getCachedData, useFetch re-fetches on every navigation.
+      // This returns cached data from a previous fetch if available,
+      // skipping the network request. Call refresh() to force a re-fetch.
+      getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key],
+    },
+  );
 
   const merchants = computed<Merchant[]>(
     () => (data.value as ListMerchantsResponse)?.merchants || [],

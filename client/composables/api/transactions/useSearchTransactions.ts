@@ -14,24 +14,24 @@ export default function (params: {
 }) {
   const config = useRuntimeConfig();
 
-  const cacheKey = `SearchTransactions:${JSON.stringify(params.filters)}:${params.paginationToken || ""}`;
-  const cachedFetch = useState(cacheKey, () => {
-    return useFetch<ListTransactionsResponse>(
-      `${config.public.SAFFRON_API_URL}/transactions/search`,
-      {
-        method: "POST",
-        body: {
-          filters: params.filters,
-          ...(params.paginationToken
-            ? { paginationToken: params.paginationToken }
-            : {}),
-        },
-        server: false,
+  const key = `SearchTransactions:${JSON.stringify(params.filters)}:${params.paginationToken || ""}`;
+  const { data, status, error, refresh } = useFetch<ListTransactionsResponse>(
+    `${config.public.SAFFRON_API_URL}/transactions/search`,
+    {
+      key,
+      method: "POST",
+      body: {
+        filters: params.filters,
+        ...(params.paginationToken
+          ? { paginationToken: params.paginationToken }
+          : {}),
       },
-    );
-  });
-
-  const { data, status, error, refresh, clear } = cachedFetch.value;
+      // Without getCachedData, useFetch re-fetches on every navigation.
+      // This returns cached data from a previous fetch if available,
+      // skipping the network request. Call refresh() to force a re-fetch.
+      getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key],
+    },
+  );
 
   const transactions = computed(() => data.value?.transactions || []);
   const paginationToken = computed(() => data.value?.paginationToken);

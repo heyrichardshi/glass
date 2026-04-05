@@ -3,15 +3,18 @@ import type { Tag, ListTagsResponse } from "@saffron/types";
 export default function (userId: string) {
   const config = useRuntimeConfig();
 
-  const cacheKey = `ListTags:${userId}`;
-  const cachedFetch = useState(cacheKey, () => {
-    return useFetch(`${config.public.SAFFRON_API_URL}/tags`, {
+  const key = `ListTags:${userId}`;
+  const { data, status, error, refresh } = useFetch(
+    `${config.public.SAFFRON_API_URL}/tags`,
+    {
+      key,
       query: { userId },
-      server: false,
-    });
-  });
-
-  const { data, status, error, refresh, clear } = cachedFetch.value;
+      // Without getCachedData, useFetch re-fetches on every navigation.
+      // This returns cached data from a previous fetch if available,
+      // skipping the network request. Call refresh() to force a re-fetch.
+      getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key],
+    },
+  );
 
   const tags = computed<Tag[]>(
     () => (data.value as ListTagsResponse)?.tags || [],

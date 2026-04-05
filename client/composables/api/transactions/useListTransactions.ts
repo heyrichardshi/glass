@@ -3,23 +3,23 @@ import type { ListTransactionsResponse } from "@saffron/types";
 export default function (params: { userId: string; paginationToken?: string }) {
   const config = useRuntimeConfig();
 
-  const cacheKey = `ListTransactions:${params.userId}:${params.paginationToken || ""}`;
-  const cachedFetch = useState(cacheKey, () => {
-    return useFetch<ListTransactionsResponse>(
-      `${config.public.SAFFRON_API_URL}/transactions`,
-      {
-        query: {
-          userId: params.userId,
-          ...(params.paginationToken
-            ? { paginationToken: params.paginationToken }
-            : {}),
-        },
-        server: false,
+  const key = `ListTransactions:${params.userId}:${params.paginationToken || ""}`;
+  const { data, status, error, refresh } = useFetch<ListTransactionsResponse>(
+    `${config.public.SAFFRON_API_URL}/transactions`,
+    {
+      key,
+      query: {
+        userId: params.userId,
+        ...(params.paginationToken
+          ? { paginationToken: params.paginationToken }
+          : {}),
       },
-    );
-  });
-
-  const { data, status, error, refresh, clear } = cachedFetch.value;
+      // Without getCachedData, useFetch re-fetches on every navigation.
+      // This returns cached data from a previous fetch if available,
+      // skipping the network request. Call refresh() to force a re-fetch.
+      getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key],
+    },
+  );
 
   const transactions = computed(() => data.value?.transactions || []);
   const paginationToken = computed(() => data.value?.paginationToken);
