@@ -6,6 +6,8 @@ import {
   validateResponse,
 } from "../middleware/validation";
 import {
+  ApplyAllMatchersBodySchema,
+  ApplyAllMatchersResponseSchema,
   CreateMerchantBodySchema,
   CreateMerchantResponseSchema,
   ListMerchantsQuerySchema,
@@ -27,6 +29,12 @@ router.post(
   validateRequest(CreateMerchantBodySchema),
   validateResponse(CreateMerchantResponseSchema),
   merchants.createMerchant,
+);
+router.post(
+  "/merchants/matchers/all",
+  validateRequest(ApplyAllMatchersBodySchema),
+  validateResponse(ApplyAllMatchersResponseSchema),
+  merchants.applyAllMatchers,
 );
 router.put(
   "/merchants/:merchantId",

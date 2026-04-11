@@ -14,6 +14,7 @@ import {
 import * as teller from "./teller.service";
 import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
 import { toApiAccount } from "../models/api";
+import { findFirstMatchingMerchant } from "../common/merchant-utils";
 
 export async function registerAccountsFromToken(
   token: string,
@@ -251,34 +252,6 @@ function buildUpdatedTransaction(
       : existingTransaction.description,
     status: tellerTransaction.status == "posted" ? "posted" : "pending",
   };
-}
-
-// Finds the first merchant whose description matchers match the provided raw description.
-function findFirstMatchingMerchant(
-  rawDescription: string,
-  merchants: Merchant[],
-): Merchant | undefined {
-  for (const merchant of merchants) {
-    if (
-      !merchant.descriptionMatchers ||
-      merchant.descriptionMatchers.length === 0
-    ) {
-      continue;
-    }
-    for (const pattern of merchant.descriptionMatchers) {
-      try {
-        // Use case-insensitive matching.
-        const regex = new RegExp(pattern, "i");
-        if (regex.test(rawDescription)) {
-          return merchant;
-        }
-      } catch (e) {
-        // Skip invalid regex patterns silently
-        continue;
-      }
-    }
-  }
-  return undefined;
 }
 
 export async function listForUser(

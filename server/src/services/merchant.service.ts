@@ -6,11 +6,20 @@ import {
   UpdateMerchantRequest,
   UpdateMerchantResponse,
 } from "@saffron/types";
-import { CategoryRepository, MerchantRepository } from "../repositories";
+import {
+  ApplyAllMatchersBody,
+  ApplyAllMatchersResponse,
+} from "@saffron/types/schemas";
+import {
+  CategoryRepository,
+  MerchantRepository,
+  TransactionRepository,
+} from "../repositories";
 import { Merchant } from "../models";
 import { ConflictError, NotFoundError } from "../common/errors";
 import { randomUUID } from "crypto";
 import { toApiMerchant } from "../models/api";
+import { findFirstMatchingMerchant } from "../common/merchant-utils";
 
 export async function listMerchants(
   request: ListMerchantsRequest,
@@ -121,4 +130,59 @@ export async function updateMerchant(
   return {
     merchant: toApiMerchant(savedMerchant),
   };
+}
+
+export async function applyAllMatchers(
+  request: ApplyAllMatchersBody,
+): Promise<ApplyAllMatchersResponse> {
+  const merchantRepo = await MerchantRepository.getInstance();
+  const transactionRepo = await TransactionRepository.getInstance();
+
+  const merchants = await merchantRepo.listAll(request.householdId);
+
+  let retaggedCount = 0;
+  let paginationToken: string | undefined;
+
+  do {
+    const page = await transactionRepo.listTransactionsByUser(
+      request.householdId,
+      paginationToken,
+    );
+
+    for (const transaction of page.transactions) {
+      const alreadyHasMerchant = transaction.counterparty.id !== "0";
+      if (alreadyHasMerchant && !request.overrideExistingMerchants) {
+        continue;
+      }
+
+      const matchedMerchant = findFirstMatchingMerchant(
+        transaction.rawDescription,
+        merchants,
+      );
+      if (!matchedMerchant) continue;
+
+      const merchantUnchanged =
+        transaction.counterparty.id === matchedMerchant.id;
+      const categoryUnchanged =
+        transaction.categoryId === matchedMerchant.defaultCategoryId;
+      if (
+        merchantUnchanged &&
+        (!request.overrideExistingCategories || categoryUnchanged)
+      ) {
+        continue;
+      }
+
+      transaction.counterparty = { id: matchedMerchant.id, type: "merchant" };
+      if (request.overrideExistingCategories) {
+        transaction.categoryId = matchedMerchant.defaultCategoryId;
+      }
+
+      await transactionRepo.upsert(transaction);
+      retaggedCount++;
+    }
+
+    paginationToken = page.paginationToken;
+  } while (paginationToken);
+
+  return { retaggedCount };
 }

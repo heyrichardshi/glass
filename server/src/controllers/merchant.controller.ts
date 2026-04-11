@@ -1,6 +1,8 @@
 import * as merchants from "../services/merchant.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
+  ApplyAllMatchersBody,
+  ApplyAllMatchersResponse,
   CreateMerchantBody,
   CreateMerchantResponse,
   ListMerchantsQuery,
@@ -60,4 +62,22 @@ export const updateMerchant = asyncController<
   });
 
   res.status(200).json(merchant);
+});
+
+export const applyAllMatchers = asyncController<
+  NoParams,
+  NoQuery,
+  ApplyAllMatchersBody,
+  ApplyAllMatchersResponse
+>(async (req, res) => {
+  const { householdId, overrideExistingMerchants, overrideExistingCategories } =
+    req.body;
+
+  const result = await merchants.applyAllMatchers({
+    householdId,
+    overrideExistingMerchants,
+    overrideExistingCategories,
+  });
+
+  res.status(200).json(result);
 });

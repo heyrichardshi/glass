@@ -2,11 +2,20 @@
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Merchants</h1>
-      <UButton
-        icon="i-lucide-plus"
-        label="Create Merchant"
-        @click="openCreateMerchant"
-      />
+      <div class="flex gap-2">
+        <UButton
+          icon="i-lucide-refresh-cw"
+          label="Apply All Matchers"
+          color="neutral"
+          variant="subtle"
+          @click="openApplyAllMatchers"
+        />
+        <UButton
+          icon="i-lucide-plus"
+          label="Create Merchant"
+          @click="openCreateMerchant"
+        />
+      </div>
     </div>
 
     <MerchantTable
@@ -20,6 +29,7 @@
 <script setup lang="ts">
 import type { Merchant } from "@saffron/types";
 import CreateMerchant from "../components/merchant/CreateMerchant.vue";
+import ApplyAllMatchersModal from "../components/merchant/ApplyAllMatchersModal.vue";
 const config = useRuntimeConfig();
 const userId = "0";
 
@@ -47,6 +57,11 @@ watch(
 
 function onUpdatedMerchant(payload: { index: number; merchant: Merchant }) {
   displayMerchants.value[payload.index] = payload.merchant;
+}
+
+async function openApplyAllMatchers() {
+  const modal = overlay.create(ApplyAllMatchersModal, {});
+  await modal.open().result;
 }
 
 async function openCreateMerchant() {
