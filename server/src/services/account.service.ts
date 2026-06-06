@@ -280,8 +280,18 @@ export async function listForUser(
   };
 }
 
+const HEALTH_CHECK_STALENESS_MS = 24 * 60 * 60 * 1000;
+
 async function isAccountHealthy(account: Account): Promise<boolean> {
   if (account.status === "closed") {
+    return true;
+  }
+
+  const lastRefreshed = new Date(account.transactionsLastRefreshedAt).getTime();
+  const isRecentlyRefreshed =
+    lastRefreshed > 0 &&
+    Date.now() - lastRefreshed < HEALTH_CHECK_STALENESS_MS;
+  if (isRecentlyRefreshed) {
     return true;
   }
 
