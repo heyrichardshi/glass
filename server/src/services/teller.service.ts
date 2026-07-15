@@ -9,8 +9,9 @@ import {
 } from "../common/errors";
 
 const baseUrl = "https://api.teller.io";
-const ENROLLMENT_DISCONNECTED_ERROR_CODE =
-  "enrollment.disconnected.user_action.mfa_required";
+// Teller uses "enrollment.disconnected" as the base code, with optional
+// sub-codes like "enrollment.disconnected.user_action.mfa_required".
+const ENROLLMENT_DISCONNECTED_ERROR_CODE = "enrollment.disconnected";
 
 const MAX_RETRIES_ON_429 = 8;
 const INITIAL_BACKOFF_MS = 1000;
@@ -87,8 +88,8 @@ async function teller(endpoint: string, token: string) {
             `Error fetching data from Teller API (410): ${JSON.stringify(error.response?.data, null, 2)}`,
           );
           case 404:
-            const errorCode = error.response?.data?.error?.code;
-            if (errorCode === ENROLLMENT_DISCONNECTED_ERROR_CODE) {
+            const errorCode = error.response?.data?.error?.code ?? "";
+            if (errorCode.startsWith(ENROLLMENT_DISCONNECTED_ERROR_CODE)) {
               throw new TellerAccountDisconnectedError(error.message);
             }
             throw new Error(

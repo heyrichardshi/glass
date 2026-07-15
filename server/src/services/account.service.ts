@@ -27,24 +27,43 @@ export async function registerAccountsFromToken(
   // Convert to own structure
   const accounts: Account[] = await Promise.all(
     tellerAccounts.map(async (account) => {
-      console.log(`Retrieving balance for account ${account.name}...`);
-      const balance = await teller.getAccountBalance(account.id, token);
-      console.log(
-        `Retrieved balance for account ${account.name}: ${balance.available} / ${balance.ledger}`,
-      );
+      let balance = "0";
+      let status: Account["status"] =
+        account.status === "open" ? "open" : "closed";
+
+      if (status === "open") {
+        try {
+          console.log(`Retrieving balance for account ${account.name}...`);
+          const balanceData = await teller.getAccountBalance(account.id, token);
+          balance = balanceData.ledger ?? "0";
+          console.log(
+            `Retrieved balance for account ${account.name}: ${balanceData.available} / ${balanceData.ledger}`,
+          );
+        } catch (error) {
+          if (error instanceof TellerAccountClosedError) {
+            console.log(
+              `Account ${account.name} is closed; skipping balance fetch.`,
+            );
+            status = "closed";
+          } else {
+            throw error;
+          }
+        }
+      }
+
       return {
         id: account.id,
         userId: "0", // TODO: multitenancy
         householdId: "0", // TODO: multitenancy
         name: account.name,
         institution: account.institution.name,
-        balance: balance.ledger ?? "0",
+        balance,
         mask: account.last_four,
         officialName: account.name,
         transactionsLastRefreshedAt: new Date(0).toISOString(),
         lastPostedTransactionId: "",
         type: account.type,
-        status: account.status == "open" ? "open" : "closed",
+        status,
         tellerAccessToken: token,
         tellerEnrollmentId: account.enrollment_id,
       };
@@ -53,18 +72,26 @@ export async function registerAccountsFromToken(
 
   const accountRepo = await AccountRepository.getInstance();
 
-  console.log("Retrieved accounts:");
-  accounts.forEach((account) => {
-    console.log("Writing account to db: ", account);
-    accountRepo
-      .create(account)
-      .then((statusCode) => {
-        console.log(`Account creation status: ${statusCode}`);
-      })
-      .catch((error) => {
-        console.error("Error writing account to db: ", error);
-      });
-  });
+  console.log("Upserting accounts into db...");
+  await Promise.all(
+    accounts.map(async (account) => {
+      const existing = await accountRepo.findById(account.id);
+      if (existing) {
+        // Reconnect: refresh the token and status while preserving transaction history.
+        console.log(`Updating existing account ${account.id} with new access token.`);
+        await accountRepo.update({
+          ...existing,
+          tellerAccessToken: account.tellerAccessToken,
+          tellerEnrollmentId: account.tellerEnrollmentId,
+          status: account.status,
+          balance: account.balance,
+        });
+      } else {
+        console.log(`Creating new account ${account.id}.`);
+        await accountRepo.create(account);
+      }
+    }),
+  );
 
   return {
     accountsRegisteredCount: accounts.length,
@@ -104,6 +131,14 @@ export async function refresh(accountId: string) {
         `Teller reports account ${accountId} is closed; marking account and skipping further refresh attempts.`,
       );
       account.status = "closed";
+      await accountRepo.update(account);
+      return;
+    }
+    if (error instanceof TellerAccountDisconnectedError) {
+      console.log(
+        `Teller reports account ${accountId} enrollment is disconnected; marking account disconnected.`,
+      );
+      account.status = "disconnected";
       await accountRepo.update(account);
       return;
     }
@@ -280,18 +315,8 @@ export async function listForUser(
   };
 }
 
-const HEALTH_CHECK_STALENESS_MS = 24 * 60 * 60 * 1000;
-
 async function isAccountHealthy(account: Account): Promise<boolean> {
   if (account.status === "closed") {
-    return true;
-  }
-
-  const lastRefreshed = new Date(account.transactionsLastRefreshedAt).getTime();
-  const isRecentlyRefreshed =
-    lastRefreshed > 0 &&
-    Date.now() - lastRefreshed < HEALTH_CHECK_STALENESS_MS;
-  if (isRecentlyRefreshed) {
     return true;
   }
 
