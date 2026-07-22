@@ -2,3 +2,9 @@ packages:
   - client
   - server
   - types
+allowBuilds:
+  '@parcel/watcher': true
+  '@tailwindcss/oxide': true
+  esbuild: true
+  unrs-resolver: true
+  vue-demi: true

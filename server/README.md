@@ -11,9 +11,10 @@ brew install httpie
 Create a `.env` file in `server` root with following keys:
 ```
 PORT=7070
-TELLER_APPLICATION_ID=
-TELLER_CERTIFICATE_PATH=
-TELLER_KEY_PATH=
+
+PLAID_CLIENT_ID=
+PLAID_SECRET=
+PLAID_ENV="sandbox" # or "production"
 
 COSMOS_DB_ENDPOINT="https://localhost:8081/"
 COSMOS_DB_KEY=
