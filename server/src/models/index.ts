@@ -1,4 +1,4 @@
-export { Account } from "./account";
+export { Account, AccountType, AccountPlaidMetadata } from "./account";
 export { Category } from "./category";
 export { Merchant } from "./merchant";
 export { Tag } from "./tag";
@@ -7,6 +7,7 @@ export {
   TransactionCounterparty,
   TransactionHistory,
   TransasctionTellerMetadata,
+  TransactionPlaidMetadata,
   TransactionsList,
 } from "./transaction";
 export { User } from "./user";

@@ -62,7 +62,9 @@ export async function registerAccountsFromToken(
         officialName: account.name,
         transactionsLastRefreshedAt: new Date(0).toISOString(),
         lastPostedTransactionId: "",
-        type: account.type,
+        // TODO: normalize Teller's raw type to Saffron's AccountType. Legacy Teller path; Teller is
+        // wound down, so this is effectively dead code pending removal.
+        type: account.type as Account["type"],
         status,
         tellerAccessToken: token,
         tellerEnrollmentId: account.enrollment_id,
@@ -118,12 +120,20 @@ export async function refresh(accountId: string) {
     return;
   }
 
+  const tellerAccessToken = account.tellerAccessToken;
+  if (!tellerAccessToken) {
+    console.log(
+      `Account ${accountId} has no Teller access token; skipping Teller refresh.`,
+    );
+    return;
+  }
+
   console.log("Fetching transactions...");
   let tellerTransactions: TellerTransaction[];
   try {
     tellerTransactions = await teller.listAccountTransactions(
       accountId,
-      account.tellerAccessToken,
+      tellerAccessToken,
     );
   } catch (error: unknown) {
     if (error instanceof TellerAccountClosedError) {
@@ -320,8 +330,14 @@ async function isAccountHealthy(account: Account): Promise<boolean> {
     return true;
   }
 
+  const tellerAccessToken = account.tellerAccessToken;
+  if (!tellerAccessToken) {
+    // Non-Teller (or tokenless) accounts have no Teller health check.
+    return true;
+  }
+
   try {
-    await teller.getAccount(account.id, account.tellerAccessToken);
+    await teller.getAccount(account.id, tellerAccessToken);
   } catch (error: unknown) {
     if (error instanceof TellerAccountClosedError) {
       console.log(

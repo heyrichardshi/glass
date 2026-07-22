@@ -11,6 +11,7 @@ export const AccountSchema = z.object({
   transactionsLastRefreshedAt: z.string(),
   type: z.string(),
   status: z.enum(["open", "closed", "disconnected"]),
+  provider: z.enum(["teller", "plaid"]).optional(),
   tellerEnrollmentId: z.string().optional(),
 });
 

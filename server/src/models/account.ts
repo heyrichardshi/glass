@@ -1,3 +1,15 @@
+/**
+ * Saffron's own normalized account type. Provider type/subtype values are mapped onto this
+ * vocabulary; the raw provider values are kept in provider-specific metadata rather than here.
+ */
+export type AccountType =
+  | "checking"
+  | "savings"
+  | "credit"
+  | "loan"
+  | "investment"
+  | "other";
+
 export interface Account {
   id: string;
   userId: string;
@@ -12,9 +24,34 @@ export interface Account {
   transactionsLastRefreshedAt: string;
   /** Used to keep track of the last posted transaction ID, to prevent extra reads. */
   lastPostedTransactionId: String;
-  /** The type of the account, e.g. checking, savings, credit card. */
-  type: string;
+  /** Saffron's normalized account type; provider-specific values are mapped onto this. */
+  type: AccountType;
+  /**
+   * Saffron's own connection status, intentionally independent of any single provider's data model.
+   * Provider-specific signals (e.g. a Plaid item error like ITEM_LOGIN_REQUIRED, or Teller's
+   * disconnected state) are mapped onto this enum rather than stored as the source of truth.
+   */
   status: "open" | "closed" | "disconnected";
-  tellerAccessToken: string;
-  tellerEnrollmentId: string;
+  /** The data provider backing this account. Legacy rows are backfilled to "teller" on read. */
+  provider?: "teller" | "plaid";
+
+  // Teller identifiers (legacy; retained on existing rows for provenance and migration matching).
+  tellerAccessToken?: string;
+  tellerEnrollmentId?: string;
+
+  // Plaid linkage keys used operationally to sync. The access token and sync cursor are stored
+  // separately per institution login, not on the account.
+  /** Identifies the Plaid institution login (Item) this account belongs to. */
+  plaidItemId?: string;
+  /** The Plaid account_id for this account. */
+  plaidAccountId?: string;
+  /** Raw provider-specific descriptors kept out of Saffron's core model. */
+  plaidMetadata?: AccountPlaidMetadata;
+}
+
+export interface AccountPlaidMetadata {
+  /** Plaid's account subtype, e.g. "checking", "savings", "credit card". */
+  subtype?: string;
+  /** Plaid's stable institution_id. */
+  institutionId?: string;
 }

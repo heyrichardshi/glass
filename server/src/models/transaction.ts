@@ -42,7 +42,15 @@ export interface Transaction {
   linkedTransactionIds: string[];
 
   history: TransactionHistory[];
-  tellerMetadata: TransasctionTellerMetadata;
+
+  /** Teller-provided metadata (legacy; present on Teller-sourced rows). */
+  tellerMetadata?: TransasctionTellerMetadata;
+  /** Plaid-provided metadata (present on Plaid-sourced rows). */
+  plaidMetadata?: TransactionPlaidMetadata;
+  /** The Plaid transaction_id; used to match incoming Plaid sync results to this row. */
+  plaidTransactionId?: string;
+  /** For a posted Plaid transaction, the transaction_id of the pending transaction it replaced. */
+  plaidPendingTransactionId?: string;
 }
 
 export interface TransactionCounterparty {
@@ -62,6 +70,21 @@ export interface TransasctionTellerMetadata {
   category?: string;
   /** The inferred counterparty of the transaction, according to Teller. */
   counterparty?: string;
+}
+
+export interface TransactionPlaidMetadata {
+  /** Plaid's personal_finance_category (primary/detailed), if provided. */
+  personalFinanceCategory?: string;
+  /** Plaid's enriched merchant name, if provided. */
+  merchantName?: string;
+  /** Plaid's stable merchant identifier (merchant_entity_id); enables reliable merchant matching. */
+  merchantEntityId?: string;
+  /** Plaid's merchant logo URL, if provided. */
+  merchantLogoUrl?: string;
+  /** Plaid's merchant website, if provided. */
+  merchantWebsite?: string;
+  /** Plaid's authorized_date (when the transaction was authorized), distinct from the posted `date`. */
+  authorizedDate?: string;
 }
 
 export interface TransactionsList {

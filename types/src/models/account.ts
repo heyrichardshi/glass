@@ -9,8 +9,10 @@ export interface Account {
   /** What the financial institution refers to the account as. */
   officialName: string;
   transactionsLastRefreshedAt: string;
-  /** The type of the account, e.g. checking, savings, credit card. */
+  /** Saffron's normalized account type, e.g. checking, savings, credit. */
   type: string;
   status: "open" | "closed" | "disconnected";
+  /** The data provider backing this account. */
+  provider?: "teller" | "plaid";
   tellerEnrollmentId?: string;
 }
