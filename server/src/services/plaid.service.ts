@@ -5,6 +5,7 @@ import {
   PlaidEnvironments,
   Products,
   type AccountBase,
+  type LinkTokenCreateRequest,
 } from "plaid";
 
 // Saffron aggregates Transactions for US institutions. These are product decisions, not
@@ -51,15 +52,25 @@ function getClient(): PlaidApi {
 
 /**
  * Creates a short-lived Link token the client uses to open Plaid Link for a given user.
+ *
+ * Pass `accessToken` to launch Link in update mode against an existing Item (e.g. to
+ * re-authenticate after ITEM_LOGIN_REQUIRED, or to add products). In update mode `products`
+ * must be omitted; otherwise the Item is initialized with the default products.
  */
-export async function createLinkToken(userId: string): Promise<string> {
-  const response = await getClient().linkTokenCreate({
+export async function createLinkToken(
+  userId: string,
+  accessToken?: string,
+): Promise<string> {
+  const request: LinkTokenCreateRequest = {
     user: { client_user_id: userId },
     client_name: "Saffron",
-    products: PLAID_PRODUCTS,
     country_codes: PLAID_COUNTRY_CODES,
     language: "en",
-  });
+    ...(accessToken
+      ? { access_token: accessToken }
+      : { products: PLAID_PRODUCTS }),
+  };
+  const response = await getClient().linkTokenCreate(request);
   return response.data.link_token;
 }
 

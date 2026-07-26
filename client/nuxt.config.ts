@@ -16,7 +16,10 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: "Saffron",
-      script: [{ src: "https://cdn.teller.io/connect/connect.js" }],
+      script: [
+        { src: "https://cdn.teller.io/connect/connect.js" },
+        { src: "https://cdn.plaid.com/link/v2/stable/link-initialize.js" },
+      ],
     },
   },
 });

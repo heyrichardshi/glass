@@ -14,7 +14,7 @@
           Refresh all accounts
         </UButton>
 
-        <TellerConnect />
+        <PlaidLink @connected="refresh" />
       </div>
     </div>
 

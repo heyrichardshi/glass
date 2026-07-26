@@ -8,6 +8,9 @@ import {
 import {
   ListAccountsQuerySchema,
   ListAccountsResponseSchema,
+  PlaidExchangeBodySchema,
+  PlaidExchangeResponseSchema,
+  PlaidLinkTokenResponseSchema,
   RegisterAccountsBodySchema,
   RegisterAccountsResponseSchema,
 } from "@saffron/types/schemas";
@@ -19,6 +22,19 @@ router.post(
   validateRequest(RegisterAccountsBodySchema),
   validateResponse(RegisterAccountsResponseSchema),
   accounts.registerAccounts,
+);
+
+router.post(
+  "/plaid/link-token",
+  validateResponse(PlaidLinkTokenResponseSchema),
+  accounts.getPlaidLinkToken,
+);
+
+router.post(
+  "/plaid/exchange",
+  validateRequest(PlaidExchangeBodySchema),
+  validateResponse(PlaidExchangeResponseSchema),
+  accounts.exchangePlaidPublicToken,
 );
 
 router.get(

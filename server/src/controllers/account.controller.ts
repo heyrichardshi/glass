@@ -3,6 +3,9 @@ import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   ListAccountsQuery,
   ListAccountsResponse,
+  PlaidExchangeBody,
+  PlaidExchangeResponse,
+  PlaidLinkTokenResponse,
   RefreshAccountParams,
   RefreshAccountResponse,
   RegisterAccountsBody,
@@ -29,6 +32,26 @@ export const refreshAccount = asyncController<
 >(async (req, res) => {
   await accounts.refresh(req.params.accountId);
   res.status(200).send();
+});
+
+export const getPlaidLinkToken = asyncController<
+  NoParams,
+  NoQuery,
+  NoBody,
+  PlaidLinkTokenResponse
+>(async (req, res) => {
+  const linkToken = await accounts.createPlaidLinkToken();
+  res.status(200).json({ linkToken });
+});
+
+export const exchangePlaidPublicToken = asyncController<
+  NoParams,
+  NoQuery,
+  PlaidExchangeBody,
+  PlaidExchangeResponse
+>(async (req, res) => {
+  const response = await accounts.exchangePlaidPublicToken(req.body.publicToken);
+  res.status(201).json(response);
 });
 
 export const listAccountsForUser = asyncController<
