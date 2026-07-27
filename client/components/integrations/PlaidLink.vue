@@ -12,8 +12,8 @@
 
 <script setup lang="ts">
 import type {
-  PlaidExchangeResponse,
-  PlaidLinkTokenResponse,
+  ConnectionTokenResponse,
+  RegisterAccountsResponse,
 } from "@saffron/types/schemas";
 
 // Plaid Link is loaded from the CDN (see nuxt.config app.head).
@@ -55,13 +55,13 @@ async function openPlaidLink() {
   linking.value = true;
 
   try {
-    const { linkToken } = await $fetch<PlaidLinkTokenResponse>(
-      `${config.public.SAFFRON_API_URL}/plaid/link-token`,
-      { method: "POST", server: false },
+    const { connectionToken } = await $fetch<ConnectionTokenResponse>(
+      `${config.public.SAFFRON_API_URL}/accounts/register/token`,
+      { method: "POST" },
     );
 
     const handler = Plaid.create({
-      token: linkToken,
+      token: connectionToken,
       onSuccess: async (publicToken: string) => {
         await exchange(publicToken);
       },
@@ -83,9 +83,9 @@ async function openPlaidLink() {
 
 async function exchange(publicToken: string) {
   try {
-    const res = await $fetch<PlaidExchangeResponse>(
-      `${config.public.SAFFRON_API_URL}/plaid/exchange`,
-      { method: "POST", body: { publicToken }, server: false },
+    const res = await $fetch<RegisterAccountsResponse>(
+      `${config.public.SAFFRON_API_URL}/accounts/register`,
+      { method: "POST", body: { exchangeToken: publicToken } },
     );
     toast.add({
       title: `Successfully added ${res.accountsRegisteredCount} account(s)`,

@@ -6,11 +6,9 @@ import {
   validateResponse,
 } from "../middleware/validation";
 import {
+  ConnectionTokenResponseSchema,
   ListAccountsQuerySchema,
   ListAccountsResponseSchema,
-  PlaidExchangeBodySchema,
-  PlaidExchangeResponseSchema,
-  PlaidLinkTokenResponseSchema,
   RegisterAccountsBodySchema,
   RegisterAccountsResponseSchema,
 } from "@saffron/types/schemas";
@@ -18,23 +16,16 @@ import {
 const router = Router();
 
 router.post(
+  "/accounts/register/token",
+  validateResponse(ConnectionTokenResponseSchema),
+  accounts.getConnectionToken,
+);
+
+router.post(
   "/accounts/register",
   validateRequest(RegisterAccountsBodySchema),
   validateResponse(RegisterAccountsResponseSchema),
   accounts.registerAccounts,
-);
-
-router.post(
-  "/plaid/link-token",
-  validateResponse(PlaidLinkTokenResponseSchema),
-  accounts.getPlaidLinkToken,
-);
-
-router.post(
-  "/plaid/exchange",
-  validateRequest(PlaidExchangeBodySchema),
-  validateResponse(PlaidExchangeResponseSchema),
-  accounts.exchangePlaidPublicToken,
 );
 
 router.get(

@@ -1,11 +1,9 @@
 import * as accounts from "../services/account.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
+  ConnectionTokenResponse,
   ListAccountsQuery,
   ListAccountsResponse,
-  PlaidExchangeBody,
-  PlaidExchangeResponse,
-  PlaidLinkTokenResponse,
   RefreshAccountParams,
   RefreshAccountResponse,
   RegisterAccountsBody,
@@ -18,9 +16,9 @@ export const registerAccounts = asyncController<
   RegisterAccountsBody,
   RegisterAccountsResponse
 >(async (req, res) => {
-  const { accessToken } = req.body;
+  const { exchangeToken } = req.body;
 
-  const response = await accounts.registerAccountsFromToken(accessToken);
+  const response = await accounts.exchangePlaidPublicToken(exchangeToken);
   res.status(201).json(response);
 });
 
@@ -34,24 +32,14 @@ export const refreshAccount = asyncController<
   res.status(200).send();
 });
 
-export const getPlaidLinkToken = asyncController<
+export const getConnectionToken = asyncController<
   NoParams,
   NoQuery,
   NoBody,
-  PlaidLinkTokenResponse
+  ConnectionTokenResponse
 >(async (req, res) => {
-  const linkToken = await accounts.createPlaidLinkToken();
-  res.status(200).json({ linkToken });
-});
-
-export const exchangePlaidPublicToken = asyncController<
-  NoParams,
-  NoQuery,
-  PlaidExchangeBody,
-  PlaidExchangeResponse
->(async (req, res) => {
-  const response = await accounts.exchangePlaidPublicToken(req.body.publicToken);
-  res.status(201).json(response);
+  const connectionToken = await accounts.createPlaidLinkToken();
+  res.status(200).json({ connectionToken });
 });
 
 export const listAccountsForUser = asyncController<

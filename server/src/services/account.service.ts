@@ -1,9 +1,5 @@
-import { ListAccountsResponse, RegisterAccountsResponse } from "@saffron/types";
-import {
-  NotFoundError,
-  TellerAccountClosedError,
-  TellerAccountDisconnectedError,
-} from "../common/errors";
+import { ListAccountsResponse } from "@saffron/types";
+import { NotFoundError } from "../common/errors";
 import { Account, AccountType, Transaction, Merchant } from "../models";
 import { Transaction as TellerTransaction } from "../models/teller";
 import {
@@ -12,7 +8,6 @@ import {
   MerchantRepository,
   PlaidItemRepository,
 } from "../repositories";
-import * as teller from "./teller.service";
 import * as plaid from "./plaid.service";
 import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
 import { toApiAccount } from "../models/api";
@@ -125,90 +120,6 @@ export async function exchangePlaidPublicToken(
   );
 
   return { accountsRegisteredCount: accounts.length };
-}
-
-export async function registerAccountsFromToken(
-  token: string,
-): Promise<RegisterAccountsResponse> {
-  // Retrieve accounts associated with this token from Teller
-  console.log("Fetching accounts...");
-  const tellerAccounts = await teller.listAccounts(token);
-  console.log(`Fetched ${tellerAccounts.length} account(s)`);
-
-  // Convert to own structure
-  const accounts: Account[] = await Promise.all(
-    tellerAccounts.map(async (account) => {
-      let balance = "0";
-      let status: Account["status"] =
-        account.status === "open" ? "open" : "closed";
-
-      if (status === "open") {
-        try {
-          console.log(`Retrieving balance for account ${account.name}...`);
-          const balanceData = await teller.getAccountBalance(account.id, token);
-          balance = balanceData.ledger ?? "0";
-          console.log(
-            `Retrieved balance for account ${account.name}: ${balanceData.available} / ${balanceData.ledger}`,
-          );
-        } catch (error) {
-          if (error instanceof TellerAccountClosedError) {
-            console.log(
-              `Account ${account.name} is closed; skipping balance fetch.`,
-            );
-            status = "closed";
-          } else {
-            throw error;
-          }
-        }
-      }
-
-      return {
-        id: account.id,
-        userId: "0", // TODO: multitenancy
-        householdId: "0", // TODO: multitenancy
-        name: account.name,
-        institution: account.institution.name,
-        balance,
-        mask: account.last_four,
-        officialName: account.name,
-        transactionsLastRefreshedAt: new Date(0).toISOString(),
-        lastPostedTransactionId: "",
-        // TODO: normalize Teller's raw type to Saffron's AccountType. Legacy Teller path; Teller is
-        // wound down, so this is effectively dead code pending removal.
-        type: account.type as Account["type"],
-        status,
-        tellerAccessToken: token,
-        tellerEnrollmentId: account.enrollment_id,
-      };
-    }),
-  );
-
-  const accountRepo = await AccountRepository.getInstance();
-
-  console.log("Upserting accounts into db...");
-  await Promise.all(
-    accounts.map(async (account) => {
-      const existing = await accountRepo.findById(account.id);
-      if (existing) {
-        // Reconnect: refresh the token and status while preserving transaction history.
-        console.log(`Updating existing account ${account.id} with new access token.`);
-        await accountRepo.update({
-          ...existing,
-          tellerAccessToken: account.tellerAccessToken,
-          tellerEnrollmentId: account.tellerEnrollmentId,
-          status: account.status,
-          balance: account.balance,
-        });
-      } else {
-        console.log(`Creating new account ${account.id}.`);
-        await accountRepo.create(account);
-      }
-    }),
-  );
-
-  return {
-    accountsRegisteredCount: accounts.length,
-  };
 }
 
 /**
