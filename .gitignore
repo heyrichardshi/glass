@@ -1,14 +1,8 @@
 node_modules/
 dist/
 .pnpm-store/
-
-# No env file is ever committed. The .example templates carry the key names
-# with no values, and are the only record of what each environment needs —
-# the deploy target never checks this repository out.
 .env
 .env.*
-!.env.example
-!.env.*.example
 
 # Provider certificates and scratch space.
 .dev
