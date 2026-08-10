@@ -5,6 +5,17 @@ name: build
 on:
   push:
     branches: [main]
+    paths:
+      - "server/**"
+      - "types/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".dockerignore"
+      - ".github/workflows/build.yml"
+
+  # An escape hatch for republishing without an empty commit.
+  workflow_dispatch:
 
 concurrency:
   group: build-${{ github.ref }}
