@@ -26,6 +26,9 @@
 </template>
 
 <script setup lang="ts">
+// Reachable without signing in
+definePageMeta({ public: true });
+
 const { clearApiBase } = useApiBase();
 const toast = useToast();
 

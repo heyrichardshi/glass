@@ -2,7 +2,10 @@
   <UApp :toaster="toaster">
     <Navigation />
     <ApiBaseGate>
-      <NuxtPage />
+      <!-- Sits inside ApiBaseGate because logging in requires knowing where the API is. -->
+      <AuthGate>
+        <NuxtPage />
+      </AuthGate>
     </ApiBaseGate>
   </UApp>
 </template>
