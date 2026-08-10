@@ -1,4 +1,4 @@
-# Saffron / Server
+# Glass / Server
 
 ## Development
 

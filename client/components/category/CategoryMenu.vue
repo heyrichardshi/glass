@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Category } from "@saffron/types";
+import type { Category } from "@glass/types";
 
 import CreateCategory from "./CreateCategory.vue";
 

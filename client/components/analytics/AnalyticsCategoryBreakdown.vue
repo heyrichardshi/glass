@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CategoryTransactions, Transaction } from "@saffron/types";
+import type { CategoryTransactions, Transaction } from "@glass/types";
 import * as d3 from "d3";
 
 const props = defineProps<{

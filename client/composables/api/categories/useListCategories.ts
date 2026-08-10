@@ -1,11 +1,11 @@
-import type { Category, ListCategoriesResponse } from "@saffron/types";
+import type { Category, ListCategoriesResponse } from "@glass/types";
 
 export default function (userId: string) {
   const config = useRuntimeConfig();
 
   const key = `ListCategories:${userId}`;
   const { data, status, refresh } = useFetch(
-    `${config.public.SAFFRON_API_URL}/categories`,
+    `${config.public.GLASS_API_URL}/categories`,
     {
       key,
       query: { userId },

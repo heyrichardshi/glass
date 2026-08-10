@@ -1,10 +1,10 @@
-# Saffron / Client
+# Glass / Client
 
 ## Development Server
 
 Create a `.env` file in `client` root with following keys:
 ```
-SAFFRON_API_URL=...
+GLASS_API_URL=...
 
 TELLER_APPLICATION_ID=...
 ```

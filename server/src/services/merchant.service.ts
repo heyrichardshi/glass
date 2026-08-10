@@ -5,11 +5,11 @@ import {
   ListMerchantsResponse,
   UpdateMerchantRequest,
   UpdateMerchantResponse,
-} from "@saffron/types";
+} from "@glass/types";
 import {
   ApplyAllMatchersBody,
   ApplyAllMatchersResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 import {
   CategoryRepository,
   MerchantRepository,

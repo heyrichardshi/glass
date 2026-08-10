@@ -1,4 +1,4 @@
-import type { ListTransactionsResponse } from "@saffron/types";
+import type { ListTransactionsResponse } from "@glass/types";
 
 type SearchFilters = {
   searchText?: string;
@@ -16,7 +16,7 @@ export default function (params: {
 
   const key = `SearchTransactions:${JSON.stringify(params.filters)}:${params.paginationToken || ""}`;
   const { data, status, error, refresh } = useFetch<ListTransactionsResponse>(
-    `${config.public.SAFFRON_API_URL}/transactions/search`,
+    `${config.public.GLASS_API_URL}/transactions/search`,
     {
       key,
       method: "POST",

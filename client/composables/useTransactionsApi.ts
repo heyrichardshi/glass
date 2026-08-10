@@ -1,12 +1,12 @@
 import type {
   UpdateTransactionRequest,
   BulkUpdateTransactionsRequest,
-} from "@saffron/types";
+} from "@glass/types";
 import useUpdateTransaction from "./api/transactions/useUpdateTransaction";
 import useBulkUpdateTransactions from "./api/transactions/useBulkUpdateTransactions";
 import useListTransactions from "./api/transactions/useListTransactions";
 import useSearchTransactions from "./api/transactions/useSearchTransactions";
-import type { TransactionSearchFilters } from "@saffron/types/schemas";
+import type { TransactionSearchFilters } from "@glass/types/schemas";
 
 export default function () {
   const listTransactions = (params: {

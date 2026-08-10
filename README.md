@@ -1,4 +1,4 @@
-# saffron
+# 💠 Glass
 Powerful cash flow analysis and budgeting.
 
 ## Development

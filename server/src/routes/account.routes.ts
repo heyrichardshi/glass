@@ -11,7 +11,7 @@ import {
   ListAccountsResponseSchema,
   RegisterAccountsBodySchema,
   RegisterAccountsResponseSchema,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 const router = Router();
 

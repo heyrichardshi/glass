@@ -1,14 +1,14 @@
 import type {
   GetMonthlyReportRequest,
   GetMonthlyReportResponse,
-} from "@saffron/types";
+} from "@glass/types";
 
 export default function (request: GetMonthlyReportRequest) {
   const config = useRuntimeConfig();
 
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error, refresh, clear } = useFetch(
-    () => `${config.public.SAFFRON_API_URL}/reports/monthly`,
+    () => `${config.public.GLASS_API_URL}/reports/monthly`,
     {
       query: request,
       server: false,

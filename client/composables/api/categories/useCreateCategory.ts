@@ -1,11 +1,11 @@
-import type { Category, CreateCategoryResponse } from "@saffron/types";
+import type { Category, CreateCategoryResponse } from "@glass/types";
 
 export default function (userId: string, name: string, parentId?: string) {
   const config = useRuntimeConfig();
 
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error, refresh, clear } = useFetch(
-    () => `${config.public.SAFFRON_API_URL}/categories`,
+    () => `${config.public.GLASS_API_URL}/categories`,
     {
       method: "POST",
       body: { userId, name, parentId },

@@ -8,14 +8,14 @@ export default defineNuxtConfig({
   components: [{ path: "~/components", pathPrefix: false }],
   runtimeConfig: {
     public: {
-      SAFFRON_API_URL: process.env.SAFFRON_API_URL || "http://localhost:7070",
+      GLASS_API_URL: process.env.GLASS_API_URL || "http://localhost:7070",
       TELLER_APPLICATION_ID: process.env.TELLER_APPLICATION_ID || "",
     },
   },
   css: ["~/assets/css/main.css"],
   app: {
     head: {
-      title: "Saffron",
+      title: "Glass",
       script: [
         { src: "https://cdn.teller.io/connect/connect.js" },
         { src: "https://cdn.plaid.com/link/v2/stable/link-initialize.js" },

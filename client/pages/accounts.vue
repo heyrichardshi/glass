@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Account } from "@saffron/types";
+import type { Account } from "@glass/types";
 import useListAccounts from "~/composables/api/accounts/useListAccounts";
 
 const config = useRuntimeConfig();
@@ -67,7 +67,7 @@ async function refreshAllAccounts() {
     for (const account of refreshableAccounts.value) {
       try {
         await $fetch(
-          `${config.public.SAFFRON_API_URL}/accounts/${account.id}/refresh`,
+          `${config.public.GLASS_API_URL}/accounts/${account.id}/refresh`,
           {
             method: "POST",
             server: false,

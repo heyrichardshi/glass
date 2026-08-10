@@ -14,7 +14,7 @@
 import type {
   ConnectionTokenResponse,
   RegisterAccountsResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 // Plaid Link is loaded from the CDN (see nuxt.config app.head).
 declare global {
@@ -56,7 +56,7 @@ async function openPlaidLink() {
 
   try {
     const { connectionToken } = await $fetch<ConnectionTokenResponse>(
-      `${config.public.SAFFRON_API_URL}/accounts/register/token`,
+      `${config.public.GLASS_API_URL}/accounts/register/token`,
       { method: "POST" },
     );
 
@@ -84,7 +84,7 @@ async function openPlaidLink() {
 async function exchange(publicToken: string) {
   try {
     const res = await $fetch<RegisterAccountsResponse>(
-      `${config.public.SAFFRON_API_URL}/accounts/register`,
+      `${config.public.GLASS_API_URL}/accounts/register`,
       { method: "POST", body: { exchangeToken: publicToken } },
     );
     toast.add({

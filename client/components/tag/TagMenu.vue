@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Tag } from "@saffron/types";
+import type { Tag } from "@glass/types";
 import CreateTag from "./CreateTag.vue";
 
 const props = defineProps<{

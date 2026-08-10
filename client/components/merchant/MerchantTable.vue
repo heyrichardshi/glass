@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import EditMerchant from "./EditMerchant.vue";
 import type { TableColumn, TableRow } from "@nuxt/ui";
-import type { Merchant, Category } from "@saffron/types";
+import type { Merchant, Category } from "@glass/types";
 
 const props = defineProps<{
   merchants: Merchant[];

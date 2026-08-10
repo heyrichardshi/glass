@@ -3,7 +3,7 @@ import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   GetMonthlyReportQuery,
   GetMonthlyReportResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 export const getMonthlyReport = asyncController<
   NoParams,

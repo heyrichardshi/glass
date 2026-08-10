@@ -1,5 +1,5 @@
 /**
- * Saffron's own normalized account type. Provider type/subtype values are mapped onto this
+ * Glass's own normalized account type. Provider type/subtype values are mapped onto this
  * vocabulary; the raw provider values are kept in provider-specific metadata rather than here.
  */
 export type AccountType =
@@ -24,10 +24,10 @@ export interface Account {
   transactionsLastRefreshedAt: string;
   /** Used to keep track of the last posted transaction ID, to prevent extra reads. */
   lastPostedTransactionId: String;
-  /** Saffron's normalized account type; provider-specific values are mapped onto this. */
+  /** Glass's normalized account type; provider-specific values are mapped onto this. */
   type: AccountType;
   /**
-   * Saffron's own connection status, intentionally independent of any single provider's data model.
+   * Glass's own connection status, intentionally independent of any single provider's data model.
    * Provider-specific signals (e.g. a Plaid item error like ITEM_LOGIN_REQUIRED, or Teller's
    * disconnected state) are mapped onto this enum rather than stored as the source of truth.
    */
@@ -45,7 +45,7 @@ export interface Account {
   plaidItemId?: string;
   /** The Plaid account_id for this account. */
   plaidAccountId?: string;
-  /** Raw provider-specific descriptors kept out of Saffron's core model. */
+  /** Raw provider-specific descriptors kept out of Glass's core model. */
   plaidMetadata?: AccountPlaidMetadata;
 }
 

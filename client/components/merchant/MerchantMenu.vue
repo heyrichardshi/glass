@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Merchant } from "@saffron/types";
+import type { Merchant } from "@glass/types";
 
 import CreateMerchant from "./CreateMerchant.vue";
 

@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GetMonthlyReportResponse } from "@saffron/types";
+import type { GetMonthlyReportResponse } from "@glass/types";
 
 const toast = useToast();
 

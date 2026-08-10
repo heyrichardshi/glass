@@ -4,7 +4,7 @@ import { validateQuery, validateResponse } from "../middleware/validation";
 import {
   GetMonthlyReportQuerySchema,
   GetMonthlyReportResponseSchema,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 const router = Router();
 

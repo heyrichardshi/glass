@@ -1,4 +1,4 @@
-import type { ApplyAllMatchersResponse } from "@saffron/types/schemas";
+import type { ApplyAllMatchersResponse } from "@glass/types/schemas";
 
 export default function (request: {
   householdId: string;
@@ -9,7 +9,7 @@ export default function (request: {
 
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error } = useFetch(
-    () => `${config.public.SAFFRON_API_URL}/merchants/matchers/all`,
+    () => `${config.public.GLASS_API_URL}/merchants/matchers/all`,
     {
       method: "POST",
       body: request,

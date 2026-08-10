@@ -1,7 +1,9 @@
 services:
   server:
-    container_name: saffron_server
-    image: node:20-alpine
+    container_name: glass_server
+    # Must satisfy the Node version required by the pnpm release pinned in the root
+    # package.json "packageManager" field, which corepack resolves inside the container.
+    image: node:22-alpine
     working_dir: /workspace
     ports:
       - "7070:7070"
@@ -15,18 +17,20 @@ services:
       - ./:/workspace
       - server_node_modules:/workspace/server/node_modules
       - types_node_modules:/workspace/types/node_modules
-      - pnpm_store:/pnpm-store
-    command: sh -c "corepack enable && corepack prepare pnpm@10.26.1 --activate && [ -x server/node_modules/.bin/ts-node-dev ] || pnpm -C server install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C server dev"
+      - pnpm_store_server:/pnpm-store
+    # The server owns building `types`; the client waits for the output. Running both concurrently
+    # corrupts the shared workspace state.
+    command: sh -c "corepack enable && pnpm -C types install && pnpm -C types build && pnpm -C server install && pnpm -C server dev"
   client:
-    container_name: saffron_client
-    image: node:20-alpine
+    container_name: glass_client
+    image: node:22-alpine
     working_dir: /workspace
     depends_on:
       - server
     ports:
       - "3000:3000"
     environment:
-      - SAFFRON_API_URL=http://localhost:7070
+      - GLASS_API_URL=http://localhost:7070
       - CHOKIDAR_USEPOLLING=1
       - PNPM_STORE_DIR=/pnpm-store
       - CI=true
@@ -34,10 +38,13 @@ services:
       - ./:/workspace
       - client_node_modules:/workspace/client/node_modules
       - types_node_modules:/workspace/types/node_modules
-      - pnpm_store:/pnpm-store
-    command: sh -c "corepack enable && corepack prepare pnpm@10.26.1 --activate && [ -x client/node_modules/.bin/nuxt ] || pnpm -C client install && [ -f types/dist/index.js ] || (pnpm -C types install && pnpm -C types build) && pnpm -C client dev --port 3000 --host 0.0.0.0"
+      # A separate store per service: pnpm's store index is a SQLite database that concurrent
+      # installs from two containers can corrupt.
+      - pnpm_store_client:/pnpm-store
+    command: sh -c "corepack enable && until [ -f types/dist/index.js ]; do echo 'waiting for types build...'; sleep 2; done && pnpm -C client install && pnpm -C client dev --port 3000 --host 0.0.0.0"
 volumes:
   server_node_modules:
   client_node_modules:
   types_node_modules:
-  pnpm_store:
+  pnpm_store_server:
+  pnpm_store_client:

@@ -1,11 +1,11 @@
-import type { ListTransactionsResponse } from "@saffron/types";
+import type { ListTransactionsResponse } from "@glass/types";
 
 export default function (params: { userId: string; paginationToken?: string }) {
   const config = useRuntimeConfig();
 
   const key = `ListTransactions:${params.userId}:${params.paginationToken || ""}`;
   const { data, status, error, refresh } = useFetch<ListTransactionsResponse>(
-    `${config.public.SAFFRON_API_URL}/transactions`,
+    `${config.public.GLASS_API_URL}/transactions`,
     {
       key,
       query: {

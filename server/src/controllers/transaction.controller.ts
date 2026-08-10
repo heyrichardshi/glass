@@ -10,7 +10,7 @@ import {
   UpdateTransactionBody,
   UpdateTransactionParams,
   UpdateTransactionResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 export const listByUser = asyncController<
   NoParams,

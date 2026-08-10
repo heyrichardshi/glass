@@ -1,10 +1,10 @@
-import type { Account, ListAccountsResponse } from "@saffron/types";
+import type { Account, ListAccountsResponse } from "@glass/types";
 
 export default function (userId: string) {
   const config = useRuntimeConfig();
 
   const { data, status, refresh } = useFetch(
-    `${config.public.SAFFRON_API_URL}/accounts`,
+    `${config.public.GLASS_API_URL}/accounts`,
     {
       key: `ListAccounts:${userId}`,
       query: { userId },

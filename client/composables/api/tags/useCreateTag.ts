@@ -1,11 +1,11 @@
-import type { Tag, CreateTagResponse } from "@saffron/types";
+import type { Tag, CreateTagResponse } from "@glass/types";
 
 export default function (userId: string, name: string, parentId?: string) {
   const config = useRuntimeConfig();
 
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error, refresh, clear } = useFetch(
-    () => `${config.public.SAFFRON_API_URL}/tags`,
+    () => `${config.public.GLASS_API_URL}/tags`,
     {
       method: "POST",
       body: { userId, name, parentId },

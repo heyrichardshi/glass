@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import type { TableColumn, TableRow } from "@nuxt/ui";
-import type { Category, Transaction } from "@saffron/types";
+import type { Category, Transaction } from "@glass/types";
 import EditTransaction from "./EditTransaction.vue";
 import BulkEditTransaction from "./BulkEditTransaction.vue";
 import TagBadge from "../tag/TagBadge.vue";

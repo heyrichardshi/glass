@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
-import type { Transaction } from "@saffron/types";
+import type { Transaction } from "@glass/types";
 import TagBadge from "../tag/TagBadge.vue";
 import useSearchTransactions from "~/composables/api/transactions/useSearchTransactions";
 import formatDisplayDate from "~/utils/formatDisplayDate";

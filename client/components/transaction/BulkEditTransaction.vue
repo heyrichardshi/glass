@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Category, Tag, Transaction, Merchant } from "@saffron/types";
+import type { Category, Tag, Transaction, Merchant } from "@glass/types";
 
 const props = defineProps<{
   transactions: Transaction[];

@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Tag } from "@saffron/types";
+import type { Tag } from "@glass/types";
 
 const props = defineProps<{
   prefillName: string;

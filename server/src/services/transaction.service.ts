@@ -3,7 +3,7 @@ import {
   UpdateTransactionResponse,
   BulkUpdateTransactionsRequest,
   BulkUpdateTransactionsResponse,
-} from "@saffron/types";
+} from "@glass/types";
 import { TransactionRepository, TagRepository } from "../repositories";
 import { Transaction } from "../models";
 import {
@@ -13,7 +13,7 @@ import {
 import {
   ListTransactionsResponse,
   TransactionSearchFilters,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 /**
  * Retrieves all transactions for a given user, in reverse chronological order.

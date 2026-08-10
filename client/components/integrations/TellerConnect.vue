@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import type { RegisterAccountsResponse } from "@saffron/types";
+import type { RegisterAccountsResponse } from "@glass/types";
 
 // Declare the global TellerConnect object loaded from the CDN
 declare global {
@@ -90,7 +90,7 @@ function openTellerConnect() {
 }
 
 function registerAccounts(accessToken: string) {
-  useFetch(() => `${config.public.SAFFRON_API_URL}/accounts/register`, {
+  useFetch(() => `${config.public.GLASS_API_URL}/accounts/register`, {
     method: "POST",
     body: { accessToken },
     server: false,

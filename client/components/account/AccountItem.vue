@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Account } from "@saffron/types";
+import type { Account } from "@glass/types";
 
 const props = defineProps<{
   account: Account;
@@ -95,7 +95,7 @@ function refreshAccount() {
 
   useFetch(
     () =>
-      `${config.public.SAFFRON_API_URL}/accounts/${props.account.id}/refresh`,
+      `${config.public.GLASS_API_URL}/accounts/${props.account.id}/refresh`,
     {
       method: "POST",
       server: false,

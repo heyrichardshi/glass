@@ -1,4 +1,4 @@
-import * as apiTypes from "@saffron/types";
+import * as apiTypes from "@glass/types";
 import { Category } from "./category";
 import { Tag } from "./tag";
 import { Account } from "./account";

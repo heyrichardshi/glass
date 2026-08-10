@@ -9,7 +9,7 @@ export interface Account {
   /** What the financial institution refers to the account as. */
   officialName: string;
   transactionsLastRefreshedAt: string;
-  /** Saffron's normalized account type, e.g. checking, savings, credit. */
+  /** Glass's normalized account type, e.g. checking, savings, credit. */
   type: string;
   status: "open" | "closed" | "disconnected";
   /** The data provider backing this account. */

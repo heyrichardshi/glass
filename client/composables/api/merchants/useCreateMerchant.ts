@@ -2,14 +2,14 @@ import type {
   Merchant,
   CreateMerchantResponse,
   CreateMerchantRequest,
-} from "@saffron/types";
+} from "@glass/types";
 
 export default function (request: CreateMerchantRequest) {
   const config = useRuntimeConfig();
 
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error, refresh, clear } = useFetch(
-    () => `${config.public.SAFFRON_API_URL}/merchants`,
+    () => `${config.public.GLASS_API_URL}/merchants`,
     {
       method: "POST",
       body: request,

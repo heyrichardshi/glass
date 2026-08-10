@@ -1,11 +1,11 @@
-import type { Tag, ListTagsResponse } from "@saffron/types";
+import type { Tag, ListTagsResponse } from "@glass/types";
 
 export default function (userId: string) {
   const config = useRuntimeConfig();
 
   const key = `ListTags:${userId}`;
   const { data, status, error, refresh } = useFetch(
-    `${config.public.SAFFRON_API_URL}/tags`,
+    `${config.public.GLASS_API_URL}/tags`,
     {
       key,
       query: { userId },

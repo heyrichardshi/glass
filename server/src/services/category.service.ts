@@ -3,7 +3,7 @@ import {
   CreateCategoryResponse,
   ListCategoriesRequest,
   ListCategoriesResponse,
-} from "@saffron/types";
+} from "@glass/types";
 import { CategoryRepository } from "../repositories";
 import { Category, toApiCategory } from "../models";
 import { ConflictError, NotFoundError } from "../common/errors";

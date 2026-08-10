@@ -5,7 +5,7 @@ import {
   CreateCategoryResponse,
   ListCategoriesQuery,
   ListCategoriesResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 export const listCategories = asyncController<
   NoParams,

@@ -2,7 +2,7 @@ import type {
   Transaction,
   UpdateTransactionRequest,
   UpdateTransactionResponse,
-} from "@saffron/types";
+} from "@glass/types";
 
 export default function (request: UpdateTransactionRequest) {
   const config = useRuntimeConfig();
@@ -10,7 +10,7 @@ export default function (request: UpdateTransactionRequest) {
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error, refresh, clear } = useFetch(
     () =>
-      `${config.public.SAFFRON_API_URL}/transactions/${request.transactionId}`,
+      `${config.public.GLASS_API_URL}/transactions/${request.transactionId}`,
     {
       method: "PUT",
       body: request,

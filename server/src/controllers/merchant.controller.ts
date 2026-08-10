@@ -9,7 +9,7 @@ import {
   ListMerchantsResponse,
   UpdateMerchantBody,
   UpdateMerchantResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 export const listMerchants = asyncController<
   NoParams,

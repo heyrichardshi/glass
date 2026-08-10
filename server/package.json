@@ -1,5 +1,5 @@
 {
-    "name": "@saffron/server",
+    "name": "@glass/server",
     "version": "0.1.0",
     "description": "",
     "main": "index.js",
@@ -8,8 +8,8 @@
         "start": "dist/index.js",
         "build": "tsc",
         "lint": "prettier src/ --write && eslint .",
-        "docker:build": "docker build -t saffron-server .",
-        "docker:run": "docker build -t saffron-server . && docker run -p 7070:7070 saffron-server"
+        "docker:build": "docker build -t glass-server .",
+        "docker:run": "docker build -t glass-server . && docker run -p 7070:7070 glass-server"
     },
     "keywords": [],
     "author": "Richard Shi",
@@ -18,7 +18,7 @@
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.864.0",
         "@azure/cosmos": "^4.5.0",
-        "@saffron/types": "workspace:*",
+        "@glass/types": "workspace:*",
         "axios": "^1.11.0",
         "cors": "^2.8.5",
         "dotenv": "^17.2.1",

@@ -2,7 +2,7 @@ import type {
   CreateMerchantRequest,
   ListMerchantsRequest,
   UpdateMerchantRequest,
-} from "@saffron/types";
+} from "@glass/types";
 import useListMerchants from "./api/merchants/useListMerchants";
 import useCreateMerchant from "./api/merchants/useCreateMerchant";
 import useUpdateMerchant from "./api/merchants/useUpdateMerchant";

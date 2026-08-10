@@ -1,4 +1,4 @@
-import { ListAccountsResponse } from "@saffron/types";
+import { ListAccountsResponse } from "@glass/types";
 import { NotFoundError } from "../common/errors";
 import { Account, AccountType, Transaction, Merchant } from "../models";
 import { Transaction as TellerTransaction } from "../models/teller";
@@ -26,14 +26,16 @@ export async function createPlaidLinkToken(
   accessToken?: string,
 ): Promise<string> {
   // Plaid's client_user_id must be a stable, non-empty identifier. Namespace the internal userId,
-  // since Plaid rejects a bare "0" (it is treated as a falsy/nil value).
+  // since Plaid rejects a bare "0" (it is treated as a falsy/nil value). The prefix predates the
+  // rename to Glass and is deliberately left alone: changing it makes Plaid treat future link
+  // tokens as belonging to a different user.
   return plaid.createLinkToken(`saffron-user-${userId}`, accessToken);
 }
 
 /**
- * Maps Plaid's account type/subtype onto Saffron's normalized AccountType vocabulary.
+ * Maps Plaid's account type/subtype onto Glass's normalized AccountType vocabulary.
  */
-function toSaffronAccountType(
+function toGlassAccountType(
   plaidType: string,
   plaidSubtype?: string | null,
 ): AccountType {
@@ -58,7 +60,7 @@ function toSaffronAccountType(
 
 /**
  * Exchanges a Plaid Link public token for an access token, persists the Item, and creates the
- * Saffron accounts for it. Transactions are synced separately.
+ * Glass accounts for it. Transactions are synced separately.
  */
 export async function exchangePlaidPublicToken(
   publicToken: string,
@@ -102,7 +104,7 @@ export async function exchangePlaidPublicToken(
     officialName: plaidAccount.official_name ?? plaidAccount.name,
     transactionsLastRefreshedAt: new Date(0).toISOString(),
     lastPostedTransactionId: "",
-    type: toSaffronAccountType(plaidAccount.type, plaidAccount.subtype),
+    type: toGlassAccountType(plaidAccount.type, plaidAccount.subtype),
     status: "open",
     provider: "plaid",
     plaidItemId: itemId,

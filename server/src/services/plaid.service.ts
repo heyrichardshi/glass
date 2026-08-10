@@ -8,7 +8,7 @@ import {
   type LinkTokenCreateRequest,
 } from "plaid";
 
-// Saffron aggregates Transactions for US institutions. These are product decisions, not
+// Glass aggregates Transactions for US institutions. These are product decisions, not
 // deployment config, so they are hardcoded rather than read from the environment.
 const PLAID_PRODUCTS: Products[] = [Products.Transactions];
 const PLAID_COUNTRY_CODES: CountryCode[] = [CountryCode.Us];
@@ -63,7 +63,7 @@ export async function createLinkToken(
 ): Promise<string> {
   const request: LinkTokenCreateRequest = {
     user: { client_user_id: userId },
-    client_name: "Saffron",
+    client_name: "Glass",
     country_codes: PLAID_COUNTRY_CODES,
     language: "en",
     ...(accessToken

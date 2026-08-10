@@ -18,7 +18,7 @@ export interface PlaidItem {
   institutionName?: string;
   /**
    * Raw Plaid error code from the most recent operation (e.g. ITEM_LOGIN_REQUIRED), or undefined
-   * when healthy. This is raw provider state; Saffron's own account status is derived separately.
+   * when healthy. This is raw provider state; Glass's own account status is derived separately.
    */
   errorCode?: string;
 }

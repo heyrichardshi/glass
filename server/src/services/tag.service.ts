@@ -3,7 +3,7 @@ import {
   CreateTagResponse,
   ListTagsRequest,
   ListTagsResponse,
-} from "@saffron/types";
+} from "@glass/types";
 import { TagRepository } from "../repositories";
 import { toApiTag } from "../models";
 import { ConflictError } from "../common/errors";

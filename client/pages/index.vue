@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Transaction, ListTransactionsResponse } from "@saffron/types";
+import type { Transaction, ListTransactionsResponse } from "@glass/types";
 
 const config = useRuntimeConfig();
 const userId = 0;

@@ -5,7 +5,7 @@ import {
   CreateTagResponse,
   ListTagsQuery,
   ListTagsResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 export const listTags = asyncController<
   NoParams,

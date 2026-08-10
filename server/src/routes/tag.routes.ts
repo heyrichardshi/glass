@@ -10,7 +10,7 @@ import {
   CreateTagResponseSchema,
   ListTagsQuerySchema,
   ListTagsResponseSchema,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 const router = Router();
 

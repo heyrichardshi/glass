@@ -10,7 +10,7 @@ import {
   CreateCategoryResponseSchema,
   ListCategoriesQuerySchema,
   ListCategoriesResponseSchema,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 const router = Router();
 

@@ -1,4 +1,4 @@
-import type { GetMonthlyReportRequest } from "@saffron/types";
+import type { GetMonthlyReportRequest } from "@glass/types";
 import useGetMonthlyReport from "./api/reports/useGetMonthlyReport";
 
 export default function () {

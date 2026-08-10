@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Category, Merchant } from "@saffron/types";
+import type { Category, Merchant } from "@glass/types";
 
 const props = defineProps<{
   prefillName: string;

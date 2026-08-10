@@ -1,5 +1,5 @@
 {
-  "name": "@saffron/client",
+  "name": "@glass/client",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,7 +17,7 @@
     "@nuxt/fonts": "0.11.1",
     "@nuxt/icon": "1.12.0",
     "@nuxt/ui": "3.1.1",
-    "@saffron/types": "workspace:*",
+    "@glass/types": "workspace:*",
     "d3": "^7.9.0",
     "nuxt": "^3.18.1",
     "tailwindcss": "^4.1.11",

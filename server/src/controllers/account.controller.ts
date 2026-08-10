@@ -8,7 +8,7 @@ import {
   RefreshAccountResponse,
   RegisterAccountsBody,
   RegisterAccountsResponse,
-} from "@saffron/types/schemas";
+} from "@glass/types/schemas";
 
 export const registerAccounts = asyncController<
   NoParams,
