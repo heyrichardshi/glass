@@ -11,7 +11,6 @@ PLAID_CLIENT_ID=
 PLAID_SECRET=
 PLAID_ENV=production
 ```
-   This file should be placed alongside the compose file.
 
 2. Create a `.deploy_sha` file in the same folder containing the commit SHA of a
    successful build, and nothing else:
@@ -20,9 +19,13 @@ PLAID_ENV=production
 28dff46bf7b1afd0ea32ef4930cbb49940c36178
 ```
 
-   It is a plain pointer rather than an env file, so it is read by exporting it
-   rather than by Compose:
+3. Run the following to fetch the latest compose file and deploy it:
 
 ```
-export GLASS_SHA=$(cat .deploy_sha)
+SHA=$(cat .deploy_sha)
+curl -fsSL "https://raw.githubusercontent.com/heyrichardshi/glass/$SHA/docker-compose.prod.yml" -o docker-compose.yml
+chmod 600 .env.api
+export GLASS_SHA="$SHA"
+docker compose config --quiet
+docker compose up -d
 ```
