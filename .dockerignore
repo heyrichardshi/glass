@@ -1,0 +1,21 @@
+# Docker does not read .gitignore, so anything sensitive must be excluded here
+# explicitly or it ends up in the build context and potentially in the image.
+
+# Secrets and local-only material
+**/.env
+**/.env.*
+**/.dev
+
+# Installed dependencies and build output — reinstalled and rebuilt in the image
+**/node_modules
+**/dist
+**/.nuxt
+**/.output
+.pnpm-store
+
+# Not needed to build the server
+.git
+.vscode
+docker
+**/.DS_Store
+**/*.md
