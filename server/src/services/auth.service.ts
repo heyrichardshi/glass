@@ -1,4 +1,5 @@
 import {
+  AuthConfigResponse,
   ExchangeTokenBody,
   ExchangeTokenResponse,
 } from "@glass/types/schemas";
@@ -23,13 +24,18 @@ function isAllowedRedirectUri(candidate: string): boolean {
     .includes(candidate);
 }
 
-let tokenEndpoint: Promise<string> | undefined;
+interface Discovery {
+  authorization_endpoint: string;
+  token_endpoint: string;
+}
 
-async function getTokenEndpoint(): Promise<string> {
-  if (!tokenEndpoint) {
+let discovery: Promise<Discovery> | undefined;
+
+async function getDiscovery(): Promise<Discovery> {
+  if (!discovery) {
     const issuer = env("OIDC_ISSUER");
 
-    tokenEndpoint = (async () => {
+    discovery = (async () => {
       const response = await fetch(
         `${issuer}/.well-known/openid-configuration`,
       );
@@ -37,21 +43,32 @@ async function getTokenEndpoint(): Promise<string> {
         throw new Error(`OIDC discovery failed with ${response.status}.`);
       }
 
-      const document = (await response.json()) as { token_endpoint?: string };
-      if (!document.token_endpoint) {
-        throw new Error("OIDC discovery document has no token_endpoint.");
+      const document = (await response.json()) as Partial<Discovery>;
+      if (!document.authorization_endpoint || !document.token_endpoint) {
+        throw new Error("OIDC discovery document is missing endpoints.");
       }
 
-      return document.token_endpoint;
+      return document as Discovery;
     })().catch((error) => {
       // A rejected promise left in place would poison every later request, so a
       // transient failure here must not be cached.
-      tokenEndpoint = undefined;
+      discovery = undefined;
       throw error;
     });
   }
 
-  return tokenEndpoint;
+  return discovery;
+}
+
+// Scopes requested at /authorize. tsidp advertises exactly these three.
+const SCOPE = "openid email profile";
+
+export async function getAuthConfig(): Promise<AuthConfigResponse> {
+  return {
+    authorizationEndpoint: (await getDiscovery()).authorization_endpoint,
+    clientId: env("OIDC_CLIENT_ID"),
+    scope: SCOPE,
+  };
 }
 
 export async function exchangeAuthorizationCode(
@@ -61,7 +78,7 @@ export async function exchangeAuthorizationCode(
     throw new ForbiddenError("redirect_uri is not allowed.");
   }
 
-  const response = await fetch(await getTokenEndpoint(), {
+  const response = await fetch((await getDiscovery()).token_endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
