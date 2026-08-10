@@ -7,6 +7,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import errorHandler from "./middleware/errorHandler";
+import auth from "./routes/auth.routes";
 import accounts from "./routes/account.routes";
 import transactions from "./routes/transaction.routes";
 import categories from "./routes/category.routes";
@@ -40,6 +41,8 @@ app.use(express.json());
 app.use(function (req, res, next) {
   next();
 });
+
+app.use("/", auth);
 
 app.use("/", accounts);
 app.use("/", transactions);
