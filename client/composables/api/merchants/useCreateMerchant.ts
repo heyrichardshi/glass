@@ -5,11 +5,11 @@ import type {
 } from "@glass/types";
 
 export default function (request: CreateMerchantRequest) {
-  const config = useRuntimeConfig();
+  const { apiBase } = useApiBase();
 
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error, refresh, clear } = useFetch(
-    () => `${config.public.GLASS_API_URL}/merchants`,
+    () => `${apiBase.value}/merchants`,
     {
       method: "POST",
       body: request,

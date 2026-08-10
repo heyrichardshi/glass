@@ -5,11 +5,11 @@ export default function (request: {
   overrideExistingMerchants: boolean;
   overrideExistingCategories: boolean;
 }) {
-  const config = useRuntimeConfig();
+  const { apiBase } = useApiBase();
 
   const errorMessage = ref<string | undefined>(undefined);
   const { data, status, error } = useFetch(
-    () => `${config.public.GLASS_API_URL}/merchants/matchers/all`,
+    () => `${apiBase.value}/merchants/matchers/all`,
     {
       method: "POST",
       body: request,

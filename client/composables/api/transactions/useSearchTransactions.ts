@@ -12,11 +12,11 @@ export default function (params: {
   filters: SearchFilters;
   paginationToken?: string;
 }) {
-  const config = useRuntimeConfig();
+  const { apiBase } = useApiBase();
 
   const key = `SearchTransactions:${JSON.stringify(params.filters)}:${params.paginationToken || ""}`;
   const { data, status, error, refresh } = useFetch<ListTransactionsResponse>(
-    `${config.public.GLASS_API_URL}/transactions/search`,
+    `${apiBase.value}/transactions/search`,
     {
       key,
       method: "POST",

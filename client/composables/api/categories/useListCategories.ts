@@ -1,11 +1,11 @@
 import type { Category, ListCategoriesResponse } from "@glass/types";
 
 export default function (userId: string) {
-  const config = useRuntimeConfig();
+  const { apiBase } = useApiBase();
 
   const key = `ListCategories:${userId}`;
   const { data, status, refresh } = useFetch(
-    `${config.public.GLASS_API_URL}/categories`,
+    `${apiBase.value}/categories`,
     {
       key,
       query: { userId },

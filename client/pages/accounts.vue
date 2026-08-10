@@ -39,7 +39,7 @@
 import type { Account } from "@glass/types";
 import useListAccounts from "~/composables/api/accounts/useListAccounts";
 
-const config = useRuntimeConfig();
+const { apiBase } = useApiBase();
 const userId = "0";
 
 const { accounts, status, refresh } = useListAccounts(userId);
@@ -67,7 +67,7 @@ async function refreshAllAccounts() {
     for (const account of refreshableAccounts.value) {
       try {
         await $fetch(
-          `${config.public.GLASS_API_URL}/accounts/${account.id}/refresh`,
+          `${apiBase.value}/accounts/${account.id}/refresh`,
           {
             method: "POST",
             server: false,

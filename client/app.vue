@@ -1,7 +1,9 @@
 <template>
   <UApp :toaster="toaster">
     <Navigation />
-    <NuxtPage />
+    <ApiBaseGate>
+      <NuxtPage />
+    </ApiBaseGate>
   </UApp>
 </template>
 

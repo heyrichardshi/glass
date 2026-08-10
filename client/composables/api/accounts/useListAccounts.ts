@@ -1,10 +1,10 @@
 import type { Account, ListAccountsResponse } from "@glass/types";
 
 export default function (userId: string) {
-  const config = useRuntimeConfig();
+  const { apiBase } = useApiBase();
 
   const { data, status, refresh } = useFetch(
-    `${config.public.GLASS_API_URL}/accounts`,
+    `${apiBase.value}/accounts`,
     {
       key: `ListAccounts:${userId}`,
       query: { userId },

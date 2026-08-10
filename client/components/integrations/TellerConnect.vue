@@ -31,6 +31,7 @@ const props = withDefaults(
 );
 
 const config = useRuntimeConfig();
+const { apiBase } = useApiBase();
 const tellerApplicationId = config.public.TELLER_APPLICATION_ID;
 
 const isTellerLoaded = ref(false);
@@ -90,7 +91,7 @@ function openTellerConnect() {
 }
 
 function registerAccounts(accessToken: string) {
-  useFetch(() => `${config.public.GLASS_API_URL}/accounts/register`, {
+  useFetch(() => `${apiBase.value}/accounts/register`, {
     method: "POST",
     body: { accessToken },
     server: false,

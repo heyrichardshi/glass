@@ -54,6 +54,7 @@ const lastRefreshedAt = ref<string>(
 );
 
 const toast = useToast();
+const { apiBase } = useApiBase();
 
 function toRelativeDate(date: Date | string | number): string {
   date = new Date(date);
@@ -91,11 +92,9 @@ function refreshAccount() {
     title: `Getting new transactions for account ${props.account.name}`,
   });
 
-  const config = useRuntimeConfig();
-
   useFetch(
     () =>
-      `${config.public.GLASS_API_URL}/accounts/${props.account.id}/refresh`,
+      `${apiBase.value}/accounts/${props.account.id}/refresh`,
     {
       method: "POST",
       server: false,

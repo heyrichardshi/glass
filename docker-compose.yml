@@ -30,7 +30,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GLASS_API_URL=http://localhost:7070
       - CHOKIDAR_USEPOLLING=1
       - PNPM_STORE_DIR=/pnpm-store
       - CI=true

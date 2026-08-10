@@ -5,11 +5,11 @@ import type {
 } from "@glass/types";
 
 export default function (request: ListMerchantsRequest) {
-  const config = useRuntimeConfig();
+  const { apiBase } = useApiBase();
 
   const key = `ListMerchants:${request.householdId}`;
   const { data, status, error, refresh } = useFetch(
-    `${config.public.GLASS_API_URL}/merchants`,
+    `${apiBase.value}/merchants`,
     {
       key,
       query: request,

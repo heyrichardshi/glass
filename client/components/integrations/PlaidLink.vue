@@ -36,7 +36,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{ connected: [] }>();
 
-const config = useRuntimeConfig();
+const { apiBase } = useApiBase();
 const toast = useToast();
 
 const isPlaidLoaded = ref(false);
@@ -56,7 +56,7 @@ async function openPlaidLink() {
 
   try {
     const { connectionToken } = await $fetch<ConnectionTokenResponse>(
-      `${config.public.GLASS_API_URL}/accounts/register/token`,
+      `${apiBase.value}/accounts/register/token`,
       { method: "POST" },
     );
 
@@ -84,7 +84,7 @@ async function openPlaidLink() {
 async function exchange(publicToken: string) {
   try {
     const res = await $fetch<RegisterAccountsResponse>(
-      `${config.public.GLASS_API_URL}/accounts/register`,
+      `${apiBase.value}/accounts/register`,
       { method: "POST", body: { exchangeToken: publicToken } },
     );
     toast.add({

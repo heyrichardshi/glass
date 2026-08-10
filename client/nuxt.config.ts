@@ -8,8 +8,6 @@ export default defineNuxtConfig({
   components: [{ path: "~/components", pathPrefix: false }],
   runtimeConfig: {
     public: {
-      GLASS_API_URL: process.env.GLASS_API_URL || "http://localhost:7070",
-      TELLER_APPLICATION_ID: process.env.TELLER_APPLICATION_ID || "",
     },
   },
   css: ["~/assets/css/main.css"],

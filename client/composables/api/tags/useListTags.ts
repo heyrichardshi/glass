@@ -1,11 +1,11 @@
 import type { Tag, ListTagsResponse } from "@glass/types";
 
 export default function (userId: string) {
-  const config = useRuntimeConfig();
+  const { apiBase } = useApiBase();
 
   const key = `ListTags:${userId}`;
   const { data, status, error, refresh } = useFetch(
-    `${config.public.GLASS_API_URL}/tags`,
+    `${apiBase.value}/tags`,
     {
       key,
       query: { userId },
