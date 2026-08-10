@@ -26,5 +26,10 @@ const items = ref<NavigationMenuItem[]>([
     icon: "i-lucide-file-chart-pie",
     to: "/report",
   },
+  {
+    label: "Settings",
+    icon: "i-lucide-settings",
+    to: "/settings",
+  },
 ]);
 </script>

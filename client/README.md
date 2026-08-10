@@ -2,20 +2,11 @@
 
 ## Development Server
 
-Create a `.env` file in `client` root with following keys:
-```
-TELLER_APPLICATION_ID=...
-```
-
 Start the development server on `http://localhost:3000`:
 
 ```bash
 pnpm dev
 ```
-
-The API address is not configured here. The app asks for it on first load and
-keeps it in `localStorage`, so it never enters a build artifact — see
-`composables/useApiBase.ts`.
 
 ## Production
 
