@@ -1,0 +1,42 @@
+# Production composition. Copied to the guest as /srv/glass/docker-compose.yml,
+# so commands there are plain `docker compose up -d` with no -f flag.
+#
+# Runs a prebuilt, pinned image. Nothing is built, installed or watched here.
+# The development stack is docker-compose.yml, which is the default so that
+# `docker compose up` runs the thing you use daily.
+#
+# Expects two files alongside it:
+#   .env      GLASS_SHA — read by Compose for interpolation, NOT passed to the
+#             container. This is what pins the release.
+#   .env.api  the API's runtime environment, injected into the container.
+
+services:
+  api:
+    image: ghcr.io/heyrichardshi/glass-server:${GLASS_SHA:?set GLASS_SHA in .env}
+    restart: unless-stopped
+    env_file: ./.env.api
+    command: ["node", "server/dist/index.js"]
+
+    # Published to loopback only. `tailscale serve` runs as a systemd unit on the
+    # guest and reaches the container this way, while nothing on the guest's
+    # network interface can. Publishing "7070:7070" would expose the API on the
+    # LAN. Note the process binds 0.0.0.0 *inside* the container, as it must —
+    # Docker forwards published ports to the container IP, so binding to
+    # container-loopback would make it unreachable.
+    ports:
+      - "127.0.0.1:7070:7070"
+
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    # A bounded ring buffer, so logs cannot fill the disk unattended.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
