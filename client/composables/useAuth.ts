@@ -6,6 +6,10 @@ import type {
 const VERIFIER_KEY = "glass.pkceVerifier";
 const STATE_KEY = "glass.oauthState";
 const RETURN_KEY = "glass.returnTo";
+const ATTEMPTED_AT_KEY = "glass.loginAttemptedAt";
+
+// This is the maximum time after which a login can be retried to prevent redirect loops.
+const RETRY_AFTER_MS = 10_000;
 
 function base64url(bytes: Uint8Array): string {
   let binary = "";
@@ -33,8 +37,17 @@ async function challengeFor(verifier: string): Promise<string> {
 export function useAuth() {
   const { apiBase } = useApiBase();
 
-  const accessToken = useState<string | null>("glass:accessToken", () => null);
-  const isAuthenticated = computed(() => accessToken.value !== null);
+  const token = useState<string | null>("glass:token", () => null);
+  const isAuthenticated = computed(() => token.value !== null);
+
+  // Set when signing in again cannot help.
+  const authError = useState<string | null>("glass:authError", () => null);
+
+  /** False when a login just happened, meaning another one is pointless. */
+  function shouldRetryLogin(): boolean {
+    const attemptedAt = Number(sessionStorage.getItem(ATTEMPTED_AT_KEY) ?? 0);
+    return Date.now() - attemptedAt > RETRY_AFTER_MS;
+  }
 
   // Must match OIDC_REDIRECT_URIS on the server and the URI registered in tsidp.
   function redirectUri(): string {
@@ -42,6 +55,11 @@ export function useAuth() {
   }
 
   async function login(): Promise<void> {
+    authError.value = null;
+
+    // Recorded before the redirect, since the page is about to be replaced.
+    sessionStorage.setItem(ATTEMPTED_AT_KEY, String(Date.now()));
+
     const config = await $fetch<AuthConfigResponse>(
       `${apiBase.value}/auth/config`,
     );
@@ -95,7 +113,7 @@ export function useAuth() {
       throw new Error("No PKCE verifier for this login attempt.");
     }
 
-    const token = await $fetch<ExchangeTokenResponse>(
+    const exchanged = await $fetch<ExchangeTokenResponse>(
       `${apiBase.value}/auth/token`,
       {
         method: "POST",
@@ -103,13 +121,21 @@ export function useAuth() {
       },
     );
 
-    accessToken.value = token.accessToken;
+    token.value = exchanged.idToken;
     return returnTo;
   }
 
   function logout(): void {
-    accessToken.value = null;
+    token.value = null;
   }
 
-  return { accessToken, isAuthenticated, login, completeLogin, logout };
+  return {
+    token,
+    isAuthenticated,
+    authError,
+    shouldRetryLogin,
+    login,
+    completeLogin,
+    logout,
+  };
 }

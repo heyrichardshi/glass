@@ -7,6 +7,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import errorHandler from "./middleware/errorHandler";
+import requireToken from "./middleware/requireToken";
 import auth from "./routes/auth.routes";
 import accounts from "./routes/account.routes";
 import transactions from "./routes/transaction.routes";
@@ -42,7 +43,11 @@ app.use(function (req, res, next) {
   next();
 });
 
+// The auth endpoints cannot live behind an auth gate.
 app.use("/", auth);
+
+// All other routes require a valid token.
+app.use(requireToken);
 
 app.use("/", accounts);
 app.use("/", transactions);

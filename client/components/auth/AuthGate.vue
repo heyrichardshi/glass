@@ -25,24 +25,30 @@
 
 <script setup lang="ts">
 const route = useRoute();
-const { isAuthenticated, login } = useAuth();
+const { isAuthenticated, authError, login } = useAuth();
 
-const error = ref<string | undefined>();
+const localError = ref<string | undefined>();
+
+// authError comes from the fetch interceptor, which has no UI of its own: it is
+// set when the API rejects a freshly issued token and retrying cannot help.
+const error = computed(() => localError.value ?? authError.value ?? undefined);
 
 const isPublic = computed(() => route.meta.public === true);
 
 // Short-circuit on error to prevent redirect loops.
 async function start() {
-  error.value = undefined;
+  localError.value = undefined;
+  authError.value = null;
   try {
     await login();
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : String(caught);
+    localError.value =
+      caught instanceof Error ? caught.message : String(caught);
   }
 }
 
 onMounted(() => {
-  if (!isAuthenticated.value && !isPublic.value) start();
+  if (!isAuthenticated.value && !isPublic.value && !error.value) start();
 });
 
 // Navigating from the error state to a public route and back should retry rather

@@ -5,6 +5,7 @@ import {
   InvalidInputError,
   InvalidInputWithCustomMessageError,
   NotFoundError,
+  UnauthorizedError,
 } from "../common/errors";
 import { Request, Response, NextFunction } from "express";
 
@@ -19,6 +20,8 @@ const errorHandler = (
     error instanceof InvalidInputWithCustomMessageError
   ) {
     return response.status(400).send({ message: error.message });
+  } else if (error instanceof UnauthorizedError) {
+    return response.status(401).send({ message: error.message });
   } else if (error instanceof NotFoundError) {
     return response.status(404).send({ message: error.message });
   } else if (error instanceof ConflictError) {

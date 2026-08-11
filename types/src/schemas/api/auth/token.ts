@@ -8,9 +8,6 @@ export const ExchangeTokenBodySchema = z.object({
 export type ExchangeTokenBody = z.infer<typeof ExchangeTokenBodySchema>;
 
 export const ExchangeTokenResponseSchema = z.object({
-  accessToken: z.string(),
-  tokenType: z.string(),
-  expiresIn: z.number().optional(),
-  idToken: z.string().optional(),
+  idToken: z.string(),
 });
 export type ExchangeTokenResponse = z.infer<typeof ExchangeTokenResponseSchema>;

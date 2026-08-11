@@ -27,6 +27,7 @@ function isAllowedRedirectUri(candidate: string): boolean {
 interface Discovery {
   authorization_endpoint: string;
   token_endpoint: string;
+  jwks_uri: string;
 }
 
 let discovery: Promise<Discovery> | undefined;
@@ -44,7 +45,11 @@ async function getDiscovery(): Promise<Discovery> {
       }
 
       const document = (await response.json()) as Partial<Discovery>;
-      if (!document.authorization_endpoint || !document.token_endpoint) {
+      if (
+        !document.authorization_endpoint ||
+        !document.token_endpoint ||
+        !document.jwks_uri
+      ) {
         throw new Error("OIDC discovery document is missing endpoints.");
       }
 
@@ -62,6 +67,10 @@ async function getDiscovery(): Promise<Discovery> {
 
 // Scopes requested at /authorize. tsidp advertises exactly these three.
 const SCOPE = "openid email profile";
+
+export async function getJwksUri(): Promise<string> {
+  return (await getDiscovery()).jwks_uri;
+}
 
 export async function getAuthConfig(): Promise<AuthConfigResponse> {
   return {
@@ -101,21 +110,16 @@ export async function exchangeAuthorizationCode(
     );
   }
 
-  const token = (await response.json()) as {
-    access_token?: string;
-    token_type?: string;
-    expires_in?: number;
-    id_token?: string;
-  };
+  // The access token in this response is opaque and unusable to us.
+  // The ID token is the JWT the API can verify.
+  const token = (await response.json()) as { id_token?: string };
 
-  if (!token.access_token || !token.token_type) {
-    throw new Error("Token response is missing access_token or token_type.");
+  if (!token.id_token) {
+    throw new Error(
+      "Token response has no id_token. Check that the authorization request " +
+        "included the openid scope.",
+    );
   }
 
-  return {
-    accessToken: token.access_token,
-    tokenType: token.token_type,
-    expiresIn: token.expires_in,
-    idToken: token.id_token,
-  };
+  return { idToken: token.id_token };
 }
