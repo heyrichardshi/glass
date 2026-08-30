@@ -7,15 +7,13 @@ export default defineNuxtConfig({
   ssr: false,
   components: [{ path: "~/components", pathPrefix: false }],
   runtimeConfig: {
-    public: {
-    },
+    public: {},
   },
   css: ["~/assets/css/main.css"],
   app: {
     head: {
       title: "Glass",
       script: [
-        { src: "https://cdn.teller.io/connect/connect.js" },
         { src: "https://cdn.plaid.com/link/v2/stable/link-initialize.js" },
       ],
     },

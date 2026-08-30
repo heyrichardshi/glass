@@ -12,7 +12,4 @@ export interface Account {
   /** Glass's normalized account type, e.g. checking, savings, credit. */
   type: string;
   status: "open" | "closed" | "disconnected";
-  /** The data provider backing this account. */
-  provider?: "teller" | "plaid";
-  tellerEnrollmentId?: string;
 }

@@ -28,16 +28,10 @@ export interface Account {
   type: AccountType;
   /**
    * Glass's own connection status, intentionally independent of any single provider's data model.
-   * Provider-specific signals (e.g. a Plaid item error like ITEM_LOGIN_REQUIRED, or Teller's
-   * disconnected state) are mapped onto this enum rather than stored as the source of truth.
+   * Provider-specific signals (e.g. a Plaid item error like ITEM_LOGIN_REQUIRED) are mapped onto
+   * this enum rather than stored as the source of truth.
    */
   status: "open" | "closed" | "disconnected";
-  /** The data provider backing this account. Legacy rows are backfilled to "teller" on read. */
-  provider?: "teller" | "plaid";
-
-  // Teller identifiers (legacy; retained on existing rows for provenance and migration matching).
-  tellerAccessToken?: string;
-  tellerEnrollmentId?: string;
 
   // Plaid linkage keys used operationally to sync. The access token and sync cursor are stored
   // separately per institution login, not on the account.

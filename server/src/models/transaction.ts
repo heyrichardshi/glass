@@ -8,7 +8,7 @@ import type { Tag } from "./tag";
  * but may also be another account in the case of transfers.
  */
 export interface Transaction {
-  /** The identifier for this transaction; same as the transaction ID in Teller for more efficient lookups. */
+  /** The identifier for this transaction; same as the provider's transaction ID for more efficient lookups. */
   id: string;
   /** The user to which this transaction belongs to. */
   userId: string;
@@ -43,8 +43,6 @@ export interface Transaction {
 
   history: TransactionHistory[];
 
-  /** Teller-provided metadata (legacy; present on Teller-sourced rows). */
-  tellerMetadata?: TransasctionTellerMetadata;
   /** Plaid-provided metadata (present on Plaid-sourced rows). */
   plaidMetadata?: TransactionPlaidMetadata;
   /** The Plaid transaction_id; used to match incoming Plaid sync results to this row. */
@@ -61,15 +59,6 @@ export interface TransactionCounterparty {
 export interface TransactionHistory {
   timestamp: Date;
   changes: Partial<Transaction>;
-}
-
-export interface TransasctionTellerMetadata {
-  /** The type code of the transaction, e.g., card_payment, according to Teller. */
-  type: string;
-  /** The inferred category of the transaction, according to Teller. */
-  category?: string;
-  /** The inferred counterparty of the transaction, according to Teller. */
-  counterparty?: string;
 }
 
 export interface TransactionPlaidMetadata {

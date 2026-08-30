@@ -6,7 +6,6 @@ export {
   Transaction,
   TransactionCounterparty,
   TransactionHistory,
-  TransasctionTellerMetadata,
   TransactionPlaidMetadata,
   TransactionsList,
 } from "./transaction";

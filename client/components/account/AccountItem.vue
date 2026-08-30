@@ -31,10 +31,6 @@
     </div>
     <div v-else-if="isDisconnected" class="text-sm text-red-800 text-right">
       action required: re-connect account
-      <TellerConnect
-        :enrollment-id="account.tellerEnrollmentId"
-        button-text=""
-      />
     </div>
   </div>
 </template>
@@ -92,29 +88,25 @@ function refreshAccount() {
     title: `Getting new transactions for account ${props.account.name}`,
   });
 
-  useFetch(
-    () =>
-      `${apiBase.value}/accounts/${props.account.id}/refresh`,
-    {
-      method: "POST",
-      server: false,
-      onResponse({ response }) {
-        console.log("Account refreshed successfully", response);
-        lastRefreshedAt.value = toRelativeDate(Date.now());
-        toast.add({
-          title: `Successfully refreshed account ${props.account.name}`,
-          color: "success",
-        });
-      },
-      onRequestError({ error: err }) {
-        console.error("Error refreshing account", err);
-        toast.add({
-          title: "Something went wrong",
-          description: `Error refreshing account ${props.account.name}: ${err.message}`,
-          color: "error",
-        });
-      },
+  useFetch(() => `${apiBase.value}/accounts/${props.account.id}/refresh`, {
+    method: "POST",
+    server: false,
+    onResponse({ response }) {
+      console.log("Account refreshed successfully", response);
+      lastRefreshedAt.value = toRelativeDate(Date.now());
+      toast.add({
+        title: `Successfully refreshed account ${props.account.name}`,
+        color: "success",
+      });
     },
-  );
+    onRequestError({ error: err }) {
+      console.error("Error refreshing account", err);
+      toast.add({
+        title: "Something went wrong",
+        description: `Error refreshing account ${props.account.name}: ${err.message}`,
+        color: "error",
+      });
+    },
+  });
 }
 </script>

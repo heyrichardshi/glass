@@ -1,17 +1,8 @@
 import { ListAccountsResponse } from "@glass/types";
 import { NotFoundError } from "../common/errors";
-import { Account, AccountType, Transaction, Merchant } from "../models";
-import { Transaction as TellerTransaction } from "../models/teller";
-import {
-  AccountRepository,
-  TransactionRepository,
-  MerchantRepository,
-  PlaidItemRepository,
-} from "../repositories";
+import { Account, AccountType } from "../models";
+import { AccountRepository, PlaidItemRepository } from "../repositories";
 import * as plaid from "./plaid.service";
-import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
-import { toApiAccount } from "../models/api";
-import { findFirstMatchingMerchant } from "../common/merchant-utils";
 
 // TODO: multitenancy. A single user/household backs the app for now.
 const DEFAULT_USER_ID = "0";
@@ -106,7 +97,6 @@ export async function exchangePlaidPublicToken(
     lastPostedTransactionId: "",
     type: toGlassAccountType(plaidAccount.type, plaidAccount.subtype),
     status: "open",
-    provider: "plaid",
     plaidItemId: itemId,
     plaidAccountId: plaidAccount.account_id,
     plaidMetadata: {
@@ -125,12 +115,10 @@ export async function exchangePlaidPublicToken(
 }
 
 /**
- * Retrieves latest balance and transaction data for the given account from Teller, and updates the database.
+ * Retrieves latest balance and transaction data for the given account, and updates the database.
  */
 export async function refresh(accountId: string) {
   const accountRepo = await AccountRepository.getInstance();
-  const transactionRepo = await TransactionRepository.getInstance();
-  const merchantRepo = await MerchantRepository.getInstance();
 
   const account = await accountRepo.findById(accountId);
   if (!account) {
@@ -138,16 +126,7 @@ export async function refresh(accountId: string) {
   }
 
   if (account.status === "closed") {
-    console.log(
-      `Account ${accountId} is marked closed; skipping refresh.`,
-    );
-    return;
-  }
-
-  if (account.provider !== "plaid" || !account.tellerAccessToken) {
-    console.log(
-      `Skipping refresh for account ${accountId} (provider=${account.provider ?? "unknown"}); Teller is wound down.`,
-    );
+    console.log(`Account ${accountId} is marked closed; skipping refresh.`);
     return;
   }
 
@@ -160,9 +139,8 @@ export async function listForUser(
   const accountRepo = await AccountRepository.getInstance();
   const accounts = await accountRepo.listByUser(userId);
 
-  // Connection health checks are provider-specific. The only previous check called Teller, which is
-  // wound down, so we make no live provider calls here. Plaid connection health will be derived
-  // during sync (next step) and mapped onto Account.status.
+  // No live provider calls here. Plaid connection health is derived during sync and mapped onto
+  // Account.status.
   return {
     accounts,
   };

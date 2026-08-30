@@ -62,24 +62,6 @@ export class AccountRepository {
     return response.statusCode;
   }
 
-  /**
-   * Ensures older account records comply with the current Account interface, writing back the
-   * change if necessary. Currently backfills `provider` for legacy (Teller-sourced) rows so that
-   * provider-aware logic can rely on the field being present.
-   */
-  async normalizeAccount(account: Account): Promise<Account> {
-    if (account.provider) {
-      return account;
-    }
-
-    const normalized: Account = { ...account, provider: "teller" };
-    console.log(
-      `Account ${account.id} is missing 'provider'; backfilling as "teller".`,
-    );
-    await this.update(normalized);
-    return normalized;
-  }
-
   // Find an account by ID
   async findById(accountId: string): Promise<Account | undefined> {
     const container = await this.promisedContainer;
@@ -91,8 +73,7 @@ export class AccountRepository {
       })
       .fetchAll();
 
-    const account = response.resources[0];
-    return account ? await this.normalizeAccount(account) : undefined;
+    return response.resources[0];
   }
 
   // List all accounts for given user
@@ -112,8 +93,6 @@ export class AccountRepository {
       )
       .fetchAll();
 
-    return await Promise.all(
-      response.resources.map((account) => this.normalizeAccount(account)),
-    );
+    return response.resources;
   }
 }

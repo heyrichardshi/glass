@@ -1,10 +1,3 @@
-export class TellerAccountDisconnectedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "TellerAccountDisconnectedError";
-  }
-}
-
 export class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
@@ -23,13 +16,6 @@ export class ForbiddenError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ForbiddenError";
-  }
-}
-
-export class TellerAccountClosedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "TellerAccountClosedError";
   }
 }
 
