@@ -1,8 +1,10 @@
+export interface UserIdentity {
+  issuer: string;
+  subject: string;
+}
+
 export interface User {
   id: string;
-  email: string;
-  createdAt: Date;
-
-  // TODO: Move to auth0 or similar.
-  hash: string;
+  identities: UserIdentity[];
+  name: string;
 }
