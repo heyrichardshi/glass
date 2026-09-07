@@ -4,8 +4,8 @@ import { Account, AccountType } from "../models";
 import { AccountRepository, PlaidItemRepository } from "../repositories";
 import * as plaid from "./plaid.service";
 
-// TODO: multitenancy. A single user/household backs the app for now.
-const DEFAULT_USER_ID = "0";
+// TODO: multitenancy. A single household backs the app for now; the owning user comes from the
+// caller's verified token.
 const DEFAULT_HOUSEHOLD_ID = "0";
 
 /**
@@ -13,14 +13,12 @@ const DEFAULT_HOUSEHOLD_ID = "0";
  * update mode against an existing Item.
  */
 export async function createPlaidLinkToken(
-  userId: string = DEFAULT_USER_ID,
+  userId: string,
   accessToken?: string,
 ): Promise<string> {
   // Plaid's client_user_id must be a stable, non-empty identifier. Namespace the internal userId,
-  // since Plaid rejects a bare "0" (it is treated as a falsy/nil value). The prefix predates the
-  // rename to Glass and is deliberately left alone: changing it makes Plaid treat future link
-  // tokens as belonging to a different user.
-  return plaid.createLinkToken(`saffron-user-${userId}`, accessToken);
+  // since Plaid rejects a bare "0" (it is treated as a falsy/nil value).
+  return plaid.createLinkToken(`glass-user-${userId}`, accessToken);
 }
 
 /**
@@ -54,6 +52,7 @@ function toGlassAccountType(
  * Glass accounts for it. Transactions are synced separately.
  */
 export async function exchangePlaidPublicToken(
+  userId: string,
   publicToken: string,
 ): Promise<{ accountsRegisteredCount: number }> {
   const { accessToken, itemId } = await plaid.exchangePublicToken(publicToken);
@@ -76,7 +75,7 @@ export async function exchangePlaidPublicToken(
   const plaidItemRepo = await PlaidItemRepository.getInstance();
   await plaidItemRepo.upsert({
     id: itemId,
-    userId: DEFAULT_USER_ID,
+    userId,
     householdId: DEFAULT_HOUSEHOLD_ID,
     accessToken,
     institutionId: institutionId ?? undefined,
@@ -86,7 +85,7 @@ export async function exchangePlaidPublicToken(
   const accountRepo = await AccountRepository.getInstance();
   const accounts: Account[] = plaidAccounts.map((plaidAccount) => ({
     id: plaidAccount.account_id,
-    userId: DEFAULT_USER_ID,
+    userId,
     householdId: DEFAULT_HOUSEHOLD_ID,
     name: plaidAccount.name,
     institution: institutionName ?? "",

@@ -1,3 +1,4 @@
+import { requireUserId } from "../middleware/requireToken";
 import * as transactions from "../services/transaction.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
@@ -18,10 +19,10 @@ export const listByUser = asyncController<
   NoBody,
   ListTransactionsResponse
 >(async (req, res) => {
-  const { userId, paginationToken } = req.query;
+  const { paginationToken } = req.query;
 
   const transactionsList = await transactions.listForUser(
-    userId,
+    requireUserId(req),
     paginationToken,
   );
   res.status(200).json(transactionsList);
@@ -33,11 +34,10 @@ export const search = asyncController<
   SearchTransactionsBody,
   SearchTransactionsResponse
 >(async (req, res) => {
-  const userId = "0";
   const { filters, paginationToken } = req.body;
 
   const response = await transactions.list({
-    userId,
+    userId: requireUserId(req),
     filters,
     paginationToken,
   });
@@ -52,11 +52,11 @@ export const updateTransaction = asyncController<
   UpdateTransactionResponse
 >(async (req, res) => {
   const transactionId = req.params.transactionId;
-  const { userId, date, description, notes, categoryId, tagIds, counterparty } =
+  const { date, description, notes, categoryId, tagIds, counterparty } =
     req.body;
 
   const response = await transactions.update({
-    userId,
+    userId: requireUserId(req),
     transactionId,
     date,
     description,
@@ -75,10 +75,10 @@ export const bulkUpdateTransactions = asyncController<
   BulkUpdateTransactionsBody,
   BulkUpdateTransactionsResponse
 >(async (req, res) => {
-  const { userId, transactionIds, updates } = req.body;
+  const { transactionIds, updates } = req.body;
 
   const response = await transactions.bulkUpdate({
-    userId,
+    userId: requireUserId(req),
     transactionIds,
     updates: updates,
   });

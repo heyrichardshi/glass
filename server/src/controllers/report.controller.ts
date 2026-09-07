@@ -1,3 +1,4 @@
+import { requireUserId } from "../middleware/requireToken";
 import * as analytics from "../services/analytics.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
@@ -11,9 +12,13 @@ export const getMonthlyReport = asyncController<
   NoBody,
   GetMonthlyReportResponse
 >(async (req, res) => {
-  const { userId, year, month } = req.query;
+  const { year, month } = req.query;
 
-  const response = await analytics.getMonthlyReport({ userId, year, month });
+  const response = await analytics.getMonthlyReport({
+    userId: requireUserId(req),
+    year,
+    month,
+  });
 
   res.status(200).json(response);
 });

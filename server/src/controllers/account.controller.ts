@@ -1,3 +1,4 @@
+import { requireUserId } from "../middleware/requireToken";
 import * as accounts from "../services/account.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
@@ -18,7 +19,10 @@ export const registerAccounts = asyncController<
 >(async (req, res) => {
   const { exchangeToken } = req.body;
 
-  const response = await accounts.exchangePlaidPublicToken(exchangeToken);
+  const response = await accounts.exchangePlaidPublicToken(
+    requireUserId(req),
+    exchangeToken,
+  );
   res.status(201).json(response);
 });
 
@@ -38,7 +42,9 @@ export const getConnectionToken = asyncController<
   NoBody,
   ConnectionTokenResponse
 >(async (req, res) => {
-  const connectionToken = await accounts.createPlaidLinkToken();
+  const connectionToken = await accounts.createPlaidLinkToken(
+    requireUserId(req),
+  );
   res.status(200).json({ connectionToken });
 });
 
@@ -48,8 +54,6 @@ export const listAccountsForUser = asyncController<
   NoBody,
   ListAccountsResponse
 >(async (req, res) => {
-  const { userId } = req.query;
-
-  const accountsList = await accounts.listForUser(userId);
+  const accountsList = await accounts.listForUser(requireUserId(req));
   res.status(200).json(accountsList);
 });

@@ -1,12 +1,25 @@
 import { NextFunction, Request, Response } from "express";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
-import { UnauthorizedError } from "../common/errors";
+import { ForbiddenError, UnauthorizedError } from "../common/errors";
 import { getJwksUri } from "../services/auth.service";
+import { resolveUserId } from "../services/user.service";
 
-declare module "express-serve-static-core" {
-  interface Request {
-    /** Set by requireToken. Present on every route mounted behind it. */
-    token?: JWTPayload;
+// Extra fields on `req`. Express picks these up from the global Express.Request
+// interface, which is the supported extension point. Augmenting the
+// "express-serve-static-core" module by name does not work here: that package
+// is not a direct dependency, so TypeScript cannot resolve it to merge into.
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      /** Set by requireToken. Present on every route mounted behind it. */
+      token?: JWTPayload;
+      /**
+       * The caller's user ID, resolved from the verified token. Undefined when the token is valid
+       * but no account holds its identity yet; see {@link requireUserId}.
+       */
+      userId?: string;
+    }
   }
 }
 
@@ -52,15 +65,43 @@ export async function requireToken(
     });
 
     req.token = payload;
-    next();
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return next(error);
     }
 
     console.warn("Token verification failed:", error);
-    next(new UnauthorizedError("Invalid token."));
+    return next(new UnauthorizedError("Invalid token."));
   }
+
+  // Identity is derived from the verified token.
+  const { iss, sub } = req.token;
+  if (!iss || !sub) {
+    return next(new UnauthorizedError("Token is missing an identity."));
+  }
+
+  try {
+    // An unrecognised identity is left unresolved rather than rejected,
+    // because enrolment has to be reachable by a caller who does not have an account yet.
+    req.userId = await resolveUserId({ issuer: iss, subject: sub });
+  } catch (error) {
+    return next(error);
+  }
+
+  next();
+}
+
+/**
+ * Throws when the token verified but no account holds its identity.
+ * This should require a user to create a Glass identity.
+ */
+export function requireUserId(req: Request): string {
+  if (!req.userId) {
+    throw new ForbiddenError(
+      "No Glass account is linked to this identity yet.",
+    );
+  }
+  return req.userId;
 }
 
 export default requireToken;
