@@ -52,8 +52,6 @@ const emit = defineEmits<{
   close: [{ retaggedCount?: number }];
 }>();
 
-const userId = "0";
-
 const overrideExistingMerchants = ref(false);
 const overrideExistingCategories = ref(false);
 
@@ -68,7 +66,6 @@ function run() {
   errorMessage.value = "";
 
   const result = merchantsApi.applyAllMatchers({
-    householdId: userId,
     overrideExistingMerchants: overrideExistingMerchants.value,
     overrideExistingCategories: overrideExistingCategories.value,
   });

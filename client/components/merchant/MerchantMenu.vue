@@ -31,8 +31,6 @@ const emit = defineEmits<{
   selectedMerchant: [Merchant | undefined];
 }>();
 
-const userId = "0";
-
 const label = computed(() => {
   return props.hideLabel ? "" : "Merchant";
 });
@@ -57,7 +55,7 @@ watch(searchTerm, () => {
 // End of code for previous comment.
 
 const merchantsApi = useMerchantsApi();
-const listMerchants = merchantsApi.listMerchants({ householdId: userId });
+const listMerchants = merchantsApi.listMerchants();
 const allMerchants = computed(() => {
   return (
     listMerchants.merchants.value

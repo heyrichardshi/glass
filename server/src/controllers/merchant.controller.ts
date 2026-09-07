@@ -1,3 +1,4 @@
+import { requireUserId } from "../middleware/requireToken";
 import * as merchants from "../services/merchant.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
@@ -5,7 +6,6 @@ import {
   ApplyAllMatchersResponse,
   CreateMerchantBody,
   CreateMerchantResponse,
-  ListMerchantsQuery,
   ListMerchantsResponse,
   UpdateMerchantBody,
   UpdateMerchantResponse,
@@ -13,15 +13,11 @@ import {
 
 export const listMerchants = asyncController<
   NoParams,
-  ListMerchantsQuery,
+  NoQuery,
   NoBody,
   ListMerchantsResponse
->(async (req, res) => {
-  const { householdId } = req.query;
-
-  const merchantsList = await merchants.listMerchants({
-    householdId: householdId,
-  });
+>(async (_req, res) => {
+  const merchantsList = await merchants.listMerchants();
   res.status(200).json(merchantsList);
 });
 
@@ -31,11 +27,9 @@ export const createMerchant = asyncController<
   CreateMerchantBody,
   CreateMerchantResponse
 >(async (req, res) => {
-  const { householdId, name, defaultCategoryId, descriptionMatchers } =
-    req.body;
+  const { name, defaultCategoryId, descriptionMatchers } = req.body;
 
   const merchant = await merchants.createMerchant({
-    householdId,
     name,
     defaultCategoryId,
     descriptionMatchers: descriptionMatchers || [],
@@ -50,12 +44,10 @@ export const updateMerchant = asyncController<
   UpdateMerchantBody,
   UpdateMerchantResponse
 >(async (req, res) => {
-  const { householdId, name, defaultCategoryId, descriptionMatchers } =
-    req.body;
+  const { name, defaultCategoryId, descriptionMatchers } = req.body;
   const merchantId = req.params.merchantId;
 
   const merchant = await merchants.updateMerchant(merchantId, {
-    householdId,
     name,
     defaultCategoryId,
     descriptionMatchers,
@@ -70,11 +62,10 @@ export const applyAllMatchers = asyncController<
   ApplyAllMatchersBody,
   ApplyAllMatchersResponse
 >(async (req, res) => {
-  const { householdId, overrideExistingMerchants, overrideExistingCategories } =
-    req.body;
+  const { overrideExistingMerchants, overrideExistingCategories } = req.body;
 
   const result = await merchants.applyAllMatchers({
-    householdId,
+    userId: requireUserId(req),
     overrideExistingMerchants,
     overrideExistingCategories,
   });

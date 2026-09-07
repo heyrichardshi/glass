@@ -31,7 +31,7 @@ export const refreshAccount = asyncController<
   NoBody,
   RefreshAccountResponse
 >(async (req, res) => {
-  await accounts.refresh(req.params.accountId);
+  await accounts.refresh(req.params.accountId, requireUserId(req));
   res.status(200).send();
 });
 

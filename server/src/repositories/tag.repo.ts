@@ -1,5 +1,5 @@
 import { Container, StatusCodes } from "@azure/cosmos";
-import { DatabaseProvider } from "./database";
+import { DatabaseProvider, DEFAULT_TAXONOMY_USER_ID } from "./database";
 import { Tag } from "../models";
 import { DatabaseError } from "../common/errors";
 
@@ -13,12 +13,12 @@ export class TagRepository {
     this.promisedContainer = DatabaseProvider.getContainer({
       id: TAG_CONTAINER_ID,
       partitionKey: {
-        paths: ["/householdId"],
+        paths: ["/userId"],
       },
       indexingPolicy: {
         indexingMode: "consistent",
         automatic: true,
-        includedPaths: [{ path: "/householdId/?" }, { path: "/name/?" }],
+        includedPaths: [{ path: "/name/?" }],
         excludedPaths: [
           { path: "/*" }, // Exclude everything by default to only index explicitly included properties
         ],
@@ -34,24 +34,29 @@ export class TagRepository {
     return TagRepository.instance;
   }
 
-  async findById(tagId: string, householdId: string): Promise<Tag | undefined> {
+  async findById(tagId: string): Promise<Tag | undefined> {
     const container = await this.promisedContainer;
 
     try {
-      const { resource } = await container.item(tagId, householdId).read<Tag>();
+      const { resource } = await container
+        .item(tagId, DEFAULT_TAXONOMY_USER_ID)
+        .read<Tag>();
       return resource;
     } catch (err: any) {
-      if (err.code === 404) {
+      if (err.code === StatusCodes.NotFound) {
         return undefined;
       }
       throw err;
     }
   }
 
-  async upsert(tag: Tag): Promise<Tag> {
+  async upsert(tag: Omit<Tag, "userId">): Promise<Tag> {
     const container = await this.promisedContainer;
 
-    const response = await container.items.upsert(tag);
+    const response = await container.items.upsert<Tag>({
+      ...tag,
+      userId: DEFAULT_TAXONOMY_USER_ID,
+    });
 
     if (
       response.statusCode !== StatusCodes.Ok &&
@@ -62,56 +67,33 @@ export class TagRepository {
       );
     }
 
-    console.log(
-      `Upserted tag in db with status ${response.statusCode}: `,
-      response,
-    );
     return response.resource as unknown as Tag;
   }
 
-  async listAll(householdId: string): Promise<Tag[]> {
+  async listAll(): Promise<Tag[]> {
     const container = await this.promisedContainer;
 
     const response = await container.items
-      .query<Tag>(
-        {
-          query: "SELECT * FROM c WHERE c.householdId = @householdId",
-          parameters: [{ name: "@householdId", value: householdId }],
-        },
-        {
-          partitionKey: householdId,
-        },
-      )
+      .query<Tag>("SELECT * FROM c", { partitionKey: DEFAULT_TAXONOMY_USER_ID })
       .fetchAll();
 
     return response.resources;
   }
 
-  async findByName(
-    householdId: string,
-    tagName: string,
-  ): Promise<Tag | undefined> {
+  async findByName(tagName: string): Promise<Tag | undefined> {
     const container = await this.promisedContainer;
 
     const response = await container.items
       .query<Tag>(
         {
-          query:
-            "SELECT * FROM c WHERE c.householdId = @householdId AND c.name = @name",
-          parameters: [
-            { name: "@householdId", value: householdId },
-            { name: "@name", value: tagName },
-          ],
+          query: "SELECT * FROM c WHERE c.name = @name",
+          parameters: [{ name: "@name", value: tagName }],
         },
         {
-          partitionKey: householdId,
+          partitionKey: DEFAULT_TAXONOMY_USER_ID,
         },
       )
       .fetchAll();
-
-    if (response.resources.length === 0) {
-      return undefined;
-    }
 
     return response.resources[0];
   }

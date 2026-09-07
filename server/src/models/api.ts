@@ -26,7 +26,6 @@ export function toApiTransaction(
   return {
     id: transaction.id,
     userId: transaction.userId,
-    householdId: transaction.householdId,
     accountId: transaction.accountId,
     amount: transaction.amount,
     currency: transaction.currency,
@@ -57,7 +56,6 @@ export function toApiTag(tag: Tag): apiTypes.Tag {
   return {
     id: tag.id,
     name: tag.name,
-    householdId: tag.householdId,
   };
 }
 

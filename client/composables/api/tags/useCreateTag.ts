@@ -1,6 +1,6 @@
 import type { Tag, CreateTagResponse } from "@glass/types";
 
-export default function (userId: string, name: string, parentId?: string) {
+export default function (name: string, parentId?: string) {
   const { apiBase } = useApiBase();
 
   const errorMessage = ref<string | undefined>(undefined);
@@ -8,7 +8,7 @@ export default function (userId: string, name: string, parentId?: string) {
     () => `${apiBase.value}/tags`,
     {
       method: "POST",
-      body: { userId, name, parentId },
+      body: { name, parentId },
       server: false,
       onResponseError: (e) => {
         console.error("Error creating tag:", e);

@@ -3,17 +3,11 @@
  * vocabulary; the raw provider values are kept in provider-specific metadata rather than here.
  */
 export type AccountType =
-  | "checking"
-  | "savings"
-  | "credit"
-  | "loan"
-  | "investment"
-  | "other";
+  "checking" | "savings" | "credit" | "loan" | "investment" | "other";
 
 export interface Account {
   id: string;
   userId: string;
-  householdId: string;
   name: string;
   institution: string;
   balance: string;

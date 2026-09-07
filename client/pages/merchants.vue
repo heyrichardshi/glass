@@ -31,12 +31,8 @@ import type { Merchant } from "@glass/types";
 import CreateMerchant from "../components/merchant/CreateMerchant.vue";
 import ApplyAllMatchersModal from "../components/merchant/ApplyAllMatchersModal.vue";
 const config = useRuntimeConfig();
-const userId = "0";
-
 const merchantsApi = useMerchantsApi();
-const { merchants, status, refresh } = merchantsApi.listMerchants({
-  householdId: userId,
-});
+const { merchants, status, refresh } = merchantsApi.listMerchants();
 
 const toast = useToast();
 

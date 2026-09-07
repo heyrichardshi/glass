@@ -1,7 +1,6 @@
 import type { ApplyAllMatchersResponse } from "@glass/types/schemas";
 
 export default function (request: {
-  householdId: string;
   overrideExistingMerchants: boolean;
   overrideExistingCategories: boolean;
 }) {

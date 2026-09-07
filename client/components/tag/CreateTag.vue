@@ -31,8 +31,6 @@ const emit = defineEmits<{
 
 const name = ref(props.prefillName);
 
-const userId = "0";
-
 const toast = useToast();
 
 const tagsApi = useTagsApi();
@@ -46,7 +44,7 @@ function close() {
 }
 
 function submit() {
-  const createTag = tagsApi.createTag(userId, name.value);
+  const createTag = tagsApi.createTag(name.value);
 
   watch(
     createTag.status,

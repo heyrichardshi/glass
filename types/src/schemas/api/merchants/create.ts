@@ -2,7 +2,6 @@ import { z } from "zod";
 import { MerchantSchema } from "../../models";
 
 export const CreateMerchantBodySchema = z.object({
-  householdId: z.string(),
   name: z.string(),
   defaultCategoryId: z.string(),
   descriptionMatchers: z.array(z.string()).optional(),

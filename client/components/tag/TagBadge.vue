@@ -7,10 +7,8 @@ const props = defineProps<{
   tagId: string;
 }>();
 
-const userId = "0";
-
 const tagsApi = useTagsApi();
-const listTags = tagsApi.listTags(userId);
+const listTags = tagsApi.listTags();
 
 const name = computed(() => {
   const tag = listTags.tags.value.find((tag) => tag.id === props.tagId);

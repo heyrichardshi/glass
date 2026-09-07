@@ -31,8 +31,6 @@ const emit = defineEmits<{
   selectedCategory: [Category | undefined];
 }>();
 
-const userId = "0";
-
 const label = computed(() => {
   return props.hideLabel ? "" : "Category";
 });
@@ -57,7 +55,7 @@ watch(searchTerm, () => {
 // End of code for previous comment.
 
 const categoriesApi = useCategoriesApi();
-const listCategories = categoriesApi.listCategories(userId);
+const listCategories = categoriesApi.listCategories();
 const allCategories = computed(() => {
   return listCategories.categories.value
     .map((category) => ({

@@ -2,7 +2,6 @@ import { z } from "zod";
 import { CategorySchema } from "../../models";
 
 export const CreateCategoryBodySchema = z.object({
-  userId: z.string(),
   name: z.string(),
   parentId: z.string().optional(),
 });

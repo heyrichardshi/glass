@@ -12,16 +12,15 @@ export class AccountRepository {
     this.promisedContainer = DatabaseProvider.getContainer({
       id: ACCOUNT_CONTAINER_ID,
       partitionKey: {
-        paths: ["/householdId"],
+        paths: ["/userId"],
       },
       indexingPolicy: {
         indexingMode: "consistent",
         automatic: true,
         includedPaths: [
-          { path: "/userId/?" },
-          { path: "/householdId/?" },
           { path: "/status/?" },
           { path: "/isDeleted/?" },
+          { path: "/plaidItemId/?" },
         ],
         excludedPaths: [
           { path: "/*" }, // Exclude everything by default to only index explicitly included properties
@@ -62,18 +61,27 @@ export class AccountRepository {
     return response.statusCode;
   }
 
-  // Find an account by ID
-  async findById(accountId: string): Promise<Account | undefined> {
+  /**
+   * Takes the owner rather than the account ID alone: without it this reads across every
+   * partition and can return an account belonging to someone else.
+   */
+  async findById(
+    accountId: string,
+    userId: string,
+  ): Promise<Account | undefined> {
     const container = await this.promisedContainer;
 
-    const response = await container.items
-      .query<Account>({
-        query: "SELECT * FROM c WHERE c.id = @accountId",
-        parameters: [{ name: "@accountId", value: accountId }],
-      })
-      .fetchAll();
-
-    return response.resources[0];
+    try {
+      const { resource } = await container
+        .item(accountId, userId)
+        .read<Account>();
+      return resource;
+    } catch (err: any) {
+      if (err.code === StatusCodes.NotFound) {
+        return undefined;
+      }
+      throw err;
+    }
   }
 
   // List all accounts for given user
@@ -81,16 +89,7 @@ export class AccountRepository {
     const container = await this.promisedContainer;
 
     const response = await container.items
-      .query<Account>(
-        {
-          query: "SELECT * FROM c WHERE c.userId = @userId",
-          parameters: [{ name: "@userId", value: userId }],
-        },
-        {
-          // TODO: need to update this to hosueholdId once households are implemented; currently all hosueholds are = userId
-          partitionKey: userId,
-        },
-      )
+      .query<Account>("SELECT * FROM c", { partitionKey: userId })
       .fetchAll();
 
     return response.resources;

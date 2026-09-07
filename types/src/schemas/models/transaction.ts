@@ -8,7 +8,6 @@ export const TransactionCounterpartySchema = z.object({
 export const TransactionSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  householdId: z.string(),
   accountId: z.string(),
   amount: z.string(),
   currency: z.string(),

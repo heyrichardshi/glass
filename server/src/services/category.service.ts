@@ -1,19 +1,17 @@
-import {
-  CreateCategoryRequest,
-  CreateCategoryResponse,
-  ListCategoriesRequest,
-  ListCategoriesResponse,
-} from "@glass/types";
+import { CreateCategoryResponse, ListCategoriesResponse } from "@glass/types";
 import { CategoryRepository } from "../repositories";
 import { Category, toApiCategory } from "../models";
 import { ConflictError, NotFoundError } from "../common/errors";
 import { randomUUID } from "crypto";
 
-export async function listCategories(
-  request: ListCategoriesRequest,
-): Promise<ListCategoriesResponse> {
+export interface CreateCategoryRequest {
+  name: string;
+  parentId?: string;
+}
+
+export async function listCategories(): Promise<ListCategoriesResponse> {
   const categoryRepository = await CategoryRepository.getInstance();
-  const categories = await categoryRepository.listAll(request.householdId);
+  const categories = await categoryRepository.listAll();
   return {
     categories: categories.map((category) => toApiCategory(category)),
   };
@@ -22,9 +20,9 @@ export async function listCategories(
 export async function createCategory(
   request: CreateCategoryRequest,
 ): Promise<CreateCategoryResponse> {
-  const { householdId, name, parentId } = request;
+  const { name, parentId } = request;
   console.log(
-    `createCategory() called with householdId: ${householdId}, name: ${name}, parentId: ${parentId}`,
+    `createCategory() called with name: ${name}, parentId: ${parentId}`,
   );
 
   const categoryRepository = await CategoryRepository.getInstance();
@@ -32,7 +30,7 @@ export async function createCategory(
   // Get the parent category if it exists
   let parent: Category | undefined;
   if (parentId) {
-    parent = await categoryRepository.findById(parentId, householdId);
+    parent = await categoryRepository.findById(parentId);
 
     // No category found with id = parentId, so we cannot create a nested category under it.
     if (!parent) {
@@ -45,10 +43,7 @@ export async function createCategory(
   }
 
   // Check if category with given path already exists
-  const siblings = await categoryRepository.listAllDirectChildren(
-    householdId,
-    parentId,
-  );
+  const siblings = await categoryRepository.listAllDirectChildren(parentId);
   const existing = siblings.find((category) => category.name === name);
   if (existing) {
     throw new ConflictError("Category", name);
@@ -61,7 +56,6 @@ export async function createCategory(
     name: name,
     parentId: parentId,
     fullPath: [...(parent?.fullPath || []), name],
-    householdId: householdId,
   });
 
   return {

@@ -3,21 +3,16 @@ import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   CreateCategoryBody,
   CreateCategoryResponse,
-  ListCategoriesQuery,
   ListCategoriesResponse,
 } from "@glass/types/schemas";
 
 export const listCategories = asyncController<
   NoParams,
-  ListCategoriesQuery,
+  NoQuery,
   NoBody,
   ListCategoriesResponse
->(async (req, res) => {
-  const { userId } = req.query;
-
-  const categoriesList = await categories.listCategories({
-    householdId: userId,
-  });
+>(async (_req, res) => {
+  const categoriesList = await categories.listCategories();
   res.status(200).json(categoriesList);
 });
 
@@ -27,12 +22,8 @@ export const createCategory = asyncController<
   CreateCategoryBody,
   CreateCategoryResponse
 >(async (req, res) => {
-  const { userId, name, parentId } = req.body;
+  const { name, parentId } = req.body;
 
-  const category = await categories.createCategory({
-    householdId: userId,
-    name,
-    parentId,
-  });
+  const category = await categories.createCategory({ name, parentId });
   res.status(201).json(category);
 });

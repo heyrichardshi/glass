@@ -7,10 +7,8 @@ const props = defineProps<{
   merchantId: string;
 }>();
 
-const userId = "0";
-
 const merchantsApi = useMerchantsApi();
-const listMerchants = merchantsApi.listMerchants({ householdId: "0" });
+const listMerchants = merchantsApi.listMerchants();
 
 const name = computed(() => {
   const merchant = listMerchants.merchants.value.find(

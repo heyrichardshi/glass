@@ -3,21 +3,16 @@ import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   CreateTagBody,
   CreateTagResponse,
-  ListTagsQuery,
   ListTagsResponse,
 } from "@glass/types/schemas";
 
 export const listTags = asyncController<
   NoParams,
-  ListTagsQuery,
+  NoQuery,
   NoBody,
   ListTagsResponse
->(async (req, res) => {
-  const { userId } = req.query;
-
-  const tagsList = await tags.listTags({
-    householdId: userId,
-  });
+>(async (_req, res) => {
+  const tagsList = await tags.listTags();
   res.status(200).json(tagsList);
 });
 
@@ -27,11 +22,8 @@ export const createTag = asyncController<
   CreateTagBody,
   CreateTagResponse
 >(async (req, res) => {
-  const { userId, name } = req.body;
+  const { name } = req.body;
 
-  const tag = await tags.createTag({
-    householdId: userId,
-    name,
-  });
+  const tag = await tags.createTag({ name });
   res.status(201).json(tag);
 });

@@ -7,7 +7,6 @@ export const UpdateMerchantParamsSchema = z.object({
 export type UpdateMerchantParams = z.infer<typeof UpdateMerchantParamsSchema>;
 
 export const UpdateMerchantBodySchema = z.object({
-  householdId: z.string(),
   name: z.string().optional(),
   defaultCategoryId: z.string().optional(),
   descriptionMatchers: z.array(z.string()).optional(),

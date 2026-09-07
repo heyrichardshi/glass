@@ -61,13 +61,13 @@ export async function getMonthlyReport(
     `Fetched ${transactions.length} transactions for userId: ${userId}, year: ${year}, month: ${month}`,
   );
 
-  const categories = await categoryRepo.listAll(userId);
+  const categories = await categoryRepo.listAll();
   const categoryIndex = indexById(categories, (item) => item);
 
   // key = category ID
   let categoryTransactionIndex: Record<string, CategoryTransactions> = {};
 
-  const tags = await tagRepo.listAll(userId);
+  const tags = await tagRepo.listAll();
   const tagIndex = indexById(tags, (item) => item);
 
   // key = tag ID

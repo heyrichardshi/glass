@@ -78,12 +78,10 @@ const emit = defineEmits<{
   ];
 }>();
 
-const userId = "0";
-
 const overlay = useOverlay();
 
 const categoriesApi = useCategoriesApi();
-const listCategories = categoriesApi.listCategories(userId);
+const listCategories = categoriesApi.listCategories();
 
 function getCategoryById(categoryId: string): Category | undefined {
   return listCategories.categories.value.find((c) => c.id === categoryId);

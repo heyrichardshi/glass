@@ -1,10 +1,45 @@
 import { Container, SqlQuerySpec, StatusCodes } from "@azure/cosmos";
-import { DatabaseProvider } from "./database";
+import { DatabaseProvider, DEFAULT_TAXONOMY_USER_ID } from "./database";
 import { Category } from "../models";
 import { getDefaultCategories } from "../models/category";
 import { DatabaseError } from "../common/errors";
 
 const CATEGORY_CONTAINER_ID = "categories";
+
+/**
+ * Creates whichever default categories are absent. This runs once per process as part of setting
+ * the container up, rather than on every read, and leaves existing rows alone so that repeating it
+ * across restarts is harmless.
+ */
+async function seedDefaultCategories(container: Container): Promise<void> {
+  const { resources: existing } = await container.items
+    .query<{ id: string }>("SELECT c.id FROM c", {
+      partitionKey: DEFAULT_TAXONOMY_USER_ID,
+    })
+    .fetchAll();
+
+  const existingIds = new Set(existing.map((category) => category.id));
+  const missing = getDefaultCategories().filter(
+    (category) => !existingIds.has(category.id),
+  );
+
+  if (missing.length === 0) {
+    return;
+  }
+
+  console.log(
+    `Creating missing default categories: ${missing.map((c) => c.name).join(", ")}`,
+  );
+
+  await Promise.all(
+    missing.map((category) =>
+      container.items.upsert<Category>({
+        ...category,
+        userId: DEFAULT_TAXONOMY_USER_ID,
+      }),
+    ),
+  );
+}
 
 export class CategoryRepository {
   private static instance: CategoryRepository;
@@ -14,17 +49,20 @@ export class CategoryRepository {
     this.promisedContainer = DatabaseProvider.getContainer({
       id: CATEGORY_CONTAINER_ID,
       partitionKey: {
-        paths: ["/householdId"],
+        paths: ["/userId"],
       },
       indexingPolicy: {
         indexingMode: "consistent",
         automatic: true,
-        includedPaths: [{ path: "/householdId/?" }, { path: "/fullPath/?" }],
+        includedPaths: [{ path: "/fullPath/?" }, { path: "/parentId/?" }],
         excludedPaths: [
           { path: "/*" }, // Exclude everything by default to only index explicitly included properties
         ],
         compositeIndexes: [],
       },
+    }).then(async (container) => {
+      await seedDefaultCategories(container);
+      return container;
     });
   }
 
@@ -35,46 +73,29 @@ export class CategoryRepository {
     return CategoryRepository.instance;
   }
 
-  private async initializeDefaultCategories(householdId: string) {
-    const defaultCategories = getDefaultCategories(householdId);
-    for (const category of defaultCategories) {
-      const existing = await this.findById(category.id, householdId);
-      if (!existing) {
-        console.log(
-          `Creating missing category: ${category.id} (${category.name})`,
-        );
-        await this.upsert(category);
-      } else {
-        console.log(
-          `Category already exists: ${category.id} (${category.name})`,
-        );
-      }
-    }
-  }
-
-  async findById(
-    categoryId: string,
-    householdId: string,
-  ): Promise<Category | undefined> {
+  async findById(categoryId: string): Promise<Category | undefined> {
     const container = await this.promisedContainer;
 
     try {
       const { resource } = await container
-        .item(categoryId, householdId)
+        .item(categoryId, DEFAULT_TAXONOMY_USER_ID)
         .read<Category>();
       return resource;
     } catch (err: any) {
-      if (err.code === 404) {
+      if (err.code === StatusCodes.NotFound) {
         return undefined;
       }
       throw err;
     }
   }
 
-  async upsert(category: Category): Promise<Category> {
+  async upsert(category: Omit<Category, "userId">): Promise<Category> {
     const container = await this.promisedContainer;
 
-    const response = await container.items.upsert(category);
+    const response = await container.items.upsert<Category>({
+      ...category,
+      userId: DEFAULT_TAXONOMY_USER_ID,
+    });
 
     if (
       response.statusCode !== StatusCodes.Ok &&
@@ -85,68 +106,42 @@ export class CategoryRepository {
       );
     }
 
-    console.log(
-      `Upserted category in db with status ${response.statusCode}: `,
-      response,
-    );
     return response.resource as unknown as Category;
   }
 
-  async listAll(householdId: string): Promise<Category[]> {
-    await this.initializeDefaultCategories(householdId);
-
+  async listAll(): Promise<Category[]> {
     const container = await this.promisedContainer;
 
     const response = await container.items
-      .query<Category>(
-        {
-          query: "SELECT * FROM c WHERE c.householdId = @householdId",
-          parameters: [{ name: "@householdId", value: householdId }],
-        },
-        {
-          partitionKey: householdId,
-        },
-      )
+      .query<Category>("SELECT * FROM c", {
+        partitionKey: DEFAULT_TAXONOMY_USER_ID,
+      })
       .fetchAll();
 
     return response.resources;
   }
 
-  async listAllDirectChildren(
-    householdId: string,
-    parentId?: string,
-  ): Promise<Category[]> {
+  async listAllDirectChildren(parentId?: string): Promise<Category[]> {
     const container = await this.promisedContainer;
 
     let query: SqlQuerySpec;
     if (parentId) {
       query = {
-        query:
-          "SELECT * FROM c WHERE c.householdId = @householdId AND c.parentId = @parentId",
-        parameters: [
-          { name: "@householdId", value: householdId },
-          { name: "@parentId", value: parentId },
-        ],
+        query: "SELECT * FROM c WHERE c.parentId = @parentId",
+        parameters: [{ name: "@parentId", value: parentId }],
       };
     } else {
       // If no parentId is provided, we want to fetch all root categories
       query = {
         query:
-          "SELECT * FROM c WHERE c.householdId = @householdId AND (c.parentId = null OR NOT IS_DEFINED(c.parentId))",
-        parameters: [{ name: "@householdId", value: householdId }],
+          "SELECT * FROM c WHERE c.parentId = null OR NOT IS_DEFINED(c.parentId)",
+        parameters: [],
       };
     }
 
     const response = await container.items
-      .query<Category>(query, {
-        partitionKey: householdId,
-      })
+      .query<Category>(query, { partitionKey: DEFAULT_TAXONOMY_USER_ID })
       .fetchAll();
-
-    console.log(
-      `Fetched ${response.resources.length} categories for householdId '${householdId}' with parentId '${parentId}' from db: `,
-      response,
-    );
 
     return response.resources;
   }

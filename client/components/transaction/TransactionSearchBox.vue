@@ -74,8 +74,6 @@ const merchantsApi = useMerchantsApi();
 const categoriesApi = useCategoriesApi();
 const tagsApi = useTagsApi();
 
-const userId = "0";
-
 const listAccounts = accountsApi.listAccounts();
 const accounts = computed(() => listAccounts.accounts.value);
 const accountItems = computed<FilterItem[]>(() =>
@@ -87,7 +85,7 @@ const accountItems = computed<FilterItem[]>(() =>
   })),
 );
 
-const listMerchants = merchantsApi.listMerchants({ householdId: userId });
+const listMerchants = merchantsApi.listMerchants();
 const merchants = computed(() => listMerchants.merchants.value);
 const merchantItems = computed<FilterItem[]>(() =>
   merchants.value.map((merchant) => ({
@@ -98,7 +96,7 @@ const merchantItems = computed<FilterItem[]>(() =>
   })),
 );
 
-const listCategories = categoriesApi.listCategories(userId);
+const listCategories = categoriesApi.listCategories();
 const categories = computed(() => listCategories.categories.value);
 const categoryItems = computed<FilterItem[]>(() =>
   categories.value.map((category) => ({
@@ -109,7 +107,7 @@ const categoryItems = computed<FilterItem[]>(() =>
   })),
 );
 
-const listTags = tagsApi.listTags(userId);
+const listTags = tagsApi.listTags();
 const tags = computed(() => listTags.tags.value);
 const tagItems = computed<FilterItem[]>(() =>
   tags.value.map((tag) => ({

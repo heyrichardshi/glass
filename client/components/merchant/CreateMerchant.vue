@@ -42,8 +42,6 @@ const name = ref(props.prefillName);
 // TODO: Set default category to be "Uncategorized"
 const defaultCategoryId = ref<Category | undefined>(undefined);
 
-const userId = "0";
-
 const toast = useToast();
 
 const merchantsApi = useMerchantsApi();
@@ -67,7 +65,6 @@ function submit() {
   }
 
   const createMerchant = merchantsApi.createMerchant({
-    householdId: userId,
     name: name.value,
     defaultCategoryId: defaultCategoryId.value.id,
     descriptionMatchers: [],

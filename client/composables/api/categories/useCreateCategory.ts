@@ -1,6 +1,6 @@
 import type { Category, CreateCategoryResponse } from "@glass/types";
 
-export default function (userId: string, name: string, parentId?: string) {
+export default function (name: string, parentId?: string) {
   const { apiBase } = useApiBase();
 
   const errorMessage = ref<string | undefined>(undefined);
@@ -8,7 +8,7 @@ export default function (userId: string, name: string, parentId?: string) {
     () => `${apiBase.value}/categories`,
     {
       method: "POST",
-      body: { userId, name, parentId },
+      body: { name, parentId },
       server: false,
       onResponseError: (e) => {
         console.error("Error creating category:", e);

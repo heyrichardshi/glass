@@ -7,7 +7,6 @@ export interface PlaidItem {
   /** The Plaid item_id; the primary key of this record. */
   id: string;
   userId: string;
-  householdId: string;
   /** The Plaid access token for this Item (secret). */
   accessToken: string;
   /** The /transactions/sync cursor; undefined until the first sync completes. */

@@ -1,18 +1,12 @@
-import type {
-  Merchant,
-  ListMerchantsResponse,
-  ListMerchantsRequest,
-} from "@glass/types";
+import type { Merchant, ListMerchantsResponse } from "@glass/types";
 
-export default function (request: ListMerchantsRequest) {
+export default function () {
   const { apiBase } = useApiBase();
 
-  const key = `ListMerchants:${request.householdId}`;
   const { data, status, error, refresh } = useFetch(
     `${apiBase.value}/merchants`,
     {
-      key,
-      query: request,
+      key: "ListMerchants",
       // Without getCachedData, useFetch re-fetches on every navigation.
       // This returns cached data from a previous fetch if available,
       // skipping the network request. Call refresh() to force a re-fetch.

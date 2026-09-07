@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const ApplyAllMatchersBodySchema = z.object({
-  householdId: z.string(),
   overrideExistingMerchants: z.boolean(),
   overrideExistingCategories: z.boolean(),
 });

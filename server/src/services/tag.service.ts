@@ -1,19 +1,16 @@
-import {
-  CreateTagRequest,
-  CreateTagResponse,
-  ListTagsRequest,
-  ListTagsResponse,
-} from "@glass/types";
+import { CreateTagResponse, ListTagsResponse } from "@glass/types";
 import { TagRepository } from "../repositories";
 import { toApiTag } from "../models";
 import { ConflictError } from "../common/errors";
 import { randomUUID } from "crypto";
 
-export async function listTags(
-  request: ListTagsRequest,
-): Promise<ListTagsResponse> {
+export interface CreateTagRequest {
+  name: string;
+}
+
+export async function listTags(): Promise<ListTagsResponse> {
   const tagRepository = await TagRepository.getInstance();
-  const tags = await tagRepository.listAll(request.householdId);
+  const tags = await tagRepository.listAll();
 
   // Sort tags alphabetically by name
   const sortedTags = tags.sort((a, b) =>
@@ -28,15 +25,13 @@ export async function listTags(
 export async function createTag(
   request: CreateTagRequest,
 ): Promise<CreateTagResponse> {
-  const { householdId, name } = request;
-  console.log(
-    `createTag() called with householdId: ${householdId}, name: ${name}`,
-  );
+  const { name } = request;
+  console.log(`createTag() called with name: ${name}`);
 
   const tagRepository = await TagRepository.getInstance();
 
   // Check if category with given name already exists
-  const existing = await tagRepository.findByName(householdId, name);
+  const existing = await tagRepository.findByName(name);
   if (existing) {
     throw new ConflictError("Tag", name);
   }
@@ -47,7 +42,6 @@ export async function createTag(
   const newTag = await tagRepository.upsert({
     id: randomUUID(),
     name: name,
-    householdId: householdId,
   });
 
   return {

@@ -49,8 +49,6 @@ function selectedCategory(category: Category | undefined) {
   parentCategory.value = category;
 }
 
-const userId = "0";
-
 const toast = useToast();
 
 const categoriesApi = useCategoriesApi();
@@ -65,7 +63,6 @@ function close() {
 
 function submit() {
   const createCategory = categoriesApi.createCategory(
-    userId,
     name.value,
     parentCategory.value?.id,
   );

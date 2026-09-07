@@ -8,6 +8,12 @@ import {
 } from "@azure/cosmos";
 import { DatabaseError } from "../common/errors";
 
+/**
+ * The `userId` every category, tag and merchant is written under for now.
+ * No part of the taxonomy is user-scoped yet.
+ */
+export const DEFAULT_TAXONOMY_USER_ID = "0";
+
 export class DatabaseProvider {
   private static instance: DatabaseProvider;
   private client: CosmosClient;

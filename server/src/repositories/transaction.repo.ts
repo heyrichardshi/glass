@@ -1,5 +1,4 @@
 import {
-  BulkOperationResponse,
   Container,
   ReadOperationInput,
   StatusCodes,
@@ -21,7 +20,7 @@ export class TransactionRepository {
     this.promisedContainer = DatabaseProvider.getContainer({
       id: TRANSACTION_CONTAINER_ID,
       partitionKey: {
-        paths: ["/householdId"],
+        paths: ["/userId"],
       },
       indexingPolicy: {
         indexingMode: "consistent",
@@ -32,8 +31,11 @@ export class TransactionRepository {
           { path: "/counterparty/id/?" },
           { path: "/categoryId/?" },
           { path: "/accountId/?" },
-          { path: "/householdId/?" },
           { path: "/isDeleted/?" },
+          // Both are needed by the Plaid sync path: a posted transaction is matched to the row it
+          // replaces, and a removed transaction has to be found by whatever still references it.
+          { path: "/plaidTransactionId/?" },
+          { path: "/linkedTransactionIds/?" },
         ],
         excludedPaths: [
           { path: "/*" }, // Exclude everything by default to only index explicitly included properties
@@ -49,56 +51,6 @@ export class TransactionRepository {
       TransactionRepository.instance = new TransactionRepository();
     }
     return TransactionRepository.instance;
-  }
-
-  /**
-   * This method ensures that old records are compliant with the Transaction interface by adding new fields and
-   * modifying updated fields, then writing the updated record to the database, if necessary.
-   */
-  async normalizeTransaction(raw: Partial<Transaction>): Promise<Transaction> {
-    let changed = false;
-
-    let transaction = { ...raw };
-
-    // Changes on 2025 04 29:
-    // - Type of `date` changed from `Date` to `string`
-    // - Added `rawDate: string`
-
-    // Transactions do not have a time of day associated with them, so it doesn't make sense to store the full ISO format.
-    // We only want to store the year-month-day portion as a string.
-    const shortDate = new Date(raw.date!!) // Safe assertion because `date` existed before this change.
-      .toISOString()
-      .substring(0, 10); // Takes the first 10 chars of the ISO string, i.e. "yyyy-MM-dd"
-    if (raw.date != shortDate) {
-      // The record being read has a full format date, so we want to commit this change
-      changed = true;
-      console.log(
-        `Transaction ${transaction.id} does not have expected date string, expected '${shortDate}' but was '${raw.date}'.`,
-      );
-      transaction = { ...transaction, date: shortDate };
-    }
-
-    // We want to allow users to modify the date associated with a transaction, but want a reference to the date as it
-    // appears on the bank statement, in case the user wants to revert their changes.
-    if (!raw.rawDate) {
-      changed = true;
-      console.log(`Transaction ${transaction.id} does not have rawDate.`);
-
-      // Take the existing date to be the raw date because at the time this field was introduced, there was no
-      // capability for the user to modify the date.
-      transaction = { ...transaction, rawDate: transaction.date!! };
-    }
-
-    // If we have made mutations to the transaction to normalize it, commit the result and return the record as it
-    // exists in the table.
-    if (changed) {
-      console.log(
-        `Transaction ${transaction.id} has been normalized, writing new object to database.`,
-      );
-      return this.upsert(transaction as Transaction);
-    }
-
-    return transaction as Transaction;
   }
 
   /**
@@ -136,55 +88,56 @@ export class TransactionRepository {
   }): Promise<TransactionsList> {
     const container = await this.promisedContainer;
 
-    let query = "SELECT * FROM c WHERE c.userId = @userId";
-    const parameters: SqlParameter[] = [
-      { name: "@userId", value: params.userId },
-    ];
+    const filters: string[] = [];
+    const parameters: SqlParameter[] = [];
 
     if (params.searchText) {
       // Case-insensitive search for the search text in the description.
       // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/contains
-      query += " AND CONTAINS(c.description, @searchText, true)";
+      filters.push("CONTAINS(c.description, @searchText, true)");
       parameters.push({ name: "@searchText", value: params.searchText });
     }
 
     if (params.accountIds && params.accountIds.length > 0) {
       // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/array-contains
-      query += " AND ARRAY_CONTAINS(@accountIds, c.accountId)";
+      filters.push("ARRAY_CONTAINS(@accountIds, c.accountId)");
       parameters.push({ name: "@accountIds", value: params.accountIds });
     }
 
     if (params.merchantIds && params.merchantIds.length > 0) {
-      query += " AND ARRAY_CONTAINS(@merchantIds, c.counterparty.id)";
+      filters.push("ARRAY_CONTAINS(@merchantIds, c.counterparty.id)");
       parameters.push({ name: "@merchantIds", value: params.merchantIds });
     }
 
     if (params.categoryIds && params.categoryIds.length > 0) {
-      query += " AND ARRAY_CONTAINS(@categoryIds, c.categoryId)";
+      filters.push("ARRAY_CONTAINS(@categoryIds, c.categoryId)");
       parameters.push({ name: "@categoryIds", value: params.categoryIds });
     }
 
     if (params.tagIds && params.tagIds.length > 0) {
       // ARRAY_CONTAINS_ANY is variadic, so the simpler approach than spreading the array is to loop through the tagIds
       // array in the record
-      query +=
-        " AND EXISTS(SELECT VALUE t FROM t IN c.tagIds WHERE ARRAY_CONTAINS(@tagIds, t))";
+      filters.push(
+        "EXISTS(SELECT VALUE t FROM t IN c.tagIds WHERE ARRAY_CONTAINS(@tagIds, t))",
+      );
       parameters.push({ name: "@tagIds", value: params.tagIds });
     }
 
     if (params.startDate) {
-      query += " AND c.date >= @startDate";
+      filters.push("c.date >= @startDate");
       parameters.push({ name: "@startDate", value: params.startDate });
     }
 
     if (params.endDate) {
-      query += " AND c.date <= @endDate";
+      filters.push("c.date <= @endDate");
       parameters.push({ name: "@endDate", value: params.endDate });
     }
 
-    query += " ORDER BY c.date DESC";
-
-    const querySpec: SqlQuerySpec = { query, parameters };
+    const where = filters.length > 0 ? ` WHERE ${filters.join(" AND ")}` : "";
+    const querySpec: SqlQuerySpec = {
+      query: `SELECT * FROM c${where} ORDER BY c.date DESC`,
+      parameters,
+    };
 
     const response = await container.items
       .query<Transaction>(querySpec, {
@@ -194,14 +147,8 @@ export class TransactionRepository {
       })
       .fetchNext();
 
-    const normalizedTransactions = await Promise.all(
-      response.resources.map(
-        async (transaction) => await this.normalizeTransaction(transaction),
-      ),
-    );
-
     return {
-      transactions: normalizedTransactions,
+      transactions: response.resources,
       paginationToken: response.continuationToken,
     };
   }
@@ -213,33 +160,18 @@ export class TransactionRepository {
     const container = await this.promisedContainer;
 
     const response = await container.items
-      .query<Transaction>(
-        {
-          query:
-            "SELECT * FROM c WHERE c.userId = @userId ORDER BY c.date DESC",
-          parameters: [{ name: "@userId", value: userId }],
-        },
-        {
-          // TODO: need to update this to householdId once households are implemented; currently all hosueholds are = userId
-          partitionKey: userId,
-          maxItemCount: 50,
-          continuationToken: paginationToken,
-        },
-      )
+      .query<Transaction>("SELECT * FROM c ORDER BY c.date DESC", {
+        partitionKey: userId,
+        maxItemCount: 50,
+        continuationToken: paginationToken,
+      })
       .fetchNext();
     console.log(
       `Fetched ${response.resources.length} transactions for user ${userId} with pagination token ${paginationToken}, got next pagination token: ${response.continuationToken}`,
     );
 
-    // Must normalize transactions to account for added/modified fields.
-    const normalizedTransactions = await Promise.all(
-      response.resources.map(
-        async (transaction) => await this.normalizeTransaction(transaction),
-      ),
-    );
-
     return {
-      transactions: normalizedTransactions,
+      transactions: response.resources,
       paginationToken: response.continuationToken,
     };
   }
@@ -254,14 +186,10 @@ export class TransactionRepository {
       .query<Transaction>(
         {
           query:
-            "SELECT * FROM c WHERE c.userId = @userId AND c.accountId = @accountId ORDER BY c.date DESC",
-          parameters: [
-            { name: "@userId", value: userId },
-            { name: "@accountId", value: accountId },
-          ],
+            "SELECT * FROM c WHERE c.accountId = @accountId ORDER BY c.date DESC",
+          parameters: [{ name: "@accountId", value: accountId }],
         },
         {
-          // TODO: need to update this to householdId once households are implemented; currently all hosueholds are = userId
           partitionKey: userId,
         },
       )
@@ -270,27 +198,20 @@ export class TransactionRepository {
       `Fetched ${response.resources.length} transactions for user ${userId} and account ${accountId}`,
     );
 
-    // Must normalize transactions to account for added/modified fields.
-    const normalizedTransactions = await Promise.all(
-      response.resources.map(
-        async (transaction) => await this.normalizeTransaction(transaction),
-      ),
-    );
-
     return {
-      transactions: normalizedTransactions,
+      transactions: response.resources,
     };
   }
 
   async get(
     transactionId: string,
-    householdId: string,
+    userId: string,
   ): Promise<Transaction | undefined> {
     const container = await this.promisedContainer;
 
     try {
       const { resource } = await container
-        .item(transactionId, householdId)
+        .item(transactionId, userId)
         .read<Transaction>();
       return resource;
     } catch (err: any) {
@@ -303,7 +224,7 @@ export class TransactionRepository {
 
   async getBulk(
     transactionIds: string[],
-    householdId: string,
+    userId: string,
   ): Promise<Record<string, Transaction | undefined>> {
     const container = await this.promisedContainer;
 
@@ -312,7 +233,7 @@ export class TransactionRepository {
         return {
           operationType: "Read",
           id: transactionId,
-          partitionKey: householdId,
+          partitionKey: userId,
         };
       },
     );
@@ -357,15 +278,13 @@ export class TransactionRepository {
       .query<Transaction>(
         {
           query:
-            "SELECT * FROM c WHERE c.userId = @userId AND c.date >= @startDate AND c.date <= @endDate ORDER BY c.date DESC",
+            "SELECT * FROM c WHERE c.date >= @startDate AND c.date <= @endDate ORDER BY c.date DESC",
           parameters: [
-            { name: "@userId", value: userId },
             { name: "@startDate", value: startDateString },
             { name: "@endDate", value: endDateString },
           ],
         },
         {
-          // TODO: need to update this to householdId once households are implemented; currently all hosueholds are = userId
           partitionKey: userId,
         },
       )
@@ -378,8 +297,8 @@ export class TransactionRepository {
     return response.resources;
   }
 
-  async delete(transactionId: string, householdId: string): Promise<void> {
+  async delete(transactionId: string, userId: string): Promise<void> {
     const container = await this.promisedContainer;
-    await container.item(transactionId, householdId).delete();
+    await container.item(transactionId, userId).delete();
   }
 }

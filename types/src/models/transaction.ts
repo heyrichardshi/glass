@@ -1,7 +1,6 @@
 export interface Transaction {
   id: string;
   userId: string;
-  householdId: string;
   accountId: string;
   amount: string;
   currency: string;

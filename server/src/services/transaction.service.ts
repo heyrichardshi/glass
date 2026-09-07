@@ -132,7 +132,7 @@ export async function update(
       delete newValues.tagIds;
     } else {
       // Sort tagIds by their corresponding tag names before saving
-      const tags = await tagRepo.listAll(userId);
+      const tags = await tagRepo.listAll();
       const tagMap = new Map(tags.map((tag) => [tag.id, tag.name]));
 
       newValues.tagIds = newTagIds.sort((a, b) => {
@@ -216,7 +216,7 @@ export async function bulkUpdate(
 
       // Handle tagIds sorting if provided
       if (updates.tagIds !== undefined) {
-        const tags = await tagRepo.listAll(userId);
+        const tags = await tagRepo.listAll();
         const tagMap = new Map(tags.map((tag) => [tag.id, tag.name]));
 
         updatedTransaction.tagIds = updates.tagIds.sort(

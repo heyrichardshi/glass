@@ -1,15 +1,9 @@
 import {
-  CreateMerchantRequest,
   CreateMerchantResponse,
-  ListMerchantsRequest,
   ListMerchantsResponse,
-  UpdateMerchantRequest,
   UpdateMerchantResponse,
 } from "@glass/types";
-import {
-  ApplyAllMatchersBody,
-  ApplyAllMatchersResponse,
-} from "@glass/types/schemas";
+import { ApplyAllMatchersResponse } from "@glass/types/schemas";
 import {
   CategoryRepository,
   MerchantRepository,
@@ -21,11 +15,21 @@ import { randomUUID } from "crypto";
 import { toApiMerchant } from "../models/api";
 import { findFirstMatchingMerchant } from "../common/merchant-utils";
 
-export async function listMerchants(
-  request: ListMerchantsRequest,
-): Promise<ListMerchantsResponse> {
+export interface CreateMerchantRequest {
+  name: string;
+  defaultCategoryId: string;
+  descriptionMatchers: string[];
+}
+
+export interface UpdateMerchantRequest {
+  name?: string;
+  defaultCategoryId?: string;
+  descriptionMatchers?: string[];
+}
+
+export async function listMerchants(): Promise<ListMerchantsResponse> {
   const merchantRepository = await MerchantRepository.getInstance();
-  const merchants = await merchantRepository.listAll(request.householdId);
+  const merchants = await merchantRepository.listAll();
   return {
     merchants: merchants.map(toApiMerchant),
   };
@@ -39,7 +43,6 @@ export async function createMerchant(
   // Check if merchant with same name already exists
   const existingMerchant = await merchantRepository.getByName(
     request.name.toLowerCase(),
-    request.householdId,
   );
   if (existingMerchant) {
     throw new ConflictError("Merchant", request.name);
@@ -47,25 +50,19 @@ export async function createMerchant(
 
   // Check if given default category exists
   const categoryRepository = await CategoryRepository.getInstance();
-  const category = await categoryRepository.findById(
-    request.defaultCategoryId,
-    request.householdId,
-  );
+  const category = await categoryRepository.findById(request.defaultCategoryId);
   if (!category) {
     throw new NotFoundError(
       `Category with ID'${request.defaultCategoryId}' not found.`,
     );
   }
 
-  const merchant: Merchant = {
+  const createdMerchant = await merchantRepository.create({
     id: randomUUID(),
     name: request.name,
-    householdId: request.householdId,
     defaultCategoryId: request.defaultCategoryId,
     descriptionMatchers: request.descriptionMatchers,
-  };
-
-  const createdMerchant = await merchantRepository.create(merchant);
+  });
 
   return {
     merchant: toApiMerchant(createdMerchant),
@@ -80,10 +77,7 @@ export async function updateMerchant(
   const categoryRepository = await CategoryRepository.getInstance();
 
   // Get the existing merchant
-  const existingMerchant = await merchantRepository.get(
-    merchantId,
-    request.householdId,
-  );
+  const existingMerchant = await merchantRepository.get(merchantId);
   if (!existingMerchant) {
     throw new NotFoundError(`Merchant with ID '${merchantId}' not found.`);
   }
@@ -92,7 +86,6 @@ export async function updateMerchant(
   if (request.name && request.name !== existingMerchant.name) {
     const conflictingMerchant = await merchantRepository.getByName(
       request.name.toLowerCase(),
-      request.householdId,
     );
     if (conflictingMerchant && conflictingMerchant.id !== merchantId) {
       throw new ConflictError("Merchant", request.name);
@@ -106,7 +99,6 @@ export async function updateMerchant(
   ) {
     const category = await categoryRepository.findById(
       request.defaultCategoryId,
-      request.householdId,
     );
     if (!category) {
       throw new NotFoundError(
@@ -132,20 +124,27 @@ export async function updateMerchant(
   };
 }
 
+export interface ApplyAllMatchersRequest {
+  /** Whose transactions to re-match. The merchants themselves are shared. */
+  userId: string;
+  overrideExistingMerchants: boolean;
+  overrideExistingCategories: boolean;
+}
+
 export async function applyAllMatchers(
-  request: ApplyAllMatchersBody,
+  request: ApplyAllMatchersRequest,
 ): Promise<ApplyAllMatchersResponse> {
   const merchantRepo = await MerchantRepository.getInstance();
   const transactionRepo = await TransactionRepository.getInstance();
 
-  const merchants = await merchantRepo.listAll(request.householdId);
+  const merchants = await merchantRepo.listAll();
 
   let retaggedCount = 0;
   let paginationToken: string | undefined;
 
   do {
     const page = await transactionRepo.listTransactionsByUser(
-      request.householdId,
+      request.userId,
       paginationToken,
     );
 

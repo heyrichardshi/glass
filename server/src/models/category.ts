@@ -17,31 +17,15 @@ export interface Category {
    */
   isDefault?: boolean;
 
-  /**
-   * The household to which this category belongs. Categories are unique per household.
-   */
-  householdId: string;
-}
-
-export function toApiModel(category: Category): Category {
-  return {
-    id: category.id,
-    name: category.name,
-    parentId: category.parentId,
-    fullPath: category.fullPath,
-    isDefault: category.isDefault,
-    householdId: category.householdId,
-  };
+  /** Currently always DEFAULT_TAXONOMY_USER_ID; the taxonomy is not user-scoped yet. */
+  userId: string;
 }
 
 const INCOME_CATEGORY_NAME = "Income";
-/**
- * These are categories that are not considered expenses and are included in the default categories.
- */
 const NON_EXPENSE_CATEGORIES = [INCOME_CATEGORY_NAME, "Transfer"];
 
 /**
- * These are immutable categories that are created by default when a user is created.
+ * These are immutable categories that are created by default.
  */
 const DEFAULT_CATEGORIES = [
   ...NON_EXPENSE_CATEGORIES,
@@ -54,31 +38,28 @@ const DEFAULT_CATEGORIES = [
   "Travel",
 ];
 
+/** A default category before it is stored; the repository supplies the partition it lands in. */
+export type DefaultCategory = Omit<Category, "userId">;
+
 export const UNCATEGORIZED_CATEGORY_ID = "0";
-const UNCATEGORIZED_CATEGORY: Category = {
+const UNCATEGORIZED_CATEGORY: DefaultCategory = {
   id: UNCATEGORIZED_CATEGORY_ID,
   name: "Uncategorized",
   fullPath: ["Uncategorized"],
   isDefault: true,
-  householdId: "", // This will be set when returned as part of the default categories.
 };
 
-export function getDefaultCategories(householdId: string): Category[] {
-  const defaultCategories: Category[] = DEFAULT_CATEGORIES.map((category) => ({
-    id: `default_${category}`,
-    name: category,
-    fullPath: [category],
-    isDefault: true,
-    householdId,
-  }));
-
-  // Add 'Uncategorized' to the list of default categories since it has a special fixed ID.
-  defaultCategories.push({
-    ...UNCATEGORIZED_CATEGORY,
-    householdId,
-  });
-
-  return defaultCategories;
+export function getDefaultCategories(): DefaultCategory[] {
+  return [
+    ...DEFAULT_CATEGORIES.map((category) => ({
+      id: `default_${category}`,
+      name: category,
+      fullPath: [category],
+      isDefault: true,
+    })),
+    // 'Uncategorized' is listed separately since it has a special fixed ID.
+    UNCATEGORIZED_CATEGORY,
+  ];
 }
 
 export function isIncomeCategory(category: Category): boolean {

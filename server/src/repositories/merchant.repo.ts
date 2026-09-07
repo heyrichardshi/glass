@@ -1,5 +1,5 @@
 import { Container, StatusCodes } from "@azure/cosmos";
-import { DatabaseProvider } from "./database";
+import { DatabaseProvider, DEFAULT_TAXONOMY_USER_ID } from "./database";
 import { Merchant } from "../models";
 import { DatabaseError } from "../common/errors";
 
@@ -13,16 +13,12 @@ export class MerchantRepository {
     this.promisedContainer = DatabaseProvider.getContainer({
       id: MERCHANT_CONTAINER_ID,
       partitionKey: {
-        paths: ["/householdId"],
+        paths: ["/userId"],
       },
       indexingPolicy: {
         indexingMode: "consistent",
         automatic: true,
-        includedPaths: [
-          { path: "/householdId/?" },
-          { path: "/name/?" },
-          { path: "/isDeleted/?" },
-        ],
+        includedPaths: [{ path: "/name/?" }, { path: "/isDeleted/?" }],
         excludedPaths: [
           { path: "/*" }, // Exclude everything by default to only index explicitly included properties
         ],
@@ -38,10 +34,13 @@ export class MerchantRepository {
     return MerchantRepository.instance;
   }
 
-  async create(merchant: Merchant): Promise<Merchant> {
+  async create(merchant: Omit<Merchant, "userId">): Promise<Merchant> {
     const container = await this.promisedContainer;
 
-    const response = await container.items.create(merchant);
+    const response = await container.items.create<Merchant>({
+      ...merchant,
+      userId: DEFAULT_TAXONOMY_USER_ID,
+    });
 
     if (response.statusCode !== StatusCodes.Created) {
       throw new DatabaseError(
@@ -52,77 +51,48 @@ export class MerchantRepository {
     return response.resource as unknown as Merchant;
   }
 
-  async listAll(householdId: string): Promise<Merchant[]> {
+  async listAll(): Promise<Merchant[]> {
     const container = await this.promisedContainer;
 
     const response = await container.items
-      .query<Merchant>(
-        {
-          query:
-            "SELECT * FROM c WHERE c.householdId = @householdId ORDER BY c.name ASC",
-          parameters: [{ name: "@householdId", value: householdId }],
-        },
-        {
-          partitionKey: householdId,
-        },
-      )
+      .query<Merchant>("SELECT * FROM c ORDER BY c.name ASC", {
+        partitionKey: DEFAULT_TAXONOMY_USER_ID,
+      })
       .fetchAll();
-
-    console.log(
-      `Fetched ${response.resources.length} merchants for household ${householdId}`,
-    );
 
     return response.resources;
   }
 
-  async get(
-    merchantId: string,
-    householdId: string,
-  ): Promise<Merchant | undefined> {
+  async get(merchantId: string): Promise<Merchant | undefined> {
     const container = await this.promisedContainer;
 
     try {
       const { resource } = await container
-        .item(merchantId, householdId)
+        .item(merchantId, DEFAULT_TAXONOMY_USER_ID)
         .read<Merchant>();
       return resource;
     } catch (err: any) {
-      if (err.code === 404) {
+      if (err.code === StatusCodes.NotFound) {
         return undefined;
       }
       throw err;
     }
   }
 
-  async getByName(
-    merchantName: string,
-    householdId: string,
-  ): Promise<Merchant | undefined> {
+  async getByName(merchantName: string): Promise<Merchant | undefined> {
     const container = await this.promisedContainer;
 
     const response = await container.items
       .query<Merchant>(
         {
-          query:
-            "SELECT * FROM c WHERE c.householdId = @householdId AND c.name = @name",
-          parameters: [
-            { name: "@householdId", value: householdId },
-            { name: "@name", value: merchantName },
-          ],
+          query: "SELECT * FROM c WHERE c.name = @name",
+          parameters: [{ name: "@name", value: merchantName }],
         },
         {
-          partitionKey: householdId,
+          partitionKey: DEFAULT_TAXONOMY_USER_ID,
         },
       )
       .fetchAll();
-
-    console.log(
-      `Fetched ${response.resources.length} merchants with name ${merchantName} for household ${householdId}`,
-    );
-
-    if (response.resources.length === 0) {
-      return undefined;
-    }
 
     return response.resources[0];
   }
@@ -141,8 +111,8 @@ export class MerchantRepository {
     return response.resource as unknown as Merchant;
   }
 
-  async delete(merchantId: string, householdId: string): Promise<void> {
+  async delete(merchantId: string): Promise<void> {
     const container = await this.promisedContainer;
-    await container.item(merchantId, householdId).delete();
+    await container.item(merchantId, DEFAULT_TAXONOMY_USER_ID).delete();
   }
 }

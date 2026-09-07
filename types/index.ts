@@ -20,19 +20,16 @@ export {
 export {
   CreateCategoryRequest,
   CreateCategoryResponse,
-  ListCategoriesRequest,
   ListCategoriesResponse,
 } from "./src/api/categories";
 export {
   CreateTagRequest,
   CreateTagResponse,
-  ListTagsRequest,
   ListTagsResponse,
 } from "./src/api/tags";
 export {
   CreateMerchantRequest,
   CreateMerchantResponse,
-  ListMerchantsRequest,
   ListMerchantsResponse,
   UpdateMerchantRequest,
   UpdateMerchantResponse,

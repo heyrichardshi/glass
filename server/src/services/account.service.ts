@@ -4,10 +4,6 @@ import { Account, AccountType } from "../models";
 import { AccountRepository, PlaidItemRepository } from "../repositories";
 import * as plaid from "./plaid.service";
 
-// TODO: multitenancy. A single household backs the app for now; the owning user comes from the
-// caller's verified token.
-const DEFAULT_HOUSEHOLD_ID = "0";
-
 /**
  * Creates a Plaid Link token for the client to open Plaid Link. Pass an access token to launch
  * update mode against an existing Item.
@@ -76,7 +72,6 @@ export async function exchangePlaidPublicToken(
   await plaidItemRepo.upsert({
     id: itemId,
     userId,
-    householdId: DEFAULT_HOUSEHOLD_ID,
     accessToken,
     institutionId: institutionId ?? undefined,
     institutionName,
@@ -86,7 +81,6 @@ export async function exchangePlaidPublicToken(
   const accounts: Account[] = plaidAccounts.map((plaidAccount) => ({
     id: plaidAccount.account_id,
     userId,
-    householdId: DEFAULT_HOUSEHOLD_ID,
     name: plaidAccount.name,
     institution: institutionName ?? "",
     balance: String(plaidAccount.balances.current ?? 0),
@@ -116,10 +110,10 @@ export async function exchangePlaidPublicToken(
 /**
  * Retrieves latest balance and transaction data for the given account, and updates the database.
  */
-export async function refresh(accountId: string) {
+export async function refresh(accountId: string, userId: string) {
   const accountRepo = await AccountRepository.getInstance();
 
-  const account = await accountRepo.findById(accountId);
+  const account = await accountRepo.findById(accountId, userId);
   if (!account) {
     throw new NotFoundError(`Account with ID '${accountId}' not found`);
   }

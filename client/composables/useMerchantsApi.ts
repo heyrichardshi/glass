@@ -1,6 +1,5 @@
 import type {
   CreateMerchantRequest,
-  ListMerchantsRequest,
   UpdateMerchantRequest,
 } from "@glass/types";
 import useListMerchants from "./api/merchants/useListMerchants";
@@ -9,14 +8,12 @@ import useUpdateMerchant from "./api/merchants/useUpdateMerchant";
 import useApplyAllMatchers from "./api/merchants/useApplyAllMatchers";
 
 export default function () {
-  const listMerchants = (request: ListMerchantsRequest) =>
-    useListMerchants(request);
+  const listMerchants = () => useListMerchants();
   const createMerchant = (request: CreateMerchantRequest) =>
     useCreateMerchant(request);
   const updateMerchant = (merchantId: string, request: UpdateMerchantRequest) =>
     useUpdateMerchant(merchantId, request);
   const applyAllMatchers = (request: {
-    householdId: string;
     overrideExistingMerchants: boolean;
     overrideExistingCategories: boolean;
   }) => useApplyAllMatchers(request);

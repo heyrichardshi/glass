@@ -24,10 +24,8 @@ const emit = defineEmits<{
   selectedTags: [Tag[]];
 }>();
 
-const userId = "0";
-
 const tagsApi = useTagsApi();
-const listTags = tagsApi.listTags(userId);
+const listTags = tagsApi.listTags();
 const allTags = computed(() => {
   return listTags.tags.value
     .map((tag) => ({

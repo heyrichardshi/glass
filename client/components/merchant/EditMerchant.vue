@@ -149,7 +149,6 @@ function commitChanges() {
     name: name.value,
     defaultCategoryId: selectedCategory.value?.id,
     descriptionMatchers: matchers.value,
-    householdId: "0",
   };
 
   const result = merchantsApi.updateMerchant(props.merchant.id, request);
