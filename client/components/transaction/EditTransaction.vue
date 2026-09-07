@@ -83,10 +83,8 @@ function close() {
   emit("close", {});
 }
 
-const userId = "0";
-
 const accountsApi = useAccountsApi();
-const listAccountsResponse = accountsApi.listAccounts(userId);
+const listAccountsResponse = accountsApi.listAccounts();
 
 const formattedAmount = computed(() => `$${props.transaction.amount}`);
 
@@ -143,7 +141,6 @@ function commitChanges() {
   console.log("editMerchant: ", editMerchant.value);
 
   const updateTransaction = transactionsApi.updateTransaction({
-    userId,
     transactionId: props.transaction.id,
     date: editDate.value,
     description: editDescription.value,

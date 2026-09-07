@@ -6,7 +6,6 @@ export interface ListTransactionsResponse {
 }
 
 export interface UpdateTransactionRequest {
-  userId: string;
   transactionId: string;
   date?: string;
   description?: string;
@@ -21,7 +20,6 @@ export interface UpdateTransactionResponse {
 }
 
 export interface BulkUpdateTransactionsRequest {
-  userId: string;
   transactionIds: string[];
   updates: {
     categoryId?: string;

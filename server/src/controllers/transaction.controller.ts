@@ -55,8 +55,7 @@ export const updateTransaction = asyncController<
   const { date, description, notes, categoryId, tagIds, counterparty } =
     req.body;
 
-  const response = await transactions.update({
-    userId: requireUserId(req),
+  const response = await transactions.update(requireUserId(req), {
     transactionId,
     date,
     description,
@@ -77,8 +76,7 @@ export const bulkUpdateTransactions = asyncController<
 >(async (req, res) => {
   const { transactionIds, updates } = req.body;
 
-  const response = await transactions.bulkUpdate({
-    userId: requireUserId(req),
+  const response = await transactions.bulkUpdate(requireUserId(req), {
     transactionIds,
     updates: updates,
   });

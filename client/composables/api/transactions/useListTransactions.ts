@@ -1,15 +1,14 @@
 import type { ListTransactionsResponse } from "@glass/types";
 
-export default function (params: { userId: string; paginationToken?: string }) {
+export default function (params: { paginationToken?: string } = {}) {
   const { apiBase } = useApiBase();
 
-  const key = `ListTransactions:${params.userId}:${params.paginationToken || ""}`;
+  const key = `ListTransactions:${params.paginationToken || ""}`;
   const { data, status, error, refresh } = useFetch<ListTransactionsResponse>(
     `${apiBase.value}/transactions`,
     {
       key,
       query: {
-        userId: params.userId,
         ...(params.paginationToken
           ? { paginationToken: params.paginationToken }
           : {}),

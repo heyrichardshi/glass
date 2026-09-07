@@ -7,7 +7,6 @@ import {
 } from "../../models";
 
 export const GetMonthlyReportQuerySchema = z.object({
-  userId: z.string(),
   year: z.string(),
   month: z.string(),
 });

@@ -76,7 +76,7 @@ const tagsApi = useTagsApi();
 
 const userId = "0";
 
-const listAccounts = accountsApi.listAccounts(userId);
+const listAccounts = accountsApi.listAccounts();
 const accounts = computed(() => listAccounts.accounts.value);
 const accountItems = computed<FilterItem[]>(() =>
   accounts.value.map((account) => ({

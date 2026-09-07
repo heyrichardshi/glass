@@ -3,7 +3,6 @@ import * as accounts from "../services/account.service";
 import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   ConnectionTokenResponse,
-  ListAccountsQuery,
   ListAccountsResponse,
   RefreshAccountParams,
   RefreshAccountResponse,
@@ -50,7 +49,7 @@ export const getConnectionToken = asyncController<
 
 export const listAccountsForUser = asyncController<
   NoParams,
-  ListAccountsQuery,
+  NoQuery,
   NoBody,
   ListAccountsResponse
 >(async (req, res) => {

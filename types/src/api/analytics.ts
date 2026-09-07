@@ -3,7 +3,6 @@ import { CategoryTransactions, TagTransactions } from "../models/analytics";
 import { Transaction } from "../models/transaction";
 
 export interface GetMonthlyReportRequest {
-  userId: string;
   year: string;
   month: string;
 }

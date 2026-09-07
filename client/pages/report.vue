@@ -63,7 +63,6 @@ function generateReport() {
   console.log("Generating report...");
 
   const monthlyReportRes = reportsApi.getMonthlyReport({
-    userId: "0",
     year: year.value,
     month: month.value,
   });

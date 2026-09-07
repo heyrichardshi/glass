@@ -56,8 +56,6 @@ function close() {
   emit("close", {});
 }
 
-const userId = "0";
-
 const title = computed(() => {
   const count = props.transactions.length;
   const transactionCountString = `${count} transaction${count !== 1 ? "s" : ""}`;
@@ -126,7 +124,6 @@ function commitChanges() {
   }
 
   const bulkUpdate = transactionsApi.bulkUpdateTransactions({
-    userId,
     transactionIds: props.transactions.map((t) => t.id),
     updates,
   });

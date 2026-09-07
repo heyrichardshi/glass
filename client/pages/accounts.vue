@@ -40,9 +40,7 @@ import type { Account } from "@glass/types";
 import useListAccounts from "~/composables/api/accounts/useListAccounts";
 
 const { apiBase } = useApiBase();
-const userId = "0";
-
-const { accounts, status, refresh } = useListAccounts(userId);
+const { accounts, status, refresh } = useListAccounts();
 const refreshingAll = ref(false);
 const toast = useToast();
 

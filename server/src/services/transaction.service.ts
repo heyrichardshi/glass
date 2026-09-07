@@ -55,6 +55,7 @@ const UPDATE_TRANSACTION_KEYS = [
 ] as const;
 
 export async function update(
+  userId: string,
   request: UpdateTransactionRequest,
 ): Promise<UpdateTransactionResponse> {
   // Create a map of the changes in the request
@@ -83,10 +84,7 @@ export async function update(
   const tagRepo = await TagRepository.getInstance();
 
   // Retrieve existing item to apply changes to
-  const existing = await transactionRepo.get(
-    request.transactionId,
-    request.userId,
-  );
+  const existing = await transactionRepo.get(request.transactionId, userId);
   if (!existing) {
     throw new NotFoundError(
       `The given transaction '${request.transactionId}' does not exist.`,
@@ -134,7 +132,7 @@ export async function update(
       delete newValues.tagIds;
     } else {
       // Sort tagIds by their corresponding tag names before saving
-      const tags = await tagRepo.listAll(request.userId);
+      const tags = await tagRepo.listAll(userId);
       const tagMap = new Map(tags.map((tag) => [tag.id, tag.name]));
 
       newValues.tagIds = newTagIds.sort((a, b) => {
@@ -165,13 +163,15 @@ export async function update(
 /**
  * Updates multiple transactions in bulk. Tags are updated additively (existing tags are preserved).
  *
+ * @param userId - The owner of the transactions being updated.
  * @param request - The request object containing the transaction IDs and updates.
  * @returns A response object containing the updated transactions and any failures.
  */
 export async function bulkUpdate(
+  userId: string,
   request: BulkUpdateTransactionsRequest,
 ): Promise<BulkUpdateTransactionsResponse> {
-  const { userId, transactionIds, updates } = request;
+  const { transactionIds, updates } = request;
 
   if (!transactionIds || transactionIds.length === 0) {
     throw new InvalidInputWithCustomMessageError(

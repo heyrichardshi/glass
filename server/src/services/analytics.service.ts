@@ -17,9 +17,10 @@ import { Category, Tag, toApiAccount, toApiTransaction } from "../models";
 import { isExpenseCategory, isIncomeCategory } from "../models/category";
 
 export async function getMonthlyReport(
+  userId: string,
   request: GetMonthlyReportRequest,
 ): Promise<GetMonthlyReportResponse> {
-  const { userId, year, month } = request;
+  const { year, month } = request;
 
   // Ensure a valid year and month are passed in
   if (!/^\d{4}$/.test(year)) {

@@ -24,7 +24,6 @@
 import type { Transaction, ListTransactionsResponse } from "@glass/types";
 
 const config = useRuntimeConfig();
-const userId = 0;
 
 const transactions = ref<Transaction[]>([]);
 const paginationToken = ref<string | null>(null);
@@ -43,9 +42,7 @@ const currentFilters = ref<SearchFilters | null>(null);
 const transactionsApi = useTransactionsApi();
 
 // initial list fetch
-const initialList = transactionsApi.listTransactions({
-  userId: String(userId),
-});
+const initialList = transactionsApi.listTransactions();
 const pending = computed(() => initialList.status.value === "pending");
 watchEffect(() => {
   transactions.value = initialList.transactions.value as any[];
@@ -56,7 +53,6 @@ watchEffect(() => {
 async function loadMore() {
   if (!isSearchMode.value) {
     const nextPage = transactionsApi.listTransactions({
-      userId: String(userId),
       paginationToken: paginationToken.value || undefined,
     });
     await nextPage.refresh();

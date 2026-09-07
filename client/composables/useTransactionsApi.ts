@@ -9,10 +9,8 @@ import useSearchTransactions from "./api/transactions/useSearchTransactions";
 import type { TransactionSearchFilters } from "@glass/types/schemas";
 
 export default function () {
-  const listTransactions = (params: {
-    userId: string;
-    paginationToken?: string;
-  }) => useListTransactions(params);
+  const listTransactions = (params: { paginationToken?: string } = {}) =>
+    useListTransactions(params);
 
   const searchTransactions = (params: {
     filters: TransactionSearchFilters;

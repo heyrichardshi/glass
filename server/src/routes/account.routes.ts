@@ -1,13 +1,8 @@
 import { Router } from "express";
 import * as accounts from "../controllers/account.controller";
-import {
-  validateQuery,
-  validateRequest,
-  validateResponse,
-} from "../middleware/validation";
+import { validateRequest, validateResponse } from "../middleware/validation";
 import {
   ConnectionTokenResponseSchema,
-  ListAccountsQuerySchema,
   ListAccountsResponseSchema,
   RegisterAccountsBodySchema,
   RegisterAccountsResponseSchema,
@@ -30,7 +25,6 @@ router.post(
 
 router.get(
   "/accounts",
-  validateQuery(ListAccountsQuerySchema),
   validateResponse(ListAccountsResponseSchema),
   accounts.listAccountsForUser,
 );

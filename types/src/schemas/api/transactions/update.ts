@@ -9,7 +9,6 @@ export type UpdateTransactionParams = z.infer<
 >;
 
 export const UpdateTransactionBodySchema = z.object({
-  userId: z.string(),
   date: z.string().optional(),
   description: z.string().optional(),
   notes: z.string().optional(),

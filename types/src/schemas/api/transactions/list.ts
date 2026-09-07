@@ -2,7 +2,6 @@ import { z } from "zod";
 import { TransactionSchema } from "../../models";
 
 export const ListTransactionsQuerySchema = z.object({
-  userId: z.string(),
   paginationToken: z.string().optional(),
 });
 export type ListTransactionsQuery = z.infer<typeof ListTransactionsQuerySchema>;

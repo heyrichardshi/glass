@@ -2,7 +2,6 @@ import { z } from "zod";
 import { TransactionSchema, TransactionCounterpartySchema } from "../../models";
 
 export const BulkUpdateTransactionsBodySchema = z.object({
-  userId: z.string(),
   transactionIds: z.array(z.string()),
   updates: z.object({
     categoryId: z.string().optional(),

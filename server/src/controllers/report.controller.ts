@@ -14,8 +14,7 @@ export const getMonthlyReport = asyncController<
 >(async (req, res) => {
   const { year, month } = req.query;
 
-  const response = await analytics.getMonthlyReport({
-    userId: requireUserId(req),
+  const response = await analytics.getMonthlyReport(requireUserId(req), {
     year,
     month,
   });
