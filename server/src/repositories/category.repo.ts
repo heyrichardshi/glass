@@ -3,6 +3,9 @@ import { DatabaseProvider, DEFAULT_TAXONOMY_USER_ID } from "./database";
 import { Category } from "../models";
 import { getDefaultCategories } from "../models/category";
 import { DatabaseError } from "../common/errors";
+import { childLogger } from "../common/logger";
+
+const log = childLogger("category.repo");
 
 const CATEGORY_CONTAINER_ID = "categories";
 
@@ -27,8 +30,9 @@ async function seedDefaultCategories(container: Container): Promise<void> {
     return;
   }
 
-  console.log(
-    `Creating missing default categories: ${missing.map((c) => c.name).join(", ")}`,
+  log.info(
+    { count: missing.length, names: missing.map((category) => category.name) },
+    "creating missing default categories",
   );
 
   await Promise.all(

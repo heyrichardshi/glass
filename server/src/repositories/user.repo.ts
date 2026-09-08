@@ -2,6 +2,9 @@ import { Container, StatusCodes } from "@azure/cosmos";
 import { DatabaseProvider } from "./database";
 import { User, UserIdentity } from "../models";
 import { DatabaseError } from "../common/errors";
+import { childLogger } from "../common/logger";
+
+const log = childLogger("user.repo");
 
 const USER_CONTAINER_ID = "users";
 
@@ -136,9 +139,9 @@ export class UserRepository {
         if (err.code !== StatusCodes.PreconditionFailed) {
           throw err;
         }
-        console.warn(
-          `Identity append for user ${userId} lost to a concurrent write; ` +
-            `retrying (attempt ${attempt} of ${MAX_APPEND_ATTEMPTS}).`,
+        log.warn(
+          { userId, attempt, maxAttempts: MAX_APPEND_ATTEMPTS },
+          "identity append lost to a concurrent write; retrying",
         );
       }
     }

@@ -7,6 +7,9 @@ import {
   StatusCodes,
 } from "@azure/cosmos";
 import { DatabaseError } from "../common/errors";
+import { childLogger } from "../common/logger";
+
+const log = childLogger("database");
 
 /**
  * The `userId` every category, tag and merchant is written under for now.
@@ -72,9 +75,7 @@ export class DatabaseProvider {
         throw err;
       }
 
-      console.log(
-        `Container '${definition.id}' was not found, creating container.`,
-      );
+      log.info({ containerId: definition.id }, "container not found; creating");
       const containerCreateResponse =
         await database.containers.createIfNotExists(definition);
       return containerCreateResponse.container;
@@ -82,7 +83,7 @@ export class DatabaseProvider {
 
     // Assert that the resource exists, as if the container didn't exist, read() would throw a 404.
     const existing = containerReadResponse.resource!;
-    console.log(`Container '${definition.id}' already exists.`);
+    log.debug({ containerId: definition.id }, "container already exists");
 
     assertPartitionKeyMatches(
       definition.id,
@@ -106,8 +107,17 @@ export class DatabaseProvider {
       definition.indexingPolicy &&
       stringifiedExistingPolicy !== stringifiedGivenPolicy
     ) {
-      console.log(
-        `Existing indexing policy differs from provided definition:\n==EXISTING==\n${stringifiedExistingPolicy}\n==PROVIDED==\n${stringifiedGivenPolicy}`,
+      log.info(
+        { containerId: definition.id },
+        "indexing policy differs from definition; updating",
+      );
+      log.debug(
+        {
+          containerId: definition.id,
+          existing: stringifiedExistingPolicy,
+          provided: stringifiedGivenPolicy,
+        },
+        "indexing policy diff",
       );
       existing.indexingPolicy = definition.indexingPolicy;
       needsUpdate = true;
@@ -116,11 +126,14 @@ export class DatabaseProvider {
     // Optionally compare/update throughput or other fields here
 
     if (needsUpdate) {
-      console.log(`Updating container '${definition.id}'.`);
+      log.info({ containerId: definition.id }, "updating container");
       const containerReplaceResponse = await containerRef.replace(existing);
       return containerReplaceResponse.container;
     } else {
-      console.log(`Container '${definition.id}' matches given definition.`);
+      log.debug(
+        { containerId: definition.id },
+        "container matches given definition",
+      );
       return containerReadResponse.container;
     }
   }

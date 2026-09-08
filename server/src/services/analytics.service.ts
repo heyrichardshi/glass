@@ -12,9 +12,12 @@ import {
   TransactionRepository,
 } from "../repositories";
 import { InvalidInputWithCustomMessageError } from "../common/errors";
+import { childLogger } from "../common/logger";
 import { indexById } from "../common/utils";
 import { Category, Tag, toApiAccount, toApiTransaction } from "../models";
 import { isExpenseCategory, isIncomeCategory } from "../models/category";
+
+const log = childLogger("analytics.service");
 
 export async function getMonthlyReport(
   userId: string,
@@ -30,18 +33,12 @@ export async function getMonthlyReport(
     throw new InvalidInputWithCustomMessageError("Invalid month.");
   }
 
-  console.log(
-    `Getting monthly report for userId: ${userId}, year: ${year}, month: ${month}`,
-  );
-
   // Get the first and last days of the month
   const y = Number(year);
   const m = Number(month) - 1; // months are 0-indexed
 
   const firstDay = new Date(Date.UTC(y, m, 1));
   const lastDay = new Date(Date.UTC(y, m + 1, 0)); // Day 0 of next month = last day of this one
-
-  console.log(`Fetching transactions from ${firstDay} to ${lastDay}`);
 
   const accountRepo = await AccountRepository.getInstance();
   const transactionRepo = await TransactionRepository.getInstance();
@@ -57,8 +54,9 @@ export async function getMonthlyReport(
     lastDay,
   );
   const transactionIndex = indexById(transactions, toApiTransaction);
-  console.log(
-    `Fetched ${transactions.length} transactions for userId: ${userId}, year: ${year}, month: ${month}`,
+  log.info(
+    { userId, year, month, count: transactions.length },
+    "fetched monthly report transactions",
   );
 
   const categories = await categoryRepo.listAll();

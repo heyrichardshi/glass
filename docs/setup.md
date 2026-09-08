@@ -16,11 +16,16 @@ OIDC_AUDIENCE=
 OIDC_CLIENT_ID=
 OIDC_CLIENT_SECRET=
 OIDC_REDIRECT_URIS=https://<client-domain>/auth/callback
+
+LOG_LEVEL=info
 ```
 
 `OIDC_AUDIENCE` is the audience `requireToken` enforces on every verified token.
 It is the client ID tsidp issued, so it holds the same value as
 `OIDC_CLIENT_ID`.
+
+`LOG_LEVEL` is the pino level. `info` is the default; `warn` silences
+per-account chatter.
 
 2. Create a `.deploy_sha` file in the same folder containing the commit SHA of a
    successful build, and nothing else:

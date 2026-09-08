@@ -26,7 +26,6 @@ export async function createTag(
   request: CreateTagRequest,
 ): Promise<CreateTagResponse> {
   const { name } = request;
-  console.log(`createTag() called with name: ${name}`);
 
   const tagRepository = await TagRepository.getInstance();
 
@@ -35,8 +34,6 @@ export async function createTag(
   if (existing) {
     throw new ConflictError(`Tag with name '${name}' already exists.`);
   }
-
-  console.log(`No existing tag found with name: ${name}`);
 
   // Create the new category
   const newTag = await tagRepository.upsert({

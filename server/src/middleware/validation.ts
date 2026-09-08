@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { Request, Response, NextFunction } from "express";
 import { InvalidInputWithCustomMessageError } from "../common/errors";
+import { childLogger } from "../common/logger";
+
+const log = childLogger("validation");
 
 export const validateRequest = <T>(schema: z.ZodSchema<T>) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -97,9 +100,17 @@ export const validateResponse = <T>(schema: z.ZodSchema<T>) => {
         return originalJson.call(this, validated);
       } catch (error) {
         if (error instanceof z.ZodError) {
-          console.error("Response validation failed due to zod:", error.issues);
+          log.error(
+            {
+              issues: error.issues.map((issue) => ({
+                path: issue.path,
+                message: issue.message,
+              })),
+            },
+            "response validation failed",
+          );
         } else {
-          console.error("Response validation failed:", error);
+          log.error({ err: error }, "response validation failed");
         }
 
         throw new Error("Response validation failed");

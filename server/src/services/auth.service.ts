@@ -7,6 +7,9 @@ import {
   ForbiddenError,
   InvalidInputWithCustomMessageError,
 } from "../common/errors";
+import { childLogger } from "../common/logger";
+
+const log = childLogger("auth.service");
 
 function env(name: string): string {
   const value = process.env[name];
@@ -101,10 +104,7 @@ export async function exchangeAuthorizationCode(
   });
 
   if (!response.ok) {
-    console.error(
-      `Token exchange rejected with ${response.status}:`,
-      await response.text(),
-    );
+    log.error({ status: response.status }, "token exchange rejected");
     throw new InvalidInputWithCustomMessageError(
       "Authorization code could not be exchanged.",
     );

@@ -2,9 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import type { JWTPayload } from "jose" with { "resolution-mode": "import" };
 import { NO_ACCOUNT_ERROR_CODE } from "@glass/types/schemas";
 import { ForbiddenError, UnauthorizedError } from "../common/errors";
+import { childLogger } from "../common/logger";
 import { UserIdentity } from "../models";
 import { getJwksUri } from "../services/auth.service";
 import { resolveUserId } from "../services/user.service";
+
+const log = childLogger("requireToken");
 
 // jose is ESM-only; this package compiles as CommonJS, so value imports must
 // be dynamic (`import()`). Type-only imports need resolution-mode so tsc does
@@ -83,7 +86,7 @@ export async function requireToken(
       return next(error);
     }
 
-    console.warn("Token verification failed:", error);
+    log.warn({ err: error }, "token verification failed");
     return next(new UnauthorizedError("Invalid token."));
   }
 

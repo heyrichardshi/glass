@@ -8,7 +8,10 @@ import {
 import { Transaction, TransactionsList } from "../models";
 import { DatabaseProvider } from "./database";
 import { DatabaseError } from "../common/errors";
+import { childLogger } from "../common/logger";
 import { formatDate } from "../common/utils";
+
+const log = childLogger("transaction.repo");
 
 const TRANSACTION_CONTAINER_ID = "transactions";
 
@@ -166,8 +169,14 @@ export class TransactionRepository {
         continuationToken: paginationToken,
       })
       .fetchNext();
-    console.log(
-      `Fetched ${response.resources.length} transactions for user ${userId} with pagination token ${paginationToken}, got next pagination token: ${response.continuationToken}`,
+    log.debug(
+      {
+        userId,
+        count: response.resources.length,
+        paginationToken,
+        nextPaginationToken: response.continuationToken,
+      },
+      "fetched transactions for user",
     );
 
     return {
@@ -194,8 +203,9 @@ export class TransactionRepository {
         },
       )
       .fetchNext();
-    console.log(
-      `Fetched ${response.resources.length} transactions for user ${userId} and account ${accountId}`,
+    log.debug(
+      { userId, accountId, count: response.resources.length },
+      "fetched transactions for account",
     );
 
     return {
@@ -290,8 +300,14 @@ export class TransactionRepository {
       )
       .fetchAll();
 
-    console.log(
-      `Fetched ${response.resources.length} transactions for user ${userId} between ${startDateString} and ${endDateString}`,
+    log.debug(
+      {
+        userId,
+        startDate: startDateString,
+        endDate: endDateString,
+        count: response.resources.length,
+      },
+      "fetched transactions for date range",
     );
 
     return response.resources;

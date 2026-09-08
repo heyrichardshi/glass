@@ -21,9 +21,6 @@ export async function createCategory(
   request: CreateCategoryRequest,
 ): Promise<CreateCategoryResponse> {
   const { name, parentId } = request;
-  console.log(
-    `createCategory() called with name: ${name}, parentId: ${parentId}`,
-  );
 
   const categoryRepository = await CategoryRepository.getInstance();
 
@@ -34,12 +31,10 @@ export async function createCategory(
 
     // No category found with id = parentId, so we cannot create a nested category under it.
     if (!parent) {
-      console.log(`No category found with id: ${parentId}`);
       throw new NotFoundError(
         `Category with given id '${parentId}' does not exist.`,
       );
     }
-    console.log(`Parent category found: `, parent);
   }
 
   // Check if category with given path already exists
@@ -48,7 +43,6 @@ export async function createCategory(
   if (existing) {
     throw new ConflictError(`Category with name '${name}' already exists.`);
   }
-  console.log(`No existing category found with name: ${name}`);
 
   // Create the new category
   const newCategory = await categoryRepository.upsert({

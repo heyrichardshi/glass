@@ -1,6 +1,9 @@
 import { Container, StatusCodes } from "@azure/cosmos";
+import { childLogger } from "../common/logger";
 import { Account } from "../models";
 import { DatabaseProvider } from "./database";
+
+const log = childLogger("account.repo");
 
 const ACCOUNT_CONTAINER_ID = "accounts";
 
@@ -41,7 +44,14 @@ export class AccountRepository {
     const container = await this.promisedContainer;
 
     const response = await container.items.create(account);
-    console.log("Created account in db: ", response);
+    log.info(
+      {
+        accountId: account.id,
+        userId: account.userId,
+        statusCode: response.statusCode,
+      },
+      "created account",
+    );
 
     return response.statusCode;
   }
@@ -52,7 +62,7 @@ export class AccountRepository {
     const item = container.item(account.id, account.userId);
 
     if (!item) {
-      console.log(`Account ${account.id} not found in db.`);
+      log.info({ accountId: account.id }, "account not found");
       return StatusCodes.NotFound;
     }
 

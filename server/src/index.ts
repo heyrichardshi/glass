@@ -6,6 +6,7 @@ import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { logger } from "./common/logger";
 import errorHandler from "./middleware/errorHandler";
 import requireToken from "./middleware/requireToken";
 import auth from "./routes/auth.routes";
@@ -65,5 +66,5 @@ app.use(errorHandler);
  */
 
 app.listen(PORT, () => {
-  console.log(`Listening on port ${PORT}`);
+  logger.info({ port: PORT }, "listening");
 });

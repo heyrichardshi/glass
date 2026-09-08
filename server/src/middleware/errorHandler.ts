@@ -7,7 +7,10 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../common/errors";
+import { childLogger } from "../common/logger";
 import { Request, Response, NextFunction } from "express";
+
+const log = childLogger("errorHandler");
 
 const errorHandler = (
   error: unknown,
@@ -40,9 +43,9 @@ const errorHandler = (
 
   // Capture all other cases
   const { method, url, path, query, params } = request;
-  console.error(
-    `An unknown error occurred for request ${JSON.stringify({ method, url, path, query, params })}:`,
-    error,
+  log.error(
+    { err: error, method, url, path, query, params },
+    "unhandled error",
   );
   response.status(500).send("An unknown error occurred.");
 };

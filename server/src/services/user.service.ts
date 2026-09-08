@@ -1,12 +1,15 @@
 import { UserIdentity, toApiUser } from "../models";
 import { UserRepository } from "../repositories";
 import { ConflictError, NotFoundError } from "../common/errors";
+import { childLogger } from "../common/logger";
 import { randomUUID } from "crypto";
 import {
   AttachIdentityResponse,
   CreateUserResponse,
   ListUsersResponse,
 } from "@glass/types";
+
+const log = childLogger("user.service");
 
 /**
  * Maps `issuer|subject` to a user ID, as an in-process cache.
@@ -76,8 +79,13 @@ export async function createUser(
   });
 
   rememberUserId(identity, created.id);
-  console.log(
-    `Created user ${created.id} for identity ${identity.issuer}|${identity.subject}`,
+  log.info(
+    {
+      userId: created.id,
+      issuer: identity.issuer,
+      subject: identity.subject,
+    },
+    "created user",
   );
 
   return { user: toApiUser(created) };
@@ -109,8 +117,13 @@ export async function attachIdentity(
   rememberUserId(identity, updated.id);
 
   if (!holder) {
-    console.log(
-      `Attached identity ${identity.issuer}|${identity.subject} to user ${updated.id}`,
+    log.info(
+      {
+        userId: updated.id,
+        issuer: identity.issuer,
+        subject: identity.subject,
+      },
+      "attached identity",
     );
   }
 

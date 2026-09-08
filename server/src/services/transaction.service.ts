@@ -10,10 +10,13 @@ import {
   InvalidInputWithCustomMessageError,
   NotFoundError,
 } from "../common/errors";
+import { childLogger } from "../common/logger";
 import {
   ListTransactionsResponse,
   TransactionSearchFilters,
 } from "@glass/types/schemas";
+
+const log = childLogger("transaction.service");
 
 /**
  * Retrieves all transactions for a given user, in reverse chronological order.
@@ -96,29 +99,13 @@ export async function update(
     if (newValues[key] === undefined) {
       return;
     }
-    console.log(
-      "Comparing new key to old key: ",
-      key,
-      newValues[key],
-      existing[key],
-      newValues[key] == existing[key],
-      newValues[key] === existing[key],
-    );
     if (newValues[key] === existing[key]) {
-      console.log(
-        `Value for key '${key}' (${newValues[key]}) is the same as existing value (${existing[key]}); removing from new values.`,
-      );
       delete newValues[key];
     }
   });
 
   // Need to handle tagIds separately since it is a list
   if (newValues.tagIds !== undefined) {
-    console.log(
-      "Comparing new tagIds to old tagIds: ",
-      newValues.tagIds,
-      existing.tagIds,
-    );
     const newTagIds = newValues.tagIds || [];
 
     // Check if the arrays are different (different length or different content)
@@ -128,7 +115,6 @@ export async function update(
       existing.tagIds.some((tagId) => !newTagIds.includes(tagId));
 
     if (!areArraysDifferent) {
-      console.log("Tag arrays are the same; removing from new values.");
       delete newValues.tagIds;
     } else {
       // Sort tagIds by their corresponding tag names before saving
@@ -150,7 +136,10 @@ export async function update(
     );
   }
 
-  console.log("Updating transaction with new values: ", newValues, request);
+  log.info(
+    { transactionId: request.transactionId, keys: Object.keys(newValues) },
+    "updating transaction",
+  );
 
   const newTransaction = {
     ...existing,
@@ -232,7 +221,7 @@ export async function bulkUpdate(
       const savedTransaction = await transactionRepo.upsert(updatedTransaction);
       updatedTransactions.push(savedTransaction);
     } catch (error) {
-      console.error(`Failed to update transaction ${transactionId}:`, error);
+      log.error({ err: error, transactionId }, "failed to update transaction");
       failedUpdates.push({
         transactionId,
         error:

@@ -1,8 +1,11 @@
 import { ListAccountsResponse } from "@glass/types";
 import { NotFoundError } from "../common/errors";
+import { childLogger } from "../common/logger";
 import { Account, AccountType } from "../models";
 import { AccountRepository, PlaidItemRepository } from "../repositories";
 import * as plaid from "./plaid.service";
+
+const log = childLogger("account.service");
 
 /**
  * Creates a Plaid Link token for the client to open Plaid Link. Pass an access token to launch
@@ -61,9 +64,9 @@ export async function exchangePlaidPublicToken(
     try {
       institutionName = await plaid.getInstitutionName(institutionId);
     } catch (error) {
-      console.error(
-        `Failed to fetch institution name for ${institutionId}:`,
-        error,
+      log.error(
+        { err: error, institutionId },
+        "failed to fetch institution name",
       );
     }
   }
@@ -100,9 +103,7 @@ export async function exchangePlaidPublicToken(
 
   await Promise.all(accounts.map((account) => accountRepo.create(account)));
 
-  console.log(
-    `Registered ${accounts.length} Plaid account(s) for item ${itemId}.`,
-  );
+  log.info({ itemId, count: accounts.length }, "registered Plaid accounts");
 
   return { accountsRegisteredCount: accounts.length };
 }
@@ -119,7 +120,7 @@ export async function refresh(accountId: string, userId: string) {
   }
 
   if (account.status === "closed") {
-    console.log(`Account ${accountId} is marked closed; skipping refresh.`);
+    log.info({ accountId }, "account is closed; skipping refresh");
     return;
   }
 
