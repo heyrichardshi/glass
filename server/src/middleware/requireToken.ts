@@ -1,10 +1,19 @@
 import { NextFunction, Request, Response } from "express";
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+import type { JWTPayload } from "jose" with { "resolution-mode": "import" };
 import { NO_ACCOUNT_ERROR_CODE } from "@glass/types/schemas";
 import { ForbiddenError, UnauthorizedError } from "../common/errors";
 import { UserIdentity } from "../models";
 import { getJwksUri } from "../services/auth.service";
 import { resolveUserId } from "../services/user.service";
+
+// jose is ESM-only; this package compiles as CommonJS, so value imports must
+// be dynamic (`import()`). Type-only imports need resolution-mode so tsc does
+// not treat them as CJS requires.
+type Jose = typeof import("jose", { with: { "resolution-mode": "import" } });
+
+async function getJose(): Promise<Jose> {
+  return import("jose");
+}
 
 // Extra fields on `req`. Express picks these up from the global Express.Request
 // interface, which is the supported extension point. Augmenting the
@@ -33,12 +42,13 @@ function env(name: string): string {
   return value;
 }
 
-let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
+let jwks: ReturnType<Jose["createRemoteJWKSet"]> | undefined;
 
 async function getJwks() {
   // createRemoteJWKSet caches keys internally and refetches when it meets an
   // unknown `kid`, so this is built once and reused rather than per request.
   if (!jwks) {
+    const { createRemoteJWKSet } = await getJose();
     jwks = createRemoteJWKSet(new URL(await getJwksUri()));
   }
   return jwks;
@@ -61,6 +71,7 @@ export async function requireToken(
     // jose checks the signature against the JWKS and enforces exp and nbf;
     // issuer and audience are checked here so a token minted by another
     // provider, or for another client, is rejected even though it verifies.
+    const { jwtVerify } = await getJose();
     const { payload } = await jwtVerify(header.slice(7), await getJwks(), {
       issuer: env("OIDC_ISSUER"),
       audience: env("OIDC_AUDIENCE"),
