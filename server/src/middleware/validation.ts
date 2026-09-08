@@ -83,6 +83,13 @@ export const validateResponse = <T>(schema: z.ZodSchema<T>) => {
     const originalJson = res.json;
 
     res.json = function (data: unknown) {
+      // Express res.send(object) calls res.json. Error responses must not be
+      // checked against the success schema — that turns a 403 into a 500 and
+      // the client never sees the original status or body.
+      if (res.statusCode >= 400) {
+        return originalJson.call(this, data);
+      }
+
       try {
         // By parsing the response data, we ensure that only the fields that are defined in the schema are returned.
         const validated = schema.parse(data);

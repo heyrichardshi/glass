@@ -5,3 +5,5 @@ export * from "./tags";
 export * from "./merchants";
 export * from "./analytics";
 export * from "./auth";
+export * from "./users";
+export * from "./errors";

@@ -46,7 +46,7 @@ export async function createCategory(
   const siblings = await categoryRepository.listAllDirectChildren(parentId);
   const existing = siblings.find((category) => category.name === name);
   if (existing) {
-    throw new ConflictError("Category", name);
+    throw new ConflictError(`Category with name '${name}' already exists.`);
   }
   console.log(`No existing category found with name: ${name}`);
 

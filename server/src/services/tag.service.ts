@@ -33,7 +33,7 @@ export async function createTag(
   // Check if category with given name already exists
   const existing = await tagRepository.findByName(name);
   if (existing) {
-    throw new ConflictError("Tag", name);
+    throw new ConflictError(`Tag with name '${name}' already exists.`);
   }
 
   console.log(`No existing tag found with name: ${name}`);

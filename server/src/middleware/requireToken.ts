@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+import { NO_ACCOUNT_ERROR_CODE } from "@glass/types/schemas";
 import { ForbiddenError, UnauthorizedError } from "../common/errors";
+import { UserIdentity } from "../models";
 import { getJwksUri } from "../services/auth.service";
 import { resolveUserId } from "../services/user.service";
 
@@ -93,15 +95,28 @@ export async function requireToken(
 
 /**
  * Throws when the token verified but no account holds its identity.
- * This should require a user to create a Glass identity.
+ * The client interceptor recognises {@link NO_ACCOUNT_ERROR_CODE} and routes to enrollment.
  */
 export function requireUserId(req: Request): string {
   if (!req.userId) {
     throw new ForbiddenError(
       "No Glass account is linked to this identity yet.",
+      NO_ACCOUNT_ERROR_CODE,
     );
   }
   return req.userId;
+}
+
+/**
+ * The verified {issuer, subject} pair.
+ */
+export function requireIdentity(req: Request): UserIdentity {
+  const iss = req.token?.iss;
+  const sub = req.token?.sub;
+  if (!iss || !sub) {
+    throw new UnauthorizedError("Token is missing an identity.");
+  }
+  return { issuer: iss, subject: sub };
 }
 
 export default requireToken;

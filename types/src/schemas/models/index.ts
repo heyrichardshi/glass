@@ -5,3 +5,4 @@ export * from "./transaction";
 export * from "./merchant";
 export * from "./category";
 export * from "./tag";
+export * from "./user";

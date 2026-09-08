@@ -45,7 +45,9 @@ export async function createMerchant(
     request.name.toLowerCase(),
   );
   if (existingMerchant) {
-    throw new ConflictError("Merchant", request.name);
+    throw new ConflictError(
+      `Merchant with name '${request.name}' already exists.`,
+    );
   }
 
   // Check if given default category exists
@@ -88,7 +90,9 @@ export async function updateMerchant(
       request.name.toLowerCase(),
     );
     if (conflictingMerchant && conflictingMerchant.id !== merchantId) {
-      throw new ConflictError("Merchant", request.name);
+      throw new ConflictError(
+        `Merchant with name '${request.name}' already exists.`,
+      );
     }
   }
 

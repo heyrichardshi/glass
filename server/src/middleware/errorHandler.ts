@@ -27,7 +27,13 @@ const errorHandler = (
   } else if (error instanceof ConflictError) {
     return response.status(409).send({ message: error.message });
   } else if (error instanceof ForbiddenError) {
-    return response.status(403).send({ message: error.message });
+    const body: { message: string; code?: string } = {
+      message: error.message,
+    };
+    if (error.code) {
+      body.code = error.code;
+    }
+    return response.status(403).send(body);
   } else if (error instanceof DatabaseError) {
     return response.status(500).send({ message: error.message });
   }

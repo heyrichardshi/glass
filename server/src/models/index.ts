@@ -11,4 +11,10 @@ export {
 } from "./transaction";
 export { User, UserIdentity } from "./user";
 export { PlaidItem } from "./plaidItem";
-export { toApiAccount, toApiTransaction, toApiCategory, toApiTag } from "./api";
+export {
+  toApiAccount,
+  toApiTransaction,
+  toApiCategory,
+  toApiTag,
+  toApiUser,
+} from "./api";

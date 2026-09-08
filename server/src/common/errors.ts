@@ -13,18 +13,18 @@ export class UnauthorizedError extends Error {
 }
 
 export class ForbiddenError extends Error {
-  constructor(message: string) {
+  readonly code?: string;
+
+  constructor(message: string, code?: string) {
     super(message);
     this.name = "ForbiddenError";
+    this.code = code;
   }
 }
 
 export class ConflictError extends Error {
-  constructor(
-    entityType: "Category" | "Tag" | "Merchant",
-    resourceName: string,
-  ) {
-    super(`${entityType} with name '${resourceName}' already exists.`);
+  constructor(message: string) {
+    super(message);
     this.name = "ConflictError";
   }
 }

@@ -1,9 +1,16 @@
 <template>
-  <UNavigationMenu :items="items" class="w-full justify-center" />
+  <UNavigationMenu
+    v-if="!hidden"
+    :items="items"
+    class="w-full justify-center"
+  />
 </template>
 
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
+
+const route = useRoute();
+const hidden = computed(() => route.path === "/enroll");
 
 const items = ref<NavigationMenuItem[]>([
   {

@@ -3,6 +3,7 @@ export { Transaction, TransactionCounterparty } from "./src/models/transaction";
 export { Category } from "./src/models/category";
 export { Tag } from "./src/models/tag";
 export { Merchant } from "./src/models/merchant";
+export { User } from "./src/models/user";
 export { CategoryTransactions, TagTransactions } from "./src/models/analytics";
 
 export {
@@ -38,3 +39,9 @@ export {
   GetMonthlyReportRequest,
   GetMonthlyReportResponse,
 } from "./src/api/analytics";
+export {
+  ListUsersResponse,
+  CreateUserRequest,
+  CreateUserResponse,
+  AttachIdentityResponse,
+} from "./src/api/users";
