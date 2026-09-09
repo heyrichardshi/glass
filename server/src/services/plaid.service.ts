@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   Configuration,
   CountryCode,
@@ -6,7 +7,16 @@ import {
   Products,
   type AccountBase,
   type LinkTokenCreateRequest,
+  type RemovedTransaction,
+  type Transaction as PlaidTransaction,
+  type TransactionsUpdateStatus,
 } from "plaid";
+import { childLogger } from "../common/logger";
+
+const log = childLogger("plaid.service");
+
+/** Plaid's documented maximum for `/transactions/sync` `count`. */
+const SYNC_PAGE_SIZE = 500;
 
 // Glass aggregates Transactions for US institutions. These are product decisions, not
 // deployment config, so they are hardcoded rather than read from the environment.
@@ -110,4 +120,85 @@ export async function getInstitutionName(
     country_codes: PLAID_COUNTRY_CODES,
   });
   return response.data.institution.name;
+}
+
+/**
+ * A fully-paged `/transactions/sync` result.
+ * 
+ * **Note: A pending removal and its posted replacement are not guaranteed to share a page.**
+ */
+export interface TransactionSyncUpdate {
+  added: PlaidTransaction[];
+  modified: PlaidTransaction[];
+  removed: RemovedTransaction[];
+  /** Empty when Plaid has not yet produced a cursor (transactions not ready). */
+  nextCursor: string;
+  pages: number;
+  updateStatus: TransactionsUpdateStatus;
+}
+
+/**
+ * Pages `/transactions/sync` until `has_more` is false.
+ * When cursor is omitted, the full history from the first added transaction is requested.
+ */
+export async function syncTransactions(
+  accessToken: string,
+  cursor?: string,
+): Promise<TransactionSyncUpdate> {
+  const added: PlaidTransaction[] = [];
+  const modified: PlaidTransaction[] = [];
+  const removed: RemovedTransaction[] = [];
+  let nextCursor = cursor ?? "";
+  let pages = 0;
+  let hasMore = true;
+  let updateStatus: TransactionsUpdateStatus | undefined;
+
+  while (hasMore) {
+    const response = await getClient().transactionsSync({
+      access_token: accessToken,
+      cursor: nextCursor || undefined,
+      count: SYNC_PAGE_SIZE,
+      options: { include_original_description: true },
+    });
+    const page = response.data;
+    added.push(...page.added);
+    modified.push(...page.modified);
+    removed.push(...page.removed);
+    nextCursor = page.next_cursor;
+    hasMore = page.has_more;
+    updateStatus = page.transactions_update_status;
+    pages += 1;
+  }
+
+  if (updateStatus === undefined) {
+    throw new Error("Plaid /transactions/sync returned no pages");
+  }
+
+  log.info(
+    {
+      pages,
+      added: added.length,
+      modified: modified.length,
+      removed: removed.length,
+    },
+    "fetched transaction sync pages",
+  );
+
+  return {
+    added,
+    modified,
+    removed,
+    nextCursor,
+    pages,
+    updateStatus,
+  };
+}
+
+/** Reads `error_code` off a Plaid API error, or `undefined` if this is not one. */
+export function getPlaidErrorCode(error: unknown): string | undefined {
+  if (!axios.isAxiosError(error)) {
+    return undefined;
+  }
+  const code = error.response?.data?.error_code;
+  return typeof code === "string" ? code : undefined;
 }

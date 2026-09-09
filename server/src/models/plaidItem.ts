@@ -11,6 +11,11 @@ export interface PlaidItem {
   accessToken: string;
   /** The /transactions/sync cursor; undefined until the first sync completes. */
   cursor?: string;
+  /**
+   * When set, a sync of this Item is in flight.
+   * Acts as a mutex to prevent multiple syncs from running concurrently.
+   */
+  leaseExpiresAt?: string;
   /** Plaid institution_id for this Item's institution. */
   institutionId?: string;
   /** Display name of the institution. */

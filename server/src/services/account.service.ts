@@ -4,6 +4,7 @@ import { childLogger } from "../common/logger";
 import { Account, AccountType } from "../models";
 import { AccountRepository, PlaidItemRepository } from "../repositories";
 import * as plaid from "./plaid.service";
+import { syncItem } from "./sync.service";
 
 const log = childLogger("account.service");
 
@@ -124,7 +125,12 @@ export async function refresh(accountId: string, userId: string) {
     return;
   }
 
-  // TODO: Plaid transaction sync
+  if (!account.plaidItemId) {
+    log.info({ accountId }, "account has no Plaid Item; skipping refresh");
+    return;
+  }
+
+  await syncItem(account.plaidItemId);
 }
 
 export async function listForUser(
