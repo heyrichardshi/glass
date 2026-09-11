@@ -138,7 +138,7 @@ export class PlaidItemRepository {
   }
 
   /**
-   * Persists `cursor` and drops the lease in one write.
+   * Persists `cursor`, clears `errorCode`, and drops the lease in one write.
    * A 412 means the document changed since we acquired the lease.
    * We must not clobber a newer cursor, so this throws rather than retrying.
    */
@@ -149,6 +149,7 @@ export class PlaidItemRepository {
       cursor,
     };
     delete updated.leaseExpiresAt;
+    delete updated.errorCode;
 
     try {
       await container.item(leased.id, leased.id).replace(updated, {
@@ -168,11 +169,22 @@ export class PlaidItemRepository {
    * Drops the lease without moving the cursor.
    * Used when apply fails or Plaid is not ready, so a retry can start immediately
    * rather than waiting for the lease to expire.
+   * Pass `errorCode` to persist a connection error, or `null` to clear one.
    */
-  async releaseSyncLease(leased: LeasedPlaidItem): Promise<void> {
+  async releaseSyncLease(
+    leased: LeasedPlaidItem,
+    patch?: { errorCode?: string | null },
+  ): Promise<void> {
     const container = await this.promisedContainer;
     const updated: PlaidItem = withoutEtag(leased);
     delete updated.leaseExpiresAt;
+    if (patch && "errorCode" in patch) {
+      if (patch.errorCode == null) {
+        delete updated.errorCode;
+      } else {
+        updated.errorCode = patch.errorCode;
+      }
+    }
 
     try {
       await container.item(leased.id, leased.id).replace(updated, {

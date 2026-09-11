@@ -2,14 +2,18 @@ import { NotFoundError } from "../common/errors";
 import { childLogger } from "../common/logger";
 import { findFirstMatchingMerchantFromTexts } from "../common/merchant-utils";
 import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
-import { Merchant, Transaction } from "../models";
+import { Account, Merchant, PlaidItem, Transaction } from "../models";
 import {
+  AccountRepository,
   MerchantRepository,
   PlaidItemRepository,
   TransactionRepository,
 } from "../repositories";
+import type { LeasedPlaidItem } from "../repositories/plaidItem.repo";
 import {
+  getAccounts,
   getPlaidErrorCode,
+  isItemConnectionError,
   syncTransactions,
   type TransactionSyncUpdate,
 } from "./plaid.service";
@@ -29,7 +33,8 @@ type PlaidSyncTransaction = TransactionSyncUpdate["added"][number];
 export type SyncItemResult =
   | { status: "synced"; added: number; modified: number; removed: number }
   | { status: "skipped" }
-  | { status: "not_ready" };
+  | { status: "not_ready" }
+  | { status: "item_error"; errorCode: string };
 
 /**
  * Applies one Plaid `/transactions/sync` to the Item:
@@ -59,11 +64,28 @@ export async function syncItem(itemId: string): Promise<SyncItemResult> {
 
     await applySyncUpdate(leased.userId, leased.id, update);
 
+    try {
+      await refreshItemAccounts(leased);
+    } catch (balanceError) {
+      const balanceErrorCode = getPlaidErrorCode(balanceError);
+      if (balanceErrorCode && isItemConnectionError(balanceErrorCode)) {
+        return await persistItemConnectionError(
+          itemRepo,
+          leased,
+          balanceErrorCode,
+        );
+      }
+      log.error(
+        { err: balanceError, itemId },
+        "failed to refresh account balances",
+      );
+    }
+
     // TODO: persist nextCursor via completeSync once apply is verified against live
     // data. Until then, drop the lease without moving the cursor so a later refresh
     // re-fetches this batch from Plaid instead of skipping it.
     // await itemRepo.completeSync(leased, update.nextCursor);
-    await itemRepo.releaseSyncLease(leased);
+    await itemRepo.releaseSyncLease(leased, { errorCode: null });
 
     log.info(
       {
@@ -95,10 +117,15 @@ export async function syncItem(itemId: string): Promise<SyncItemResult> {
       removed: update.removed.length,
     };
   } catch (error) {
-    if (getPlaidErrorCode(error) === "PRODUCT_NOT_READY") {
+    const errorCode = getPlaidErrorCode(error);
+    if (errorCode === "PRODUCT_NOT_READY") {
       log.info({ itemId }, "transactions not ready; cursor not advanced");
       await itemRepo.releaseSyncLease(leased);
       return { status: "not_ready" };
+    }
+
+    if (errorCode && isItemConnectionError(errorCode)) {
+      return await persistItemConnectionError(itemRepo, leased, errorCode);
     }
 
     try {
@@ -110,6 +137,76 @@ export async function syncItem(itemId: string): Promise<SyncItemResult> {
       );
     }
     throw error;
+  }
+}
+
+async function persistItemConnectionError(
+  itemRepo: PlaidItemRepository,
+  leased: LeasedPlaidItem,
+  errorCode: string,
+): Promise<Extract<SyncItemResult, { status: "item_error" }>> {
+  log.info(
+    { itemId: leased.id, errorCode },
+    "item error; marking accounts disconnected",
+  );
+  await markAccountsDisconnected(leased.userId, leased.id);
+  await itemRepo.releaseSyncLease(leased, { errorCode });
+  return { status: "item_error", errorCode };
+}
+
+/**
+ * Sets every non-closed account on the Item to disconnected.
+ * Closed accounts stay closed.
+ */
+async function markAccountsDisconnected(
+  userId: string,
+  itemId: string,
+): Promise<void> {
+  const accountRepo = await AccountRepository.getInstance();
+  const accounts = await accountRepo.listByPlaidItemId(userId, itemId);
+  let marked = 0;
+  for (const account of accounts) {
+    if (account.status === "closed" || account.status === "disconnected") {
+      continue;
+    }
+    await accountRepo.update({ ...account, status: "disconnected" });
+    marked += 1;
+  }
+  log.info(
+    { itemId, marked, total: accounts.length },
+    "marked accounts disconnected",
+  );
+}
+
+/**
+ * Pulls `/accounts/get`, writes balances, sets `transactionsLastRefreshedAt`,
+ * and reopens accounts that were disconnected.
+ * Closed accounts are left alone.
+ */
+async function refreshItemAccounts(item: PlaidItem): Promise<void> {
+  const { accounts: plaidAccounts } = await getAccounts(item.accessToken);
+  const byPlaidId = new Map(
+    plaidAccounts.map((plaidAccount) => [plaidAccount.account_id, plaidAccount]),
+  );
+
+  const accountRepo = await AccountRepository.getInstance();
+  const accounts = await accountRepo.listByPlaidItemId(item.userId, item.id);
+  const now = new Date().toISOString();
+
+  for (const account of accounts) {
+    if (account.status === "closed") {
+      continue;
+    }
+    const plaidAccount = byPlaidId.get(account.plaidAccountId ?? account.id);
+    const updated: Account = {
+      ...account,
+      status: "open",
+      transactionsLastRefreshedAt: now,
+      ...(plaidAccount
+        ? { balance: String(plaidAccount.balances.current ?? 0) }
+        : {}),
+    };
+    await accountRepo.update(updated);
   }
 }
 

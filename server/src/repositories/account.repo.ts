@@ -104,4 +104,23 @@ export class AccountRepository {
 
     return response.resources;
   }
+
+  async listByPlaidItemId(
+    userId: string,
+    plaidItemId: string,
+  ): Promise<Account[]> {
+    const container = await this.promisedContainer;
+
+    const response = await container.items
+      .query<Account>(
+        {
+          query: "SELECT * FROM c WHERE c.plaidItemId = @plaidItemId",
+          parameters: [{ name: "@plaidItemId", value: plaidItemId }],
+        },
+        { partitionKey: userId },
+      )
+      .fetchAll();
+
+    return response.resources;
+  }
 }

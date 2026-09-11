@@ -202,3 +202,23 @@ export function getPlaidErrorCode(error: unknown): string | undefined {
   const code = error.response?.data?.error_code;
   return typeof code === "string" ? code : undefined;
 }
+
+/**
+ * Plaid item errors that mean the Item cannot produce data until the user re-authenticates
+ * or relinks. Mapped onto Account.status rather than thrown out of sync.
+ */
+const ITEM_CONNECTION_ERROR_CODES = new Set([
+  "ITEM_LOGIN_REQUIRED",
+  "USER_PERMISSION_REVOKED",
+  "USER_ACCOUNT_REVOKED",
+  "ITEM_LOCKED",
+  "ACCESS_NOT_GRANTED",
+  "INSUFFICIENT_CREDENTIALS",
+  "INVALID_CREDENTIALS",
+  "ITEM_NOT_FOUND",
+  "INVALID_ACCESS_TOKEN",
+]);
+
+export function isItemConnectionError(errorCode: string): boolean {
+  return ITEM_CONNECTION_ERROR_CODES.has(errorCode);
+}
