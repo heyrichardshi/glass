@@ -15,6 +15,7 @@ export const UpdateTransactionBodySchema = z.object({
   categoryId: z.string().optional(),
   tagIds: z.array(z.string()).optional(),
   counterparty: TransactionCounterpartySchema.optional(),
+  linkedTransactionIds: z.array(z.string()).optional(),
 });
 export type UpdateTransactionBody = z.infer<typeof UpdateTransactionBodySchema>;
 

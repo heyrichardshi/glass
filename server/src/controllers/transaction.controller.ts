@@ -52,8 +52,15 @@ export const updateTransaction = asyncController<
   UpdateTransactionResponse
 >(async (req, res) => {
   const transactionId = req.params.transactionId;
-  const { date, description, notes, categoryId, tagIds, counterparty } =
-    req.body;
+  const {
+    date,
+    description,
+    notes,
+    categoryId,
+    tagIds,
+    counterparty,
+    linkedTransactionIds,
+  } = req.body;
 
   const response = await transactions.update(requireUserId(req), {
     transactionId,
@@ -63,6 +70,7 @@ export const updateTransaction = asyncController<
     categoryId,
     tagIds: tagIds,
     counterparty,
+    linkedTransactionIds,
   });
 
   res.status(200).json(response);

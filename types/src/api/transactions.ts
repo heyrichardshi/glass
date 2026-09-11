@@ -13,6 +13,7 @@ export interface UpdateTransactionRequest {
   categoryId?: string;
   tagIds?: string[];
   counterparty?: TransactionCounterparty;
+  linkedTransactionIds?: string[];
 }
 
 export interface UpdateTransactionResponse {

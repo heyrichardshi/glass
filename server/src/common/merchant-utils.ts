@@ -21,10 +21,30 @@ export function findFirstMatchingMerchant(
         if (regex.test(rawDescription)) {
           return merchant;
         }
-      } catch (e) {
+      } catch {
         continue;
       }
     }
   }
   return undefined;
+}
+
+/**
+ * Tries each text in order against {@link findFirstMatchingMerchant}. First hit wins.
+ * Plaid's `original_description`, `name` and `merchant_name` are often different strings
+ * for the same merchant, so callers pass every one they have.
+ */
+export function findFirstMatchingMerchantFromTexts(
+  texts: Array<string | null | undefined>,
+  merchants: Merchant[],
+): Merchant | undefined {
+  for (const text of texts) {
+    if (!text) {
+      continue;
+    }
+    const match = findFirstMatchingMerchant(text, merchants);
+    if (match) {
+      return match;
+    }
+  }
 }

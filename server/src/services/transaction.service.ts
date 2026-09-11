@@ -62,18 +62,21 @@ export async function update(
   request: UpdateTransactionRequest,
 ): Promise<UpdateTransactionResponse> {
   // Create a map of the changes in the request
-  let newValues: Partial<Transaction> = {};
+  const newValues: Partial<Transaction> = {};
 
   UPDATE_TRANSACTION_KEYS.forEach((key) => {
-    if (request[key] !== undefined) {
-      // Sidestep TS type checking, we are assigning type-correct values to each key.
-      (newValues as any)[key] = request[key];
+    const value = request[key];
+    if (value !== undefined) {
+      Object.assign(newValues, { [key]: value });
     }
   });
 
   // The compiler complains about a type mismatch error if we include this in UPDATE_TRANSACTION_KEYS, so handle it separately for now.
   if (request.tagIds) {
     newValues["tagIds"] = request.tagIds;
+  }
+  if (request.linkedTransactionIds !== undefined) {
+    newValues.linkedTransactionIds = request.linkedTransactionIds;
   }
 
   // Short-circuit if no changes were requested
@@ -88,7 +91,7 @@ export async function update(
 
   // Retrieve existing item to apply changes to
   const existing = await transactionRepo.get(request.transactionId, userId);
-  if (!existing) {
+  if (!existing || existing.plaidIsDeleted) {
     throw new NotFoundError(
       `The given transaction '${request.transactionId}' does not exist.`,
     );
@@ -126,6 +129,20 @@ export async function update(
         const nameB = tagMap.get(b) || "";
         return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
       });
+    }
+  }
+
+  if (newValues.linkedTransactionIds !== undefined) {
+    const newLinked = newValues.linkedTransactionIds;
+    const areArraysDifferent =
+      newLinked.length !== existing.linkedTransactionIds.length ||
+      newLinked.some((id) => !existing.linkedTransactionIds.includes(id)) ||
+      existing.linkedTransactionIds.some((id) => !newLinked.includes(id));
+
+    if (!areArraysDifferent) {
+      delete newValues.linkedTransactionIds;
+    } else {
+      await assertLinkTargetsPosted(transactionRepo, userId, newLinked);
     }
   }
 
@@ -189,7 +206,7 @@ export async function bulkUpdate(
     try {
       const existing = existingTransactions[transactionId];
 
-      if (!existing) {
+      if (!existing || existing.plaidIsDeleted) {
         failedUpdates.push({
           transactionId,
           error: `Transaction '${transactionId}' not found.`,
@@ -234,4 +251,34 @@ export async function bulkUpdate(
     updatedTransactions,
     failedUpdates,
   };
+}
+
+/**
+ * Pending transactions cannot be link targets.
+ * Document IDs are provider IDs, so a posted transaction would change the target's identity;
+ * this rejects the write instead.
+ */
+async function assertLinkTargetsPosted(
+  transactionRepo: TransactionRepository,
+  userId: string,
+  linkedTransactionIds: string[],
+): Promise<void> {
+  if (linkedTransactionIds.length === 0) {
+    return;
+  }
+
+  const targets = await transactionRepo.getBulk(linkedTransactionIds, userId);
+  for (const id of linkedTransactionIds) {
+    const target = targets[id];
+    if (!target || target.plaidIsDeleted) {
+      throw new InvalidInputWithCustomMessageError(
+        `Cannot link to transaction '${id}'; it does not exist.`,
+      );
+    }
+    if (target.status === "pending") {
+      throw new InvalidInputWithCustomMessageError(
+        `Cannot link to transaction '${id}'; pending transactions may not be referenced.`,
+      );
+    }
+  }
 }

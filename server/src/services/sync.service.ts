@@ -1,6 +1,13 @@
 import { NotFoundError } from "../common/errors";
 import { childLogger } from "../common/logger";
-import { PlaidItemRepository } from "../repositories";
+import { findFirstMatchingMerchantFromTexts } from "../common/merchant-utils";
+import { UNCATEGORIZED_CATEGORY_ID } from "../models/category";
+import { Merchant, Transaction } from "../models";
+import {
+  MerchantRepository,
+  PlaidItemRepository,
+  TransactionRepository,
+} from "../repositories";
 import {
   getPlaidErrorCode,
   syncTransactions,
@@ -12,13 +19,17 @@ const log = childLogger("sync.service");
 /** Long enough for a full historical pull; short enough that a crashed holder is retried soon. */
 const SYNC_LEASE_TTL_MS = 5 * 60 * 1000;
 
+const PLACEHOLDER_COUNTERPARTY = { id: "0", type: "merchant" as const };
+
+/** How many added/modified/removed rows to include in the inspect log. */
+const SYNC_LOG_SAMPLE = 8;
+
+type PlaidSyncTransaction = TransactionSyncUpdate["added"][number];
+
 export type SyncItemResult =
   | { status: "synced"; added: number; modified: number; removed: number }
   | { status: "skipped" }
   | { status: "not_ready" };
-
-/** How many added/modified/removed rows to include in the inspect log. */
-const SYNC_LOG_SAMPLE = 8;
 
 /**
  * Applies one Plaid `/transactions/sync` to the Item:
@@ -46,7 +57,7 @@ export async function syncItem(itemId: string): Promise<SyncItemResult> {
       return { status: "not_ready" };
     }
 
-    await applySyncUpdate(leased.id, update);
+    await applySyncUpdate(leased.userId, leased.id, update);
 
     // TODO: persist nextCursor via completeSync once apply is verified against live
     // data. Until then, drop the lease without moving the cursor so a later refresh
@@ -106,21 +117,248 @@ export async function syncItem(itemId: string): Promise<SyncItemResult> {
  * Writes the accumulated added, modified and removed updates.
  */
 async function applySyncUpdate(
+  userId: string,
   itemId: string,
   update: TransactionSyncUpdate,
 ): Promise<void> {
+  const transactionRepo = await TransactionRepository.getInstance();
+  const merchantRepo = await MerchantRepository.getInstance();
+  const merchants = await merchantRepo.listAll();
+
+  const unmatched: PlaidSyncTransaction[] = [];
+
+  const fresh = update.added.filter((tx) => !tx.pending_transaction_id);
+  const replacements = update.added.filter((tx) => tx.pending_transaction_id);
+
+  for (const plaidTx of fresh) {
+    const matched = await applyAdded(
+      transactionRepo,
+      userId,
+      plaidTx,
+      merchants,
+    );
+    if (!matched) {
+      unmatched.push(plaidTx);
+    }
+  }
+  for (const plaidTx of replacements) {
+    const matched = await applyAdded(
+      transactionRepo,
+      userId,
+      plaidTx,
+      merchants,
+    );
+    if (!matched) {
+      unmatched.push(plaidTx);
+    }
+  }
+
+  for (const plaidTx of update.modified) {
+    await applyModified(transactionRepo, userId, plaidTx, merchants);
+  }
+
+  for (const removed of update.removed) {
+    await applyRemoved(transactionRepo, userId, removed.transaction_id);
+  }
+
   log.info(
     {
       itemId,
       added: update.added.length,
       modified: update.modified.length,
       removed: update.removed.length,
+      unmatched: unmatched.length,
+      unmatchedSample: unmatched.slice(0, SYNC_LOG_SAMPLE).map(sampleAdded),
     },
-    "accumulated sync update; apply is a later step",
+    "applied sync update",
   );
 }
 
-function sampleAdded(tx: TransactionSyncUpdate["added"][number]) {
+async function applyAdded(
+  repo: TransactionRepository,
+  userId: string,
+  plaidTx: PlaidSyncTransaction,
+  merchants: Merchant[],
+): Promise<boolean> {
+  const pendingId = plaidTx.pending_transaction_id;
+  if (pendingId) {
+    const pending = await repo.get(pendingId, userId);
+    if (pending && !pending.plaidIsDeleted) {
+      const posted = assignMerchantIfUnset(
+        overlayProvider(pending, plaidTx),
+        plaidTx,
+        merchants,
+      );
+      delete posted.plaidIsDeleted;
+      await repo.replacePendingWithPosted(posted, pendingId);
+      return posted.counterparty.id !== PLACEHOLDER_COUNTERPARTY.id;
+    }
+  }
+
+  const existing = await repo.get(plaidTx.transaction_id, userId);
+  if (existing && !existing.plaidIsDeleted) {
+    const updated = overlayProvider(existing, plaidTx);
+    const withMerchant = assignMerchantIfUnset(updated, plaidTx, merchants);
+    delete withMerchant.plaidIsDeleted;
+    await repo.upsert(withMerchant);
+    return withMerchant.counterparty.id !== PLACEHOLDER_COUNTERPARTY.id;
+  }
+
+  const created = createFromPlaid(userId, plaidTx, merchants);
+  await repo.upsert(created);
+  return created.counterparty.id !== PLACEHOLDER_COUNTERPARTY.id;
+}
+
+async function applyModified(
+  repo: TransactionRepository,
+  userId: string,
+  plaidTx: PlaidSyncTransaction,
+  merchants: Merchant[],
+): Promise<void> {
+  const existing = await repo.get(plaidTx.transaction_id, userId);
+  if (!existing || existing.plaidIsDeleted) {
+    await repo.upsert(createFromPlaid(userId, plaidTx, merchants));
+    return;
+  }
+  const updated = assignMerchantIfUnset(
+    overlayProvider(existing, plaidTx),
+    plaidTx,
+    merchants,
+  );
+  delete updated.plaidIsDeleted;
+  await repo.upsert(updated);
+}
+
+async function applyRemoved(
+  repo: TransactionRepository,
+  userId: string,
+  transactionId: string,
+): Promise<void> {
+  const existing = await repo.get(transactionId, userId);
+  if (!existing || existing.plaidIsDeleted) {
+    return;
+  }
+  await repo.markPlaidDeleted(existing);
+}
+
+function createFromPlaid(
+  userId: string,
+  plaidTx: PlaidSyncTransaction,
+  merchants: Merchant[],
+): Transaction {
+  const provider = providerFields(userId, plaidTx);
+  const merchant = matchMerchant(plaidTx, merchants);
+  return {
+    ...provider,
+    description: provider.rawDescription,
+    notes: "",
+    counterparty: merchant
+      ? { id: merchant.id, type: "merchant" }
+      : PLACEHOLDER_COUNTERPARTY,
+    categoryId: merchant?.defaultCategoryId ?? UNCATEGORIZED_CATEGORY_ID,
+    tagIds: [],
+    linkedTransactionIds: [],
+    history: [],
+  };
+}
+
+/**
+ * Clone the existing document and overwrite only provider-owned fields.
+ */
+function overlayProvider(
+  existing: Transaction,
+  plaidTx: PlaidSyncTransaction,
+): Transaction {
+  const provider = providerFields(existing.userId, plaidTx);
+  return {
+    ...existing,
+    ...provider,
+    description:
+      existing.description === existing.rawDescription
+        ? provider.rawDescription
+        : existing.description,
+    date: existing.date === existing.rawDate ? provider.date : existing.date,
+  };
+}
+
+function assignMerchantIfUnset(
+  transaction: Transaction,
+  plaidTx: PlaidSyncTransaction,
+  merchants: Merchant[],
+): Transaction {
+  if (transaction.counterparty.id !== PLACEHOLDER_COUNTERPARTY.id) {
+    return transaction;
+  }
+  const merchant = matchMerchant(plaidTx, merchants);
+  if (!merchant) {
+    return transaction;
+  }
+  return {
+    ...transaction,
+    counterparty: { id: merchant.id, type: "merchant" },
+    categoryId:
+      transaction.categoryId === UNCATEGORIZED_CATEGORY_ID
+        ? merchant.defaultCategoryId
+        : transaction.categoryId,
+  };
+}
+
+function providerFields(
+  userId: string,
+  plaidTx: PlaidSyncTransaction,
+): Pick<
+  Transaction,
+  | "id"
+  | "userId"
+  | "accountId"
+  | "amount"
+  | "currency"
+  | "rawDate"
+  | "date"
+  | "rawDescription"
+  | "status"
+  | "plaidTransactionId"
+  | "plaidPendingTransactionId"
+  | "plaidMetadata"
+> {
+  const pfc = plaidTx.personal_finance_category;
+  return {
+    id: plaidTx.transaction_id,
+    userId,
+    accountId: plaidTx.account_id,
+    amount: String(plaidTx.amount),
+    currency:
+      plaidTx.iso_currency_code ?? plaidTx.unofficial_currency_code ?? "USD",
+    rawDate: plaidTx.date,
+    date: plaidTx.date,
+    rawDescription: plaidTx.original_description || plaidTx.name,
+    status: plaidTx.pending ? "pending" : "posted",
+    plaidTransactionId: plaidTx.transaction_id,
+    plaidPendingTransactionId: plaidTx.pending_transaction_id ?? undefined,
+    plaidMetadata: {
+      personalFinanceCategory: pfc
+        ? `${pfc.primary}/${pfc.detailed}`
+        : undefined,
+      merchantName: plaidTx.merchant_name ?? undefined,
+      merchantEntityId: plaidTx.merchant_entity_id ?? undefined,
+      merchantLogoUrl: plaidTx.logo_url ?? undefined,
+      merchantWebsite: plaidTx.website ?? undefined,
+      authorizedDate: plaidTx.authorized_date ?? undefined,
+    },
+  };
+}
+
+function matchMerchant(
+  plaidTx: PlaidSyncTransaction,
+  merchants: Merchant[],
+): Merchant | undefined {
+  return findFirstMatchingMerchantFromTexts(
+    [plaidTx.original_description, plaidTx.name, plaidTx.merchant_name],
+    merchants,
+  );
+}
+
+function sampleAdded(tx: PlaidSyncTransaction) {
   return {
     transaction_id: tx.transaction_id,
     account_id: tx.account_id,

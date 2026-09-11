@@ -1,5 +1,7 @@
 import {
   Container,
+  JSONObject,
+  OperationInput,
   ReadOperationInput,
   StatusCodes,
   SqlParameter,
@@ -14,6 +16,9 @@ import { formatDate } from "../common/utils";
 const log = childLogger("transaction.repo");
 
 const TRANSACTION_CONTAINER_ID = "transactions";
+
+const NOT_DELETED =
+  "(NOT IS_DEFINED(c.plaidIsDeleted) OR c.plaidIsDeleted = false)";
 
 export class TransactionRepository {
   private static instance: TransactionRepository;
@@ -35,6 +40,7 @@ export class TransactionRepository {
           { path: "/categoryId/?" },
           { path: "/accountId/?" },
           { path: "/isDeleted/?" },
+          { path: "/plaidIsDeleted/?" },
           // Both are needed by the Plaid sync path: a posted transaction is matched to the row it
           // replaces, and a removed transaction has to be found by whatever still references it.
           { path: "/plaidTransactionId/?" },
@@ -91,7 +97,7 @@ export class TransactionRepository {
   }): Promise<TransactionsList> {
     const container = await this.promisedContainer;
 
-    const filters: string[] = [];
+    const filters: string[] = [NOT_DELETED];
     const parameters: SqlParameter[] = [];
 
     if (params.searchText) {
@@ -163,11 +169,14 @@ export class TransactionRepository {
     const container = await this.promisedContainer;
 
     const response = await container.items
-      .query<Transaction>("SELECT * FROM c ORDER BY c.date DESC", {
-        partitionKey: userId,
-        maxItemCount: 50,
-        continuationToken: paginationToken,
-      })
+      .query<Transaction>(
+        `SELECT * FROM c WHERE ${NOT_DELETED} ORDER BY c.date DESC`,
+        {
+          partitionKey: userId,
+          maxItemCount: 50,
+          continuationToken: paginationToken,
+        },
+      )
       .fetchNext();
     log.debug(
       {
@@ -195,7 +204,9 @@ export class TransactionRepository {
       .query<Transaction>(
         {
           query:
-            "SELECT * FROM c WHERE c.accountId = @accountId ORDER BY c.date DESC",
+            "SELECT * FROM c WHERE c.accountId = @accountId AND " +
+            NOT_DELETED +
+            " ORDER BY c.date DESC",
           parameters: [{ name: "@accountId", value: accountId }],
         },
         {
@@ -224,8 +235,8 @@ export class TransactionRepository {
         .item(transactionId, userId)
         .read<Transaction>();
       return resource;
-    } catch (err: any) {
-      if (err.code === 404) {
+    } catch (err) {
+      if (cosmosStatus(err) === StatusCodes.NotFound) {
         return undefined;
       }
       throw err;
@@ -288,7 +299,9 @@ export class TransactionRepository {
       .query<Transaction>(
         {
           query:
-            "SELECT * FROM c WHERE c.date >= @startDate AND c.date <= @endDate ORDER BY c.date DESC",
+            "SELECT * FROM c WHERE c.date >= @startDate AND c.date <= @endDate AND " +
+            NOT_DELETED +
+            " ORDER BY c.date DESC",
           parameters: [
             { name: "@startDate", value: startDateString },
             { name: "@endDate", value: endDateString },
@@ -316,5 +329,56 @@ export class TransactionRepository {
   async delete(transactionId: string, userId: string): Promise<void> {
     const container = await this.promisedContainer;
     await container.item(transactionId, userId).delete();
+  }
+
+  /**
+   * Writes `posted` and deletes the pending row in one transactional batch. Both documents
+   * share `/userId`, so the batch is atomic: a crash cannot leave the posted clone without
+   * removing the pending identity, or vice versa.
+   */
+  async replacePendingWithPosted(
+    posted: Transaction,
+    pendingId: string,
+  ): Promise<void> {
+    const container = await this.promisedContainer;
+    const operations: OperationInput[] = [
+      {
+        operationType: "Upsert",
+        resourceBody: { ...posted } as unknown as JSONObject,
+      },
+      {
+        operationType: "Delete",
+        id: pendingId,
+      },
+    ];
+
+    const response = await container.items.batch(operations, posted.userId);
+    const results = response.result ?? [];
+    for (const result of results) {
+      if (result.statusCode >= 400) {
+        throw new DatabaseError(
+          `Failed to replace pending ${pendingId} with posted ${posted.id}: ${result.statusCode}`,
+        );
+      }
+    }
+  }
+
+  /** Marks the row as removed by Plaid without destroying it, so curation stays recoverable. */
+  async markPlaidDeleted(transaction: Transaction): Promise<void> {
+    await this.upsert({ ...transaction, plaidIsDeleted: true });
+  }
+}
+
+function cosmosStatus(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+  const { code } = error as { code: unknown };
+  if (typeof code === "number") {
+    return code;
+  }
+  if (typeof code === "string") {
+    const parsed = Number(code);
+    return Number.isNaN(parsed) ? undefined : parsed;
   }
 }

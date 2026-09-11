@@ -1,10 +1,6 @@
-import type { Account } from "./account";
-import type { Merchant } from "./merchant";
-import type { Tag } from "./tag";
-
 /**
- * Represents a transaction on an {@link Account | account} at a financial institution.
- * It must have a counterparty, which is usually a {@link Merchant | merchant},
+ * Represents a transaction on an account at a financial institution.
+ * It must have a counterparty, which is usually a merchant,
  * but may also be another account in the case of transfers.
  */
 export interface Transaction {
@@ -47,6 +43,11 @@ export interface Transaction {
   plaidTransactionId?: string;
   /** For a posted Plaid transaction, the transaction_id of the pending transaction it replaced. */
   plaidPendingTransactionId?: string;
+  /**
+   * Set when Plaid removes a transaction with no posted replacement. Curation on the row
+   * stays recoverable. List queries omit these.
+   */
+  plaidIsDeleted?: boolean;
 }
 
 export interface TransactionCounterparty {
