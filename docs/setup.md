@@ -19,6 +19,7 @@ OIDC_REDIRECT_URIS=https://<client-domain>/auth/callback
 
 LOG_LEVEL=info
 CLIENT_ORIGIN=https://<client-domain>
+PLAID_WEBHOOK_URL=https://hooks.<client-domain>/webhooks/plaid
 ```
 
 `OIDC_AUDIENCE` is the audience `requireToken` enforces on every verified token.
@@ -31,6 +32,10 @@ per-account chatter.
 `CLIENT_ORIGIN` is the public client origin CORS will accept. Exactly one
 value, with scheme, and no trailing slash. A missing or wildcard value
 refuses to start.
+
+`PLAID_WEBHOOK_URL` is baked into each Item at link. Missing it refuses
+link-token creation rather than minting an Item that can never receive
+updates.
 
 2. Create a `.deploy_sha` file in the same folder containing the commit SHA of a
    successful build, and nothing else:

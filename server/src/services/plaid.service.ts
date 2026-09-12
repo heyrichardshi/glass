@@ -18,10 +18,9 @@ const log = childLogger("plaid.service");
 /** Plaid's documented maximum for `/transactions/sync` `count`. */
 const SYNC_PAGE_SIZE = 500;
 
-// Glass aggregates Transactions for US institutions. These are product decisions, not
-// deployment config, so they are hardcoded rather than read from the environment.
 const PLAID_PRODUCTS: Products[] = [Products.Transactions];
 const PLAID_COUNTRY_CODES: CountryCode[] = [CountryCode.Us];
+const TRANSACTIONS_DAYS_REQUESTED = 730;
 
 let _client: PlaidApi | undefined;
 
@@ -71,14 +70,25 @@ export async function createLinkToken(
   userId: string,
   accessToken?: string,
 ): Promise<string> {
+  const webhook = process.env.PLAID_WEBHOOK_URL;
+  if (!webhook) {
+    throw new Error(
+      "PLAID_WEBHOOK_URL is not set; an Item would be created with no delivery address.",
+    );
+  }
+
   const request: LinkTokenCreateRequest = {
     user: { client_user_id: userId },
     client_name: "Glass",
     country_codes: PLAID_COUNTRY_CODES,
     language: "en",
+    webhook,
     ...(accessToken
       ? { access_token: accessToken }
-      : { products: PLAID_PRODUCTS }),
+      : {
+          products: PLAID_PRODUCTS,
+          transactions: { days_requested: TRANSACTIONS_DAYS_REQUESTED },
+        }),
   };
   const response = await getClient().linkTokenCreate(request);
   return response.data.link_token;
