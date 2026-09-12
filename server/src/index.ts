@@ -30,6 +30,14 @@ if (!process.env.PORT) {
 
 const PORT: number = parseInt(process.env.PORT as string, 10);
 
+const CORS_PREFLIGHT_MAX_AGE_SEC = 600;
+
+const clientOrigin = process.env.CLIENT_ORIGIN;
+if (!clientOrigin || clientOrigin === "*") {
+  logger.error("CLIENT_ORIGIN must be a single origin");
+  process.exit(1);
+}
+
 const app = express();
 
 /**
@@ -37,7 +45,12 @@ const app = express();
  */
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: clientOrigin,
+    maxAge: CORS_PREFLIGHT_MAX_AGE_SEC,
+  }),
+);
 app.use(express.json());
 
 // Middleware that loads environment variables so routers can access them.

@@ -19,6 +19,8 @@ PLAID_ENV="sandbox" # or "production"
 COSMOS_DB_ENDPOINT="https://localhost:8081/"
 COSMOS_DB_KEY=
 COSMOS_DB_NAME=
+
+CLIENT_ORIGIN=http://localhost:3000
 ```
 
 Start the server locally:
