@@ -48,8 +48,8 @@ function toGlassAccountType(
 }
 
 /**
- * Exchanges a Plaid Link public token for an access token, persists the Item, and creates the
- * Glass accounts for it. Transactions are synced separately.
+ * Exchanges a Plaid Link public token for an access token, persists the Item and its accounts,
+ * then calls `/transactions/sync` once.
  */
 export async function exchangePlaidPublicToken(
   userId: string,
@@ -105,6 +105,13 @@ export async function exchangePlaidPublicToken(
   await Promise.all(accounts.map((account) => accountRepo.create(account)));
 
   log.info({ itemId, count: accounts.length }, "registered Plaid accounts");
+
+  try {
+    const result = await syncItem(itemId);
+    log.info({ itemId, status: result.status }, "activated item for webhooks");
+  } catch (error) {
+    log.error({ err: error, itemId }, "failed to activate item for webhooks");
+  }
 
   return { accountsRegisteredCount: accounts.length };
 }
