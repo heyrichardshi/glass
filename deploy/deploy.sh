@@ -24,7 +24,7 @@ curl -fsSL \
   -o docker-compose.yml.new
 mv docker-compose.yml.new docker-compose.yml
 
-chmod 600 .env.api
+chmod 600 .env.api .env.webhook
 
 # Compose reads this, not .deploy_sha.
 export GLASS_SHA="$SHA"
@@ -32,4 +32,23 @@ export GLASS_SHA="$SHA"
 docker compose config --quiet
 docker compose pull
 docker compose up -d
+
+wait_for_health() {
+  local url="$1"
+  local i
+  for i in $(seq 1 30); do
+    if curl -fsS -o /dev/null "$url"; then
+      echo "healthy ${url}"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "health check failed: ${url}" >&2
+  docker compose ps
+  docker compose logs --tail=80
+  return 1
+}
+
+wait_for_health http://127.0.0.1:7070/health
+wait_for_health http://127.0.0.1:7071/health
 docker compose ps

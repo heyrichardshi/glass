@@ -1,7 +1,9 @@
 # Production composition. Copied to the server as /srv/glass/docker-compose.yml.
 #
-# Expects two files alongside it:
-#   .env.api     the API's runtime environment, injected into the container.
+# Expects three files alongside it:
+#   .env.api     the API's runtime environment, injected into the api container.
+#   .env.webhook the webhook listener's environment. Compose fails if this file
+#                is missing.
 #   .deploy_sha  one line: the image tag to run.
 #                deploy.sh exports it as GLASS_SHA before invoking Compose.
 
@@ -28,7 +30,29 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    # A bounded ring buffer, so logs cannot fill the disk unattended.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  webhook:
+    image: ghcr.io/heyrichardshi/glass-server:${GLASS_SHA:?export GLASS_SHA from .deploy_sha}
+    restart: unless-stopped
+    env_file: ./.env.webhook
+    environment:
+      PORT: "7071"
+    command: ["node", "server/dist/webhook.js"]
+    ports:
+      - "127.0.0.1:7071:7071"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     # A bounded ring buffer, so logs cannot fill the disk unattended.
     logging:
       driver: json-file

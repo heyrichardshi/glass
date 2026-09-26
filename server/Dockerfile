@@ -64,5 +64,5 @@ COPY --from=build /app/types/dist types/dist
 COPY --from=build /app/server/dist server/dist
 
 USER node
-EXPOSE 7070
+EXPOSE 7070 7071
 CMD ["node", "server/dist/index.js"]

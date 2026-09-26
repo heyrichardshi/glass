@@ -53,6 +53,10 @@ app.use(
 );
 app.use(express.json());
 
+app.get("/health", (_req, res) => {
+  res.sendStatus(200);
+});
+
 // Middleware that loads environment variables so routers can access them.
 app.use(function (req, res, next) {
   next();
