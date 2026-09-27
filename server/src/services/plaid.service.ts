@@ -21,6 +21,7 @@ const SYNC_PAGE_SIZE = 500;
 const PLAID_PRODUCTS: Products[] = [Products.Transactions];
 const PLAID_COUNTRY_CODES: CountryCode[] = [CountryCode.Us];
 const TRANSACTIONS_DAYS_REQUESTED = 730;
+const OAUTH_REDIRECT_PATH = "/plaid/oauth";
 
 let _client: PlaidApi | undefined;
 
@@ -77,12 +78,20 @@ export async function createLinkToken(
     );
   }
 
+  const clientOrigin = process.env.CLIENT_ORIGIN;
+  if (!clientOrigin) {
+    throw new Error(
+      "CLIENT_ORIGIN is not set; OAuth institutions have nowhere to return to.",
+    );
+  }
+
   const request: LinkTokenCreateRequest = {
     user: { client_user_id: userId },
     client_name: "Glass",
     country_codes: PLAID_COUNTRY_CODES,
     language: "en",
     webhook,
+    redirect_uri: `${clientOrigin}${OAUTH_REDIRECT_PATH}`,
     ...(accessToken
       ? { access_token: accessToken }
       : {
