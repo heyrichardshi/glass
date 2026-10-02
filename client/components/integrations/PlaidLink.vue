@@ -62,7 +62,13 @@ async function openPlaidLink() {
 
     const handler = Plaid.create({
       token: connectionToken,
-      onSuccess: async (publicToken: string) => {
+      onSuccess: async (publicToken: string, metadata: any) => {
+        console.warn("PLAID_LINK_RECOVERY public token issued", {
+          publicToken,
+          institution: metadata?.institution,
+          accounts: metadata?.accounts,
+          linkSessionId: metadata?.link_session_id,
+        });
         await exchange(publicToken);
       },
       onExit: (err: unknown) => {
@@ -87,12 +93,20 @@ async function exchange(publicToken: string) {
       `${apiBase.value}/accounts/register`,
       { method: "POST", body: { exchangeToken: publicToken } },
     );
+    console.warn("PLAID_LINK_RECOVERY registered item", {
+      accountsRegisteredCount: res.accountsRegisteredCount,
+    });
     toast.add({
       title: `Successfully added ${res.accountsRegisteredCount} account(s)`,
       color: "success",
     });
     emit("connected");
   } catch (err: any) {
+    console.error("PLAID_LINK_RECOVERY registration request failed", {
+      publicToken,
+      status: err?.statusCode,
+      message: err?.message,
+    });
     toast.add({
       title: "Something went wrong",
       description: `Error adding accounts: ${err.message}`,

@@ -8,6 +8,10 @@ import { syncItem } from "./sync.service";
 
 const log = childLogger("account.service");
 
+// Logged at warn or above so LOG_LEVEL=warn cannot hide it. The access token goes under
+// `plaidAccessToken` because the logger redacts `accessToken`.
+const LINK_RECOVERY_TAG = "PLAID_LINK_RECOVERY";
+
 /**
  * Creates a Plaid Link token for the client to open Plaid Link. Pass an access token to launch
  * update mode against an existing Item.
@@ -55,8 +59,49 @@ export async function exchangePlaidPublicToken(
   userId: string,
   publicToken: string,
 ): Promise<{ accountsRegisteredCount: number }> {
-  const { accessToken, itemId } = await plaid.exchangePublicToken(publicToken);
+  log.warn({ userId, publicToken }, `${LINK_RECOVERY_TAG} received public token`);
 
+  let exchanged: { accessToken: string; itemId: string };
+  try {
+    exchanged = await plaid.exchangePublicToken(publicToken);
+  } catch (error) {
+    log.error(
+      { err: error, userId, publicToken },
+      `${LINK_RECOVERY_TAG} public token exchange failed`,
+    );
+    throw error;
+  }
+
+  const { accessToken, itemId } = exchanged;
+  log.warn(
+    { userId, itemId, plaidAccessToken: accessToken },
+    `${LINK_RECOVERY_TAG} exchanged public token`,
+  );
+
+  try {
+    const result = await registerItem(userId, itemId, accessToken);
+    log.warn(
+      { userId, itemId, accountsRegisteredCount: result.accountsRegisteredCount },
+      `${LINK_RECOVERY_TAG} registered item`,
+    );
+    return result;
+  } catch (error) {
+    log.error(
+      { err: error, userId, itemId, plaidAccessToken: accessToken },
+      `${LINK_RECOVERY_TAG} registration failed after exchange`,
+    );
+    throw error;
+  }
+}
+
+/**
+ * Persists an exchanged Item and its accounts, then calls `/transactions/sync` once.
+ */
+async function registerItem(
+  userId: string,
+  itemId: string,
+  accessToken: string,
+): Promise<{ accountsRegisteredCount: number }> {
   const { accounts: plaidAccounts, institutionId } =
     await plaid.getAccounts(accessToken);
 
