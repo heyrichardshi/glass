@@ -4,6 +4,7 @@ import asyncController, { NoBody, NoParams, NoQuery } from "./asyncController";
 import {
   ConnectionTokenResponse,
   ListAccountsResponse,
+  ReconnectAccountParams,
   RefreshAccountParams,
   RefreshAccountResponse,
   RegisterAccountsBody,
@@ -42,6 +43,19 @@ export const getConnectionToken = asyncController<
   ConnectionTokenResponse
 >(async (req, res) => {
   const connectionToken = await accounts.createPlaidLinkToken(
+    requireUserId(req),
+  );
+  res.status(200).json({ connectionToken });
+});
+
+export const getReconnectToken = asyncController<
+  ReconnectAccountParams,
+  NoQuery,
+  NoBody,
+  ConnectionTokenResponse
+>(async (req, res) => {
+  const connectionToken = await accounts.createReconnectLinkToken(
+    req.params.accountId,
     requireUserId(req),
   );
   res.status(200).json({ connectionToken });

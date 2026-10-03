@@ -11,7 +11,27 @@ declare global {
 }
 
 // localStorage, because an OAuth bank returns the browser to /plaid/oauth as a fresh page load.
-const LINK_TOKEN_KEY = "glass.plaidLinkToken";
+const LINK_SESSION_KEY = "glass.plaidLinkSession";
+
+interface LinkSession {
+  token: string;
+  /**
+   * Set when Link is repairing an existing Item. Its public token must never be registered:
+   * registering would overwrite the Item and its sync cursor, and create its accounts again.
+   */
+  reconnectAccountId?: string;
+}
+
+function readLinkSession(): LinkSession | undefined {
+  const raw = localStorage.getItem(LINK_SESSION_KEY);
+  if (!raw) return undefined;
+  try {
+    const session = JSON.parse(raw) as LinkSession;
+    return typeof session.token === "string" ? session : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 // Save the pending key in case re-auth happens in the middle of a registration.
 const PENDING_PUBLIC_TOKEN_KEY = "glass.plaidPendingPublicToken";
@@ -70,24 +90,42 @@ export function usePlaidLink(
       `${apiBase.value}/accounts/register/token`,
       { method: "POST" },
     );
-    localStorage.setItem(LINK_TOKEN_KEY, connectionToken);
-    open(connectionToken);
+    begin({ token: connectionToken });
+  }
+
+  /** Opens Link in update mode to repair the Item behind an account. */
+  async function reconnect(accountId: string): Promise<void> {
+    const { connectionToken } = await $fetch<ConnectionTokenResponse>(
+      `${apiBase.value}/accounts/${accountId}/reconnect/token`,
+      { method: "POST" },
+    );
+    begin({ token: connectionToken, reconnectAccountId: accountId });
+  }
+
+  function begin(session: LinkSession): void {
+    localStorage.setItem(LINK_SESSION_KEY, JSON.stringify(session));
+    open(session);
   }
 
   /** Re-opens Link after an OAuth bank redirects back. False when no Link session is pending. */
   function resume(receivedRedirectUri: string): boolean {
-    const token = localStorage.getItem(LINK_TOKEN_KEY);
-    if (!token) return false;
-    open(token, receivedRedirectUri);
+    const session = readLinkSession();
+    if (!session) return false;
+    open(session, receivedRedirectUri);
     return true;
   }
 
-  function open(token: string, receivedRedirectUri?: string): void {
+  function open(session: LinkSession, receivedRedirectUri?: string): void {
     const handler = Plaid.create({
-      token,
+      token: session.token,
       ...(receivedRedirectUri ? { receivedRedirectUri } : {}),
       onSuccess: async (publicToken: string, metadata: any) => {
-        localStorage.removeItem(LINK_TOKEN_KEY);
+        localStorage.removeItem(LINK_SESSION_KEY);
+        if (session.reconnectAccountId) {
+          await finishReconnect(session.reconnectAccountId);
+          options.onFinished?.();
+          return;
+        }
         const pending: PendingPublicToken = {
           publicToken,
           issuedAt: Date.now(),
@@ -103,12 +141,29 @@ export function usePlaidLink(
         options.onFinished?.();
       },
       onExit: (err: unknown) => {
-        localStorage.removeItem(LINK_TOKEN_KEY);
+        localStorage.removeItem(LINK_SESSION_KEY);
         if (err) console.error("Plaid Link exited with error:", err);
         options.onFinished?.();
       },
     });
     handler.open();
+  }
+
+  /** Refreshing the account confirms whether the reconnection worked. */
+  async function finishReconnect(accountId: string): Promise<void> {
+    try {
+      await $fetch(`${apiBase.value}/accounts/${accountId}/refresh`, {
+        method: "POST",
+      });
+      toast.add({ title: "Account reconnected", color: "success" });
+      options.onConnected?.();
+    } catch (err: any) {
+      toast.add({
+        title: "Reconnected, but the refresh failed",
+        description: `Try refreshing the account again: ${err.message}`,
+        color: "warning",
+      });
+    }
   }
 
   async function exchange(publicToken: string): Promise<void> {
@@ -168,5 +223,5 @@ export function usePlaidLink(
     }
   }
 
-  return { waitForPlaid, start, resume, retryPendingRegistration };
+  return { waitForPlaid, start, reconnect, resume, retryPendingRegistration };
 }

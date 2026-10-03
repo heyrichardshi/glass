@@ -26,6 +26,30 @@ export async function createPlaidLinkToken(
 }
 
 /**
+ * Creates an update-mode Link token for the Item behind an account, so the user can sign in to
+ * the bank again without creating a new Item. Repairing the Item repairs every account on it.
+ */
+export async function createReconnectLinkToken(
+  accountId: string,
+  userId: string,
+): Promise<string> {
+  const accountRepo = await AccountRepository.getInstance();
+  const account = await accountRepo.findById(accountId, userId);
+  if (!account?.plaidItemId) {
+    throw new NotFoundError(`Account with ID '${accountId}' not found`);
+  }
+
+  const itemRepo = await PlaidItemRepository.getInstance();
+  const item = await itemRepo.findById(account.plaidItemId);
+  if (!item || item.userId !== userId) {
+    throw new NotFoundError(`Account with ID '${accountId}' not found`);
+  }
+
+  log.info({ accountId, itemId: item.id }, "creating update-mode link token");
+  return createPlaidLinkToken(userId, item.accessToken);
+}
+
+/**
  * Maps Plaid's account type/subtype onto Glass's normalized AccountType vocabulary.
  */
 function toGlassAccountType(

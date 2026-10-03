@@ -29,5 +29,10 @@ router.get(
   accounts.listAccountsForUser,
 );
 router.post("/accounts/:accountId/refresh", accounts.refreshAccount);
+router.post(
+  "/accounts/:accountId/reconnect/token",
+  validateResponse(ConnectionTokenResponseSchema),
+  accounts.getReconnectToken,
+);
 
 export default router;

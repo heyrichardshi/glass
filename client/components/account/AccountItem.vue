@@ -31,6 +31,14 @@
     </div>
     <div v-else-if="isDisconnected" class="text-sm text-red-800 text-right">
       action required: re-connect account
+      <UButton
+        icon="i-lucide-link"
+        :loading="reconnecting"
+        :disabled="reconnecting"
+        @click="reconnectAccount()"
+      >
+        Reconnect
+      </UButton>
     </div>
   </div>
 </template>
@@ -51,6 +59,31 @@ const lastRefreshedAt = ref<string>(
 
 const toast = useToast();
 const { apiBase } = useApiBase();
+
+const { waitForPlaid, reconnect } = usePlaidLink({
+  onConnected: () => refreshNuxtData("ListAccounts"),
+});
+const reconnecting = ref(false);
+
+async function reconnectAccount() {
+  if (reconnecting.value) return;
+  reconnecting.value = true;
+
+  try {
+    if (!(await waitForPlaid())) {
+      throw new Error("Plaid Link did not load.");
+    }
+    await reconnect(props.account.id);
+  } catch (err: any) {
+    toast.add({
+      title: "Something went wrong",
+      description: `Could not start Plaid Link: ${err.message}`,
+      color: "error",
+    });
+  } finally {
+    reconnecting.value = false;
+  }
+}
 
 function toRelativeDate(date: Date | string | number): string {
   date = new Date(date);
