@@ -9,6 +9,7 @@
         <UFormField label="Default Category">
           <CategoryMenu
             hideLabel
+            allowCreate
             :prefillWithCategoryId="defaultCategoryId?.id"
             @selectedCategory="selectedCategory"
           />
