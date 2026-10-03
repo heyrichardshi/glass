@@ -81,11 +81,7 @@ export async function syncItem(itemId: string): Promise<SyncItemResult> {
       );
     }
 
-    // TODO: persist nextCursor via completeSync once apply is verified against live
-    // data. Until then, drop the lease without moving the cursor so a later refresh
-    // re-fetches this batch from Plaid instead of skipping it.
-    // await itemRepo.completeSync(leased, update.nextCursor);
-    await itemRepo.releaseSyncLease(leased, { errorCode: null });
+    await itemRepo.completeSync(leased, update.nextCursor);
 
     log.info(
       {
@@ -107,7 +103,7 @@ export async function syncItem(itemId: string): Promise<SyncItemResult> {
           account_id: tx.account_id,
         })),
       },
-      "synced item; cursor not persisted",
+      "synced item",
     );
 
     return {
