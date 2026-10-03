@@ -51,4 +51,18 @@ wait_for_health() {
 
 wait_for_health http://127.0.0.1:7070/health
 wait_for_health http://127.0.0.1:7071/health
+
+# Docker snapshots the host's resolvers at container creation,
+# so a host that has lost MagicDNS produces an API that is healthy but cannot sign anyone in.
+if ! docker compose exec -T api node -e '
+  fetch(process.env.OIDC_ISSUER + "/.well-known/openid-configuration", { signal: AbortSignal.timeout(10000) })
+    .then((r) => { if (!r.ok) { console.error("OIDC discovery returned " + r.status); process.exit(1); } })
+    .catch((e) => { console.error(e.cause ?? e); process.exit(1); });
+'; then
+  echo "api cannot reach OIDC discovery; check /etc/resolv.conf on the host" >&2
+  docker compose exec -T api cat /etc/resolv.conf >&2 || true
+  exit 1
+fi
+echo "api reaches OIDC discovery"
+
 docker compose ps
