@@ -11,18 +11,6 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  ConnectionTokenResponse,
-  RegisterAccountsResponse,
-} from "@glass/types/schemas";
-
-// Plaid Link is loaded from the CDN (see nuxt.config app.head).
-declare global {
-  const Plaid: {
-    create: (config: any) => { open: () => void; exit: () => void };
-  };
-}
-
 const props = withDefaults(
   defineProps<{
     buttonText?: string;
@@ -36,18 +24,16 @@ const props = withDefaults(
 
 const emit = defineEmits<{ connected: [] }>();
 
-const { apiBase } = useApiBase();
 const toast = useToast();
+const { waitForPlaid, start } = usePlaidLink({
+  onConnected: () => emit("connected"),
+});
 
 const isPlaidLoaded = ref(false);
 const linking = ref(false);
 
 onMounted(async () => {
-  // Wait briefly for the Plaid Link script (loaded via app.head) to become available.
-  for (let i = 0; i < 20 && typeof Plaid === "undefined"; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  isPlaidLoaded.value = typeof Plaid !== "undefined";
+  isPlaidLoaded.value = await waitForPlaid();
 });
 
 async function openPlaidLink() {
@@ -55,27 +41,7 @@ async function openPlaidLink() {
   linking.value = true;
 
   try {
-    const { connectionToken } = await $fetch<ConnectionTokenResponse>(
-      `${apiBase.value}/accounts/register/token`,
-      { method: "POST" },
-    );
-
-    const handler = Plaid.create({
-      token: connectionToken,
-      onSuccess: async (publicToken: string, metadata: any) => {
-        console.warn("PLAID_LINK_RECOVERY public token issued", {
-          publicToken,
-          institution: metadata?.institution,
-          accounts: metadata?.accounts,
-          linkSessionId: metadata?.link_session_id,
-        });
-        await exchange(publicToken);
-      },
-      onExit: (err: unknown) => {
-        if (err) console.error("Plaid Link exited with error:", err);
-      },
-    });
-    handler.open();
+    await start();
   } catch (err: any) {
     toast.add({
       title: "Something went wrong",
@@ -84,34 +50,6 @@ async function openPlaidLink() {
     });
   } finally {
     linking.value = false;
-  }
-}
-
-async function exchange(publicToken: string) {
-  try {
-    const res = await $fetch<RegisterAccountsResponse>(
-      `${apiBase.value}/accounts/register`,
-      { method: "POST", body: { exchangeToken: publicToken } },
-    );
-    console.warn("PLAID_LINK_RECOVERY registered item", {
-      accountsRegisteredCount: res.accountsRegisteredCount,
-    });
-    toast.add({
-      title: `Successfully added ${res.accountsRegisteredCount} account(s)`,
-      color: "success",
-    });
-    emit("connected");
-  } catch (err: any) {
-    console.error("PLAID_LINK_RECOVERY registration request failed", {
-      publicToken,
-      status: err?.statusCode,
-      message: err?.message,
-    });
-    toast.add({
-      title: "Something went wrong",
-      description: `Error adding accounts: ${err.message}`,
-      color: "error",
-    });
   }
 }
 </script>
