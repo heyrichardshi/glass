@@ -6,6 +6,7 @@ import {
   PlaidEnvironments,
   Products,
   type AccountBase,
+  type JWKPublicKey,
   type LinkTokenCreateRequest,
   type RemovedTransaction,
   type Transaction as PlaidTransaction,
@@ -116,6 +117,19 @@ export async function exchangePublicToken(
     accessToken: response.data.access_token,
     itemId: response.data.item_id,
   };
+}
+
+/**
+ * Returns the public key Plaid signed a webhook with,
+ * identified by the `kid` in the `Plaid-Verification` JWT header.
+ */
+export async function getWebhookVerificationKey(
+  keyId: string,
+): Promise<JWKPublicKey> {
+  const response = await getClient().webhookVerificationKeyGet({
+    key_id: keyId,
+  });
+  return response.data.key;
 }
 
 /**

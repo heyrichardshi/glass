@@ -42,14 +42,27 @@ refuses to start.
 link-token creation rather than minting an Item that can never receive
 updates.
 
-2. Create a `.deploy_sha` file in the same folder containing the commit SHA of a
+2. Create a `.env.webhook` file with the following contents:
+
+```
+PLAID_CLIENT_ID=
+PLAID_SECRET=
+PLAID_ENV=production
+
+LOG_LEVEL=info
+```
+
+The webhook listener fetches Plaid's signing keys to verify each delivery, so
+it needs the same Plaid credentials as the API.
+
+3. Create a `.deploy_sha` file in the same folder containing the commit SHA of a
    successful build, and nothing else:
 
 ```
 28dff46bf7b1afd0ea32ef4930cbb49940c36178
 ```
 
-3. Fetch the deploy script and run it:
+4. Fetch the deploy script and run it:
 
 ```
 curl -fsSL https://raw.githubusercontent.com/heyrichardshi/glass/refs/heads/main/deploy/deploy.sh -o deploy.sh
