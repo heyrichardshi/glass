@@ -17,6 +17,8 @@ OIDC_CLIENT_ID=
 OIDC_CLIENT_SECRET=
 OIDC_REDIRECT_URIS=https://<client-domain>/auth/callback
 
+SESSION_SECRET=
+
 LOG_LEVEL=info
 CLIENT_ORIGIN=https://<client-domain>
 PLAID_WEBHOOK_URL=https://hooks.<client-domain>/webhooks/plaid
@@ -25,6 +27,9 @@ PLAID_WEBHOOK_URL=https://hooks.<client-domain>/webhooks/plaid
 `OIDC_AUDIENCE` is the audience `requireToken` enforces on every verified token.
 It is the client ID tsidp issued, so it holds the same value as
 `OIDC_CLIENT_ID`.
+
+`SESSION_SECRET` signs the 12-hour session tokens the API issues after
+verifying a tsidp ID token. Generate it with `openssl rand -base64 48`.
 
 `LOG_LEVEL` is the pino level. `info` is the default; `warn` silences
 per-account chatter.

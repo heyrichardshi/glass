@@ -7,7 +7,10 @@ import {
   ForbiddenError,
   InvalidInputWithCustomMessageError,
 } from "../common/errors";
+import { getJose, type Jose } from "../common/jose";
 import { childLogger } from "../common/logger";
+import { UserIdentity } from "../models";
+import { issueSessionToken } from "./session.service";
 
 const log = childLogger("auth.service");
 
@@ -71,8 +74,30 @@ async function getDiscovery(): Promise<Discovery> {
 // Scopes requested at /authorize. tsidp advertises exactly these three.
 const SCOPE = "openid email profile";
 
-export async function getJwksUri(): Promise<string> {
-  return (await getDiscovery()).jwks_uri;
+let jwks: ReturnType<Jose["createRemoteJWKSet"]> | undefined;
+
+async function getJwks() {
+  if (!jwks) {
+    const { createRemoteJWKSet } = await getJose();
+    jwks = createRemoteJWKSet(new URL((await getDiscovery()).jwks_uri));
+  }
+  return jwks;
+}
+
+async function verifyIdToken(idToken: string): Promise<UserIdentity> {
+  // jose checks the signature against the JWKS and enforces exp and nbf;
+  // issuer and audience are checked here so a token minted by another
+  // provider, or for another client, is rejected even though it verifies.
+  const { jwtVerify } = await getJose();
+  const { payload } = await jwtVerify(idToken, await getJwks(), {
+    issuer: env("OIDC_ISSUER"),
+    audience: env("OIDC_AUDIENCE"),
+  });
+
+  if (!payload.iss || !payload.sub) {
+    throw new Error("ID token is missing an identity.");
+  }
+  return { issuer: payload.iss, subject: payload.sub };
 }
 
 export async function getAuthConfig(): Promise<AuthConfigResponse> {
@@ -121,5 +146,6 @@ export async function exchangeAuthorizationCode(
     );
   }
 
-  return { idToken: token.id_token };
+  const identity = await verifyIdToken(token.id_token);
+  return { sessionToken: await issueSessionToken(identity) };
 }

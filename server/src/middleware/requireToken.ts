@@ -1,22 +1,12 @@
 import { NextFunction, Request, Response } from "express";
-import type { JWTPayload } from "jose" with { "resolution-mode": "import" };
 import { NO_ACCOUNT_ERROR_CODE } from "@glass/types/schemas";
 import { ForbiddenError, UnauthorizedError } from "../common/errors";
 import { childLogger } from "../common/logger";
 import { UserIdentity } from "../models";
-import { getJwksUri } from "../services/auth.service";
+import { verifySessionToken } from "../services/session.service";
 import { resolveUserId } from "../services/user.service";
 
 const log = childLogger("requireToken");
-
-// jose is ESM-only; this package compiles as CommonJS, so value imports must
-// be dynamic (`import()`). Type-only imports need resolution-mode so tsc does
-// not treat them as CJS requires.
-type Jose = typeof import("jose", { with: { "resolution-mode": "import" } });
-
-async function getJose(): Promise<Jose> {
-  return import("jose");
-}
 
 // Extra fields on `req`. Express picks these up from the global Express.Request
 // interface, which is the supported extension point. Augmenting the
@@ -27,7 +17,7 @@ declare global {
   namespace Express {
     interface Request {
       /** Set by requireToken. Present on every route mounted behind it. */
-      token?: JWTPayload;
+      identity?: UserIdentity;
       /**
        * The caller's user ID, resolved from the verified token. Undefined when the token is valid
        * but no account holds its identity yet; see {@link requireUserId}.
@@ -37,50 +27,22 @@ declare global {
   }
 }
 
-function env(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is not set; tokens cannot be verified.`);
-  }
-  return value;
-}
-
-let jwks: ReturnType<Jose["createRemoteJWKSet"]> | undefined;
-
-async function getJwks() {
-  // createRemoteJWKSet caches keys internally and refetches when it meets an
-  // unknown `kid`, so this is built once and reused rather than per request.
-  if (!jwks) {
-    const { createRemoteJWKSet } = await getJose();
-    jwks = createRemoteJWKSet(new URL(await getJwksUri()));
-  }
-  return jwks;
-}
-
 /**
- * Rejects any request without a valid tsidp token.
+ * Rejects any request without a valid Glass session token.
  */
 export async function requireToken(
   req: Request,
   _res: Response,
   next: NextFunction,
 ) {
+  let identity: UserIdentity;
   try {
     const header = req.headers.authorization;
     if (!header?.startsWith("Bearer ")) {
       throw new UnauthorizedError("Missing bearer token.");
     }
 
-    // jose checks the signature against the JWKS and enforces exp and nbf;
-    // issuer and audience are checked here so a token minted by another
-    // provider, or for another client, is rejected even though it verifies.
-    const { jwtVerify } = await getJose();
-    const { payload } = await jwtVerify(header.slice(7), await getJwks(), {
-      issuer: env("OIDC_ISSUER"),
-      audience: env("OIDC_AUDIENCE"),
-    });
-
-    req.token = payload;
+    identity = await verifySessionToken(header.slice(7));
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return next(error);
@@ -90,16 +52,12 @@ export async function requireToken(
     return next(new UnauthorizedError("Invalid token."));
   }
 
-  // Identity is derived from the verified token.
-  const { iss, sub } = req.token;
-  if (!iss || !sub) {
-    return next(new UnauthorizedError("Token is missing an identity."));
-  }
+  req.identity = identity;
 
   try {
     // An unrecognised identity is left unresolved rather than rejected,
     // because enrolment has to be reachable by a caller who does not have an account yet.
-    req.userId = await resolveUserId({ issuer: iss, subject: sub });
+    req.userId = await resolveUserId(identity);
   } catch (error) {
     return next(error);
   }
@@ -125,12 +83,10 @@ export function requireUserId(req: Request): string {
  * The verified {issuer, subject} pair.
  */
 export function requireIdentity(req: Request): UserIdentity {
-  const iss = req.token?.iss;
-  const sub = req.token?.sub;
-  if (!iss || !sub) {
+  if (!req.identity) {
     throw new UnauthorizedError("Token is missing an identity.");
   }
-  return { issuer: iss, subject: sub };
+  return req.identity;
 }
 
 export default requireToken;

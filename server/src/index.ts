@@ -38,6 +38,11 @@ if (!clientOrigin || clientOrigin === "*") {
   process.exit(1);
 }
 
+if (!process.env.SESSION_SECRET) {
+  logger.error("SESSION_SECRET must be set");
+  process.exit(1);
+}
+
 const app = express();
 
 /**

@@ -121,7 +121,7 @@ export function useAuth() {
       },
     );
 
-    token.value = exchanged.idToken;
+    token.value = exchanged.sessionToken;
     return returnTo;
   }
 

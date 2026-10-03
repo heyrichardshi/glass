@@ -21,6 +21,7 @@ COSMOS_DB_KEY=
 COSMOS_DB_NAME=
 
 CLIENT_ORIGIN=http://localhost:3000
+SESSION_SECRET= # openssl rand -base64 48
 ```
 
 Start the server locally:
