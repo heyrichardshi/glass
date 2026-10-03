@@ -1,9 +1,32 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { NotFoundError } from "../common/errors";
 import { getJose, type Jose } from "../common/jose";
+import { childLogger } from "../common/logger";
 import { getWebhookVerificationKey } from "./plaid.service";
+import { syncItem } from "./sync.service";
+
+const log = childLogger("plaidWebhook.service");
 
 const SIGNING_ALGORITHM = "ES256";
 const MAX_TOKEN_AGE = "5 min";
+
+/**
+ * Webhooks answered by syncing the Item. A sync against a broken Item fails with the error code
+ * the webhook carries, which syncItem records; a sync against a repaired one clears it.
+ */
+const SYNC_WEBHOOKS = new Set([
+  "TRANSACTIONS/SYNC_UPDATES_AVAILABLE",
+  "ITEM/ERROR",
+  "ITEM/LOGIN_REPAIRED",
+  "ITEM/USER_PERMISSION_REVOKED",
+  "ITEM/USER_ACCOUNT_REVOKED",
+]);
+
+/** Webhooks that only update-mode Link can act on. */
+const UPDATE_MODE_WEBHOOKS = new Set([
+  "ITEM/PENDING_DISCONNECT",
+  "ITEM/NEW_ACCOUNTS_AVAILABLE",
+]);
 
 type VerificationKey = Awaited<ReturnType<Jose["importJWK"]>>;
 
@@ -98,4 +121,42 @@ export async function verifyPlaidWebhook(
   if (claimed.length !== actual.length || !timingSafeEqual(claimed, actual)) {
     throw new WebhookVerificationError("body hash mismatch");
   }
+}
+
+/**
+ * @throws if the work failed and Plaid should redeliver.
+ */
+export async function handlePlaidWebhook(
+  payload: Record<string, unknown>,
+): Promise<void> {
+  const webhookType = payload.webhook_type;
+  const webhookCode = payload.webhook_code;
+  const itemId = payload.item_id;
+  const context = { webhookType, webhookCode, itemId };
+  const key = `${webhookType}/${webhookCode}`;
+
+  if (SYNC_WEBHOOKS.has(key)) {
+    if (typeof itemId !== "string") {
+      log.warn(context, "webhook has no item ID; ignoring");
+      return;
+    }
+    try {
+      const result = await syncItem(itemId);
+      log.info({ ...context, result: result.status }, "handled webhook");
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        log.warn(context, "webhook for an unknown item; ignoring");
+        return;
+      }
+      throw error;
+    }
+    return;
+  }
+
+  if (UPDATE_MODE_WEBHOOKS.has(key)) {
+    log.warn(context, "item needs update-mode Link");
+    return;
+  }
+
+  log.info(context, "ignored webhook");
 }

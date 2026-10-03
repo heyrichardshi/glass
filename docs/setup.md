@@ -45,6 +45,10 @@ updates.
 2. Create a `.env.webhook` file with the following contents:
 
 ```
+COSMOS_DB_ENDPOINT=
+COSMOS_DB_KEY=
+COSMOS_DB_NAME=
+
 PLAID_CLIENT_ID=
 PLAID_SECRET=
 PLAID_ENV=production
@@ -52,8 +56,9 @@ PLAID_ENV=production
 LOG_LEVEL=info
 ```
 
-The webhook listener fetches Plaid's signing keys to verify each delivery, so
-it needs the same Plaid credentials as the API.
+The webhook listener fetches Plaid's signing keys to verify each delivery, and
+syncs the Item a verified delivery names, so it needs the same Cosmos and Plaid
+credentials as the API.
 
 3. Create a `.deploy_sha` file in the same folder containing the commit SHA of a
    successful build, and nothing else:

@@ -8,6 +8,7 @@ import express from "express";
 import helmet from "helmet";
 import { logger } from "./common/logger";
 import {
+  handlePlaidWebhook,
   verifyPlaidWebhook,
   WebhookVerificationError,
 } from "./services/plaidWebhook.service";
@@ -64,14 +65,14 @@ app.post("/webhooks/plaid", async (req, res) => {
     return;
   }
 
-  log.info(
-    {
-      webhookType: req.body.webhook_type,
-      webhookCode: req.body.webhook_code,
-      itemId: req.body.item_id,
-    },
-    "acknowledged webhook",
-  );
+  try {
+    await handlePlaidWebhook(req.body);
+  } catch (error) {
+    log.error({ err: error }, "failed to handle webhook");
+    res.sendStatus(500);
+    return;
+  }
+
   res.sendStatus(200);
 });
 
