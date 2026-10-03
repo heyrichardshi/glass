@@ -13,6 +13,23 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: "Glass",
+      link: [
+        { rel: "icon", href: "/favicon.ico", sizes: "any" },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/favicon-32x32.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "16x16",
+          href: "/favicon-16x16.png",
+        },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+        { rel: "manifest", href: "/site.webmanifest" },
+      ],
       script: [
         { src: "https://cdn.plaid.com/link/v2/stable/link-initialize.js" },
       ],
