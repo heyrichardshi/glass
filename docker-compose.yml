@@ -16,18 +16,35 @@ services:
       - CI=true
     volumes:
       - ./:/workspace
+      # Keep pnpm's workspace-level virtual store out of the bind mount.
+      # Host installs and the client container must not replace packages while this service is running.
+      - server_root_node_modules:/workspace/node_modules
       - server_node_modules:/workspace/server/node_modules
-      - types_node_modules:/workspace/types/node_modules
+      - server_types_node_modules:/workspace/types/node_modules
       - pnpm_store_server:/pnpm-store
     # The server owns building `types`; the client waits for the output. Running both concurrently
     # corrupts the shared workspace state.
     command: sh -c "corepack enable && pnpm -C types install && pnpm -C types build && pnpm -C server install && pnpm -C server dev"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:7070/health",
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 30
   client:
     container_name: glass_client
     image: node:22-alpine
     working_dir: /workspace
     depends_on:
-      - server
+      server:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
@@ -36,15 +53,23 @@ services:
       - CI=true
     volumes:
       - ./:/workspace
+      # Nuxt and pnpm both delete/recreate generated directories.
+      # Isolating them prevents a host build or the server container from removing files while the dev server reads them.
+      - client_root_node_modules:/workspace/node_modules
       - client_node_modules:/workspace/client/node_modules
-      - types_node_modules:/workspace/types/node_modules
+      - client_types_node_modules:/workspace/types/node_modules
+      - client_nuxt:/workspace/client/.nuxt
       # A separate store per service: pnpm's store index is a SQLite database that concurrent
       # installs from two containers can corrupt.
       - pnpm_store_client:/pnpm-store
     command: sh -c "corepack enable && until [ -f types/dist/index.js ]; do echo 'waiting for types build...'; sleep 2; done && pnpm -C client install && pnpm -C client dev --port 3000 --host 0.0.0.0"
 volumes:
+  server_root_node_modules:
+  client_root_node_modules:
   server_node_modules:
   client_node_modules:
-  types_node_modules:
+  server_types_node_modules:
+  client_types_node_modules:
+  client_nuxt:
   pnpm_store_server:
   pnpm_store_client:

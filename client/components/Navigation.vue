@@ -19,6 +19,11 @@ const items = ref<NavigationMenuItem[]>([
     to: "/",
   },
   {
+    label: "Tasks",
+    icon: "i-lucide-playing-cards-fan",
+    to: "/tasks",
+  },
+  {
     label: "Accounts",
     icon: "i-lucide-landmark",
     to: "/accounts",

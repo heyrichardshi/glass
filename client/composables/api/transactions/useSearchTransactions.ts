@@ -1,15 +1,8 @@
 import type { ListTransactionsResponse } from "@glass/types";
-
-type SearchFilters = {
-  searchText?: string;
-  accountIds?: string[];
-  merchantIds?: string[];
-  categoryIds?: string[];
-  tagIds?: string[];
-};
+import type { TransactionSearchFilters } from "@glass/types/schemas";
 
 export default function (params: {
-  filters: SearchFilters;
+  filters: TransactionSearchFilters;
   paginationToken?: string;
 }) {
   const { apiBase } = useApiBase();
