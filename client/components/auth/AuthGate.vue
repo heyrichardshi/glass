@@ -35,6 +35,16 @@ const error = computed(() => localError.value ?? authError.value ?? undefined);
 
 const isPublic = computed(() => route.meta.public === true);
 
+// Safari reports every failure without a response as "Load failed", including
+// iCloud Private Relay resolving tailnet hostnames outside of MagicDNS.
+const UNREACHABLE_MESSAGE =
+  "Could not reach the server. Check that Tailscale is connected and that iCloud Private Relay is off for this network.";
+
+function isUnreachable(caught: unknown): boolean {
+  const err = caught as { name?: string; response?: unknown } | null;
+  return err?.name === "FetchError" && err.response === undefined;
+}
+
 // Short-circuit on error to prevent redirect loops.
 async function start() {
   localError.value = undefined;
@@ -42,6 +52,11 @@ async function start() {
   try {
     await login();
   } catch (caught) {
+    if (isUnreachable(caught)) {
+      console.error(caught);
+      localError.value = UNREACHABLE_MESSAGE;
+      return;
+    }
     localError.value =
       caught instanceof Error ? caught.message : String(caught);
   }
