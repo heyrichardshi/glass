@@ -4,13 +4,14 @@
     ref="table"
     :data="transactions"
     :columns="columns"
-    class="flex-1 w-full"
+    :column-visibility="columnVisibility"
+    class="flex-1 w-full max-md:[&_table]:w-full max-md:[&_table]:min-w-0"
     :loading="loading"
     @select="onSelect"
   >
     <template #description-cell="{ row }">
-      <div>
-        <div>
+      <div class="min-w-0 whitespace-normal">
+        <div class="break-words">
           <MerchantBadge
             v-if="
               row.original.counterparty.type === 'merchant' &&
@@ -21,6 +22,22 @@
 
           {{ row.original.description }}
         </div>
+
+        <div
+          v-if="isCompact"
+          class="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm text-muted"
+        >
+          <span>
+            {{
+              row.original.status === "pending"
+                ? "Pending"
+                : formatDisplayDate(row.original.date)
+            }}
+          </span>
+          <span>·</span>
+          <span>{{ getCategoryName(row.original.categoryId) }}</span>
+        </div>
+
         <div class="mt-1">
           <TagBadge
             v-for="tagId in row.original.tagIds"
@@ -42,7 +59,7 @@
   >
     <div
       v-if="selectedTransactions.length > 0"
-      class="sticky bottom-0 px-4 py-3.5 border-t border-accented text-sm text-muted backdrop-blur-lg flex justify-between items-center"
+      class="sticky bottom-0 flex flex-col items-stretch justify-between gap-3 border-t border-accented px-4 py-3.5 text-sm text-muted backdrop-blur-lg sm:flex-row sm:items-center"
     >
       <span
         >{{ transactionCountString }} selected. Total:
@@ -87,6 +104,32 @@ function getCategoryById(categoryId: string): Category | undefined {
   return listCategories.categories.value.find((c) => c.id === categoryId);
 }
 
+function getCategoryName(categoryId: string): string {
+  return getCategoryById(categoryId)?.name ?? "Uncategorized";
+}
+
+const isCompact = ref(false);
+let compactMediaQuery: MediaQueryList | undefined;
+
+function updateCompactLayout() {
+  isCompact.value = compactMediaQuery?.matches ?? false;
+}
+
+onMounted(() => {
+  compactMediaQuery = window.matchMedia("(max-width: 767px)");
+  updateCompactLayout();
+  compactMediaQuery.addEventListener("change", updateCompactLayout);
+});
+
+onBeforeUnmount(() => {
+  compactMediaQuery?.removeEventListener("change", updateCompactLayout);
+});
+
+const columnVisibility = computed(() => ({
+  date: !isCompact.value,
+  categoryId: !isCompact.value,
+}));
+
 const UCheckbox = resolveComponent("UCheckbox");
 const table = useTemplateRef<{
   tableApi: {
@@ -116,6 +159,12 @@ const transactionTotalString = computed<string>(() => {
 const columns: TableColumn<Transaction>[] = [
   {
     id: "select",
+    meta: {
+      class: {
+        th: "max-md:w-12 max-md:pe-1 max-md:ps-3",
+        td: "max-md:w-12 max-md:pe-1 max-md:ps-3",
+      },
+    },
     header: ({ table }) =>
       h(UCheckbox, {
         modelValue: table.getIsSomePageRowsSelected()
@@ -144,15 +193,27 @@ const columns: TableColumn<Transaction>[] = [
   {
     accessorKey: "categoryId",
     header: "Category",
-    cell: ({ row }) => getCategoryById(row.getValue("categoryId"))?.name,
+    cell: ({ row }) => getCategoryName(row.getValue("categoryId")),
   },
   {
     accessorKey: "description",
-    header: "Description",
+    header: () => (isCompact.value ? "Transaction" : "Description"),
+    meta: {
+      class: {
+        th: "max-md:whitespace-normal max-md:[overflow-wrap:anywhere]",
+        td: "max-md:whitespace-normal max-md:[overflow-wrap:anywhere]",
+      },
+    },
   },
   {
     accessorKey: "amount",
-    header: "Amount",
+    meta: {
+      class: {
+        th: "max-md:w-28 max-md:pe-3 max-md:ps-2",
+        td: "max-md:w-28 max-md:pe-3 max-md:ps-2",
+      },
+    },
+    header: () => h("div", { class: "text-right" }, "Amount"),
     cell: ({ row }) => {
       let amount = row.getValue("amount") as string;
       let isNegative = false;
@@ -162,7 +223,6 @@ const columns: TableColumn<Transaction>[] = [
         isNegative = true;
       }
 
-      // Parse the amount as a number and format to always show 2 decimal places
       const numericAmount = parseFloat(amount);
       const formattedAmount = numericAmount.toFixed(2);
 
@@ -170,7 +230,7 @@ const columns: TableColumn<Transaction>[] = [
       const textColor = isNegative ? "text-emerald-600" : "";
       return h(
         "div",
-        { class: `text-right ${textColor}` },
+        { class: `whitespace-nowrap text-right ${textColor}` },
         `${prefix}\$${formattedAmount}`,
       );
     },

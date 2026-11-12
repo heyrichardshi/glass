@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6">
+  <div class="p-4 md:p-6">
     <h1 class="text-2xl font-bold mb-4">Transactions</h1>
 
     <TransactionSearchBox @search="onSearch" />
