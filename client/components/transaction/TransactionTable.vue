@@ -11,7 +11,33 @@
   >
     <template #description-cell="{ row }">
       <div class="min-w-0 whitespace-normal">
-        <div class="break-words">
+        <div v-if="isCompact">
+          <div class="flex items-baseline gap-2">
+            <span class="shrink-0">
+              {{
+                row.original.status === "pending"
+                  ? "Pending"
+                  : formatDisplayDate(row.original.date)
+              }}
+            </span>
+            <span class="min-w-0 break-words">
+              {{ row.original.description }}
+            </span>
+          </div>
+
+          <div class="mt-1 flex flex-wrap items-center gap-1">
+            <MerchantBadge
+              v-if="
+                row.original.counterparty.type === 'merchant' &&
+                row.original.counterparty.id != '0'
+              "
+              :merchantId="row.original.counterparty.id"
+            />
+            <CategoryBadge :categoryId="row.original.categoryId" />
+          </div>
+        </div>
+
+        <div v-else class="break-words">
           <MerchantBadge
             v-if="
               row.original.counterparty.type === 'merchant' &&
@@ -21,21 +47,6 @@
           />
 
           {{ row.original.description }}
-        </div>
-
-        <div
-          v-if="isCompact"
-          class="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm text-muted"
-        >
-          <span>
-            {{
-              row.original.status === "pending"
-                ? "Pending"
-                : formatDisplayDate(row.original.date)
-            }}
-          </span>
-          <span>·</span>
-          <span>{{ getCategoryName(row.original.categoryId) }}</span>
         </div>
 
         <div class="mt-1">

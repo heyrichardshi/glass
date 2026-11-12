@@ -1,5 +1,11 @@
 <template>
-  <UBadge :label="name" color="neutral" variant="solid" class="mx-0.5" />
+  <UBadge
+    :label="name"
+    icon="i-lucide-store"
+    color="neutral"
+    variant="solid"
+    class="mx-0.5"
+  />
 </template>
 
 <script setup lang="ts">
